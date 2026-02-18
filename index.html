@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CoNLL-U Vergleich (v1)</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="bar">
+    <h1>CoNLL-U Vergleich (v1)</h1>
+    <p class="muted">Dateien nachladen, löschen oder komplett resetten. Vergleich satzweise.</p>
+  </header>
+
+  <main class="wrap">
+    <section class="card">
+      <h2>1) Dateien</h2>
+
+      <!-- versteckter File-Input (wird über Button geöffnet) -->
+      <input id="fileInput" type="file" accept=".conllu,.conll,.txt" multiple hidden />
+
+      <div class="row">
+        <button id="addBtn">Dateien hinzufügen</button>
+        <button id="resetBtn" class="danger">Reset</button>
+        <span id="fileMeta" class="muted"></span>
+      </div>
+
+      <div id="fileList" class="fileList" style="margin-top:10px"></div>
+
+      <p class="muted small" style="margin-top:10px">
+        Tipp: Du kannst mehrfach „Dateien hinzufügen“ klicken, um nachzuladen.
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>2) Satz wählen</h2>
+      <div class="row">
+        <button id="prevBtn" disabled>←</button>
+        <select id="sentSelect" disabled></select>
+        <button id="nextBtn" disabled>→</button>
+        <span id="sentMeta" class="muted"></span>
+      </div>
+      <div id="sentText" class="sentText"></div>
+    </section>
+
+    <section class="card">
+      <h2>3) Vergleich</h2>
+      <div class="tableWrap">
+        <table id="cmpTable"></table>
+      </div>
+      <p class="muted small" style="margin-top:10px">
+        Hinweis: Multi-Word-Tokens (IDs mit „-” oder „.”) werden ignoriert.
+      </p>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
