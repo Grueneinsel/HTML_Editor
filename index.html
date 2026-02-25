@@ -10,74 +10,58 @@
   <header class="bar">
     <h1>CoNLL-U Vergleich</h1>
     <p class="muted">
-      Gold pro Zeile durch Klick auf eine Datei-Zelle. Wenn Custom befüllt ist → Custom ist Gold.
-      Satz wählen zeigt gleichzeitig Vorschau (UPOS/XPOS + Trees).
+      Gold pro Zeile durch Klick auf eine Datei-Zelle. Custom befüllt → Custom ist Gold automatisch.
     </p>
   </header>
 
   <main class="wrap">
     <section class="card">
       <h2>1) Dateien</h2>
-
-      <!-- FIX: kein "hidden" mehr, sondern per CSS versteckt -->
       <input id="fileInput" type="file" accept=".conllu,.conll,.txt" multiple class="fileHidden" />
-
       <div class="row">
-        <!-- FIX: Label öffnet Dateidialog zuverlässig -->
         <label id="addBtn" class="btnLike" for="fileInput">Dateien hinzufügen</label>
-
         <button id="resetBtn" class="danger">Reset</button>
         <span id="fileMeta" class="muted"></span>
       </div>
-
       <div id="fileList" class="fileList" style="margin-top:10px"></div>
     </section>
 
     <section class="card">
-      <h2>2) Satz wählen + Vorschau</h2>
+      <h2>2) Satz wählen</h2>
       <div class="row">
         <button id="prevBtn" disabled>←</button>
         <select id="sentSelect" disabled></select>
         <button id="nextBtn" disabled>→</button>
         <span id="sentMeta" class="muted"></span>
+        <div id="sentStats" class="sentStatsRow"></div>
       </div>
-
       <div id="sentText" class="sentText"></div>
+    </section>
 
-      <div class="previewGrid">
-        <div class="previewBlock">
-          <div class="previewTitle">Tokens (UPOS/XPOS)</div>
-          <div class="tableWrap">
-            <table id="tokTable"></table>
-          </div>
-        </div>
-
-        <div class="previewBlock">
-          <div class="previewTitle">Trees</div>
-          <div id="treeGrid" class="treeGrid"></div>
-          <div class="muted small" style="margin-top:8px">
-            Legende: ✅ gleich | ⚠️ Label-Diff | 🅶 nur GOLD | 🅵 nur Datei
-          </div>
-        </div>
+    <section class="card">
+      <h2>3) Baumansicht</h2>
+      <div id="treeGrid" class="treeGrid"></div>
+      <div class="muted small" style="margin-top:8px">
+        Legende: ✅ gleich &nbsp;|&nbsp;
+        <span class="legendWarn">⚠️ Label-Unterschied</span> &nbsp;|&nbsp;
+        <span class="legendGold">🅶 nur in Gold</span> &nbsp;|&nbsp;
+        <span class="legendFile">🅵 nur in dieser Datei</span>
+        &nbsp;|&nbsp; Klick auf Zeile → springt zur Tabellenzeile
       </div>
     </section>
 
     <section class="card">
-      <h2>3) Vergleich</h2>
-      <div class="row" style="margin-bottom:10px">
+      <h2>4) Vergleich</h2>
+      <div class="row" style="margin-bottom:8px">
         <button id="customInitBtn" disabled>Custom aus Datei 1</button>
         <button id="customClearBtn" class="danger" disabled>Custom Satz löschen</button>
-        <span class="muted small">
-          Klick auf Datei-Zelle → Gold. Custom befüllt → Gold=Custom automatisch.
-        </span>
       </div>
-
-      <div class="tableWrap">
+      <div id="colToggleBar" class="colToggleBar"></div>
+      <div class="tableWrap" style="margin-top:8px">
         <table id="cmpTable"></table>
       </div>
-
       <p class="muted small" style="margin-top:10px">
-        Hinweis: Multi-Word-Tokens (IDs mit „-” oder „.”) werden ignoriert.
+        Hinweis: Multi-Word-Tokens (IDs mit „-" oder „.") werden ignoriert.
       </p>
     </section>
   </main>

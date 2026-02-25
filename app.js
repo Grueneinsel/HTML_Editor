@@ -1,11 +1,13 @@
-// CoNLL-U Vergleich
-// - Gold pro Token-Zeile: Klick auf Datei-Zelle (wie Buttons)
-// - Wenn Custom (HEAD oder DEPREL) befüllt ist -> Custom ist automatisch Gold
-// - Satz wählen zeigt Vorschau: Token-Tabelle (UPOS/XPOS) + Trees wie trees.py
-//   * GOLD Tree (plain)
-//   * Diff-Tree pro Datei vs GOLD (✅ / ⚠️ / 🅶 / 🅵)
-//
-// FIX: Dateiauswahl wird über <label for="fileInput"> geöffnet (kein fileInput.click()).
+// CoNLL-U Vergleich – v2
+// Verbesserungen:
+// - Tokens-Fenster entfernt (redundant), Vergleich-Tabelle übernimmt
+// - Nur ein Diff-Tree (Gold vs. gemergter Annotator-Vergleich), kein Einzel-Tree pro Datei
+// - Diff-Icons visuell stärker hervorgehoben
+// - Klick auf Diff im Tree → springt zur entsprechenden Zeile in der Tabelle
+// - Statistik pro Satz (Tokens, Diffs) beim Satz-Selector
+// - Spalten ein-/ausblenden im Vergleich
+// - GOLD + CUSTOM zusammengeführt in einer Spalte
+// - Custom head: kein automatischer Focus / Wertauswahl
 
 const DEFAULT_LABELS = {
   "Core arguments": ["nsubj","obj","iobj","csubj","ccomp","xcomp"],
@@ -20,6 +22,8 @@ const DEFAULT_LABELS = {
 let LABELS = DEFAULT_LABELS;
 let DEPREL_OPTIONS_HTML = "";
 let DEPREL_VALUE_SET = new Set();
+let UPOS_OPTIONS_HTML = "";
+let XPOS_OPTIONS_HTML = "";
 
 const state = {
   docs: [],
@@ -27,6 +31,7 @@ const state = {
   maxSents: 0,
   custom: {},     // custom[sent][tokId] = {head, deprel}
   goldPick: {},   // goldPick[sent][tokId] = docIdx
+  hiddenCols: new Set(), // set of docIdx (numbers) to hide
 };
 
 // DOM
@@ -35,16 +40,17 @@ const resetBtn  = document.getElementById("resetBtn");
 const fileList  = document.getElementById("fileList");
 const fileMeta  = document.getElementById("fileMeta");
 
-const sentSelect = document.getElementById("sentSelect");
-const prevBtn    = document.getElementById("prevBtn");
-const nextBtn    = document.getElementById("nextBtn");
-const sentMeta   = document.getElementById("sentMeta");
-const sentText   = document.getElementById("sentText");
+const sentSelect  = document.getElementById("sentSelect");
+const prevBtn     = document.getElementById("prevBtn");
+const nextBtn     = document.getElementById("nextBtn");
+const sentMeta    = document.getElementById("sentMeta");
+const sentText    = document.getElementById("sentText");
+const sentStats   = document.getElementById("sentStats");
 
-const tokTable   = document.getElementById("tokTable");
-const treeGrid   = document.getElementById("treeGrid");
+const treeGrid    = document.getElementById("treeGrid");
+const cmpTable    = document.getElementById("cmpTable");
+const colToggleBar = document.getElementById("colToggleBar");
 
-const cmpTable   = document.getElementById("cmpTable");
 const customInitBtn  = document.getElementById("customInitBtn");
 const customClearBtn = document.getElementById("customClearBtn");
 
@@ -77,30 +83,25 @@ cmpTable.addEventListener("input", (e) => {
 });
 cmpTable.addEventListener("change", (e) => {
   const el = e.target;
-  if(el instanceof HTMLSelectElement && el.classList.contains("customRelSelect")){
+  if(el instanceof HTMLSelectElement && el.dataset.field && el.dataset.id){
     onCustomFieldChange(el);
   }
 });
 
-// Delegation: Klick auf Datei-Zelle -> Gold wählen
+// Klick auf Datei-Zelle → Gold wählen
 cmpTable.addEventListener("click", (e) => {
   const td = e.target.closest?.("td[data-col^='doc']");
   if(!td) return;
-
   const tr = td.closest("tr[data-id]");
   if(!tr) return;
-
   const tokId = parseInt(tr.dataset.id, 10);
   const docIdx = parseInt(td.dataset.docIdx, 10);
-
-  // Wenn Custom befüllt ist -> Custom ist Gold, Klick ignorieren
   if(getCustomEntry(state.currentSent, tokId)) return;
-
   setDocChoice(state.currentSent, tokId, docIdx);
-  updateRow(tokId);
+  renderSentence();
 });
 
-// ---------- Labels laden ----------
+// ---------- Labels ----------
 (async function initLabels(){
   try{
     const res = await fetch("labels.json", {cache:"no-store"});
@@ -108,9 +109,8 @@ cmpTable.addEventListener("click", (e) => {
       const data = await res.json();
       if(data && typeof data === "object") LABELS = data;
     }
-  }catch(_){
-    // fallback DEFAULT_LABELS
-  }finally{
+  }catch(_){}
+  finally{
     buildDeprelOptionsCache();
     renderSentence();
   }
@@ -119,10 +119,21 @@ cmpTable.addEventListener("click", (e) => {
 function normalizeLabel(label){
   return String(label).replace(/\*$/,"").trim();
 }
+function buildOptionsHtmlFromList(items){
+  let html = `<option value="">(leer)</option>`;
+  for(const raw of items){
+    const val = normalizeLabel(raw);
+    if(!val) continue;
+    html += `<option value="${escapeHtml(val)}">${escapeHtml(val)}</option>`;
+  }
+  return html;
+}
+
 function buildDeprelOptionsCache(){
   DEPREL_VALUE_SET = new Set();
   let html = `<option value="">(leer)</option>`;
   for(const [section, items] of Object.entries(LABELS)){
+    if(section.startsWith("__")) continue; // skip upos/xpos sections
     html += `<optgroup label="${escapeHtml(section)}">`;
     for(const raw of items){
       const val = normalizeLabel(raw);
@@ -133,6 +144,14 @@ function buildDeprelOptionsCache(){
     html += `</optgroup>`;
   }
   DEPREL_OPTIONS_HTML = html;
+
+  // UPOS
+  const uposList = LABELS["__upos__"] || [];
+  UPOS_OPTIONS_HTML = buildOptionsHtmlFromList(uposList);
+
+  // XPOS
+  const xposList = LABELS["__xpos__"] || [];
+  XPOS_OPTIONS_HTML = buildOptionsHtmlFromList(xposList);
 }
 
 // ---------- File loading ----------
@@ -162,30 +181,24 @@ function parseConllu(text){
   for(const line0 of lines){
     const line = line0.trimEnd();
     if(line.trim() === ""){ push(); continue; }
-
     if(line.startsWith("#")){
       const m = line.match(/^#\s*text\s*=\s*(.*)$/i);
       if(m) textLine = m[1];
       continue;
     }
-
     const cols = line.split("\t");
     if(cols.length < 8) continue;
-
     const idRaw = cols[0];
     if(idRaw.includes("-") || idRaw.includes(".")) continue;
     if(!/^\d+$/.test(idRaw)) continue;
-
     const id = parseInt(idRaw, 10);
-    const form  = cols[1] || "_";
-    const upos  = cols[3] || "_";
-    const xpos  = cols[4] || "_";
-    const head  = /^\d+$/.test(cols[6]) ? parseInt(cols[6], 10) : null;
+    const form   = cols[1] || "_";
+    const upos   = cols[3] || "_";
+    const xpos   = cols[4] || "_";
+    const head   = /^\d+$/.test(cols[6]) ? parseInt(cols[6], 10) : null;
     const deprel = cols[7] || "_";
-
     tokens.push({ id, form, upos, xpos, head, deprel });
   }
-
   push();
   return { sentences };
 }
@@ -197,20 +210,16 @@ function fileKey(f){
 async function onFilesChosen(){
   const files = Array.from(fileInput.files || []);
   if(files.length === 0) return;
-
   for(const f of files){
     const key = fileKey(f);
     if(state.docs.some(d => d.key === key)) continue;
-
     const text = await readFileAsText(f);
     const doc = parseConllu(text);
     state.docs.push({ key, name: f.name, sentences: doc.sentences });
   }
-
   fileInput.value = "";
   recomputeMaxSents();
   state.currentSent = 0;
-
   renderFiles();
   renderSentSelect();
   renderSentence();
@@ -218,8 +227,15 @@ async function onFilesChosen(){
 
 function removeDoc(index){
   state.docs.splice(index, 1);
+  state.hiddenCols.delete(index);
+  // Re-map hidden cols
+  const newHidden = new Set();
+  for(const v of state.hiddenCols){
+    if(v > index) newHidden.add(v - 1);
+    else if(v < index) newHidden.add(v);
+  }
+  state.hiddenCols = newHidden;
 
-  // goldPick indices shiften
   for(const sKey of Object.keys(state.goldPick)){
     const m = state.goldPick[sKey];
     for(const tKey of Object.keys(m)){
@@ -229,7 +245,6 @@ function removeDoc(index){
       else if(v > index) m[tKey] = v - 1;
     }
   }
-
   recomputeMaxSents();
   state.currentSent = Math.min(state.currentSent, Math.max(0, state.maxSents - 1));
   renderFiles();
@@ -242,6 +257,7 @@ function resetAll(){
   state.docs = [];
   state.custom = {};
   state.goldPick = {};
+  state.hiddenCols = new Set();
   state.currentSent = 0;
   state.maxSents = 0;
   fileInput.value = "";
@@ -255,30 +271,27 @@ function recomputeMaxSents(){
 }
 
 // ---------- State helpers ----------
-function ensureCustomSent(sentIndex){
-  if(!state.custom[sentIndex]) state.custom[sentIndex] = {};
-  return state.custom[sentIndex];
-}
-function ensureGoldSent(sentIndex){
-  if(!state.goldPick[sentIndex]) state.goldPick[sentIndex] = {};
-  return state.goldPick[sentIndex];
-}
+function ensureCustomSent(sentIndex){ if(!state.custom[sentIndex]) state.custom[sentIndex] = {}; return state.custom[sentIndex]; }
+function ensureGoldSent(sentIndex){ if(!state.goldPick[sentIndex]) state.goldPick[sentIndex] = {}; return state.goldPick[sentIndex]; }
 
 function getCustomEntry(sentIndex, tokId){
   const e = state.custom[sentIndex]?.[tokId];
   if(!e) return null;
-  const head = (e.head === null || e.head === undefined || e.head === "") ? null : e.head;
+  const head   = (e.head   === null || e.head   === undefined || e.head   === "") ? null : e.head;
   const deprel = (e.deprel === null || e.deprel === undefined || e.deprel === "") ? null : e.deprel;
-  if(head === null && deprel === null) return null;
-  return { head, deprel };
+  const upos   = (e.upos   === null || e.upos   === undefined || e.upos   === "") ? null : e.upos;
+  const xpos   = (e.xpos   === null || e.xpos   === undefined || e.xpos   === "") ? null : e.xpos;
+  if(head === null && deprel === null && upos === null && xpos === null) return null;
+  return { head, deprel, upos, xpos };
 }
 
 function setCustomField(sentIndex, tokId, field, value){
   const sent = ensureCustomSent(sentIndex);
-  if(!sent[tokId]) sent[tokId] = { head:null, deprel:null };
-  if(field === "head") sent[tokId].head = value;
+  if(!sent[tokId]) sent[tokId] = { head:null, deprel:null, upos:null, xpos:null };
+  if(field === "head")   sent[tokId].head   = value;
   if(field === "deprel") sent[tokId].deprel = value;
-
+  if(field === "upos")   sent[tokId].upos   = value;
+  if(field === "xpos")   sent[tokId].xpos   = value;
   const e = getCustomEntry(sentIndex, tokId);
   if(!e){
     delete sent[tokId];
@@ -286,35 +299,49 @@ function setCustomField(sentIndex, tokId, field, value){
   }
 }
 
+function getCustomUpos(sentIndex, tokId){ return getCustomEntry(sentIndex, tokId)?.upos ?? null; }
+function getCustomXpos(sentIndex, tokId){ return getCustomEntry(sentIndex, tokId)?.xpos ?? null; }
+
 function getDocChoice(sentIndex, tokId){
   const m = ensureGoldSent(sentIndex);
   const v = m[tokId];
   if(typeof v === "number" && v >= 0 && v < state.docs.length) return v;
   return 0;
 }
-function setDocChoice(sentIndex, tokId, docIdx){
-  ensureGoldSent(sentIndex)[tokId] = docIdx;
+function setDocChoice(sentIndex, tokId, docIdx){ ensureGoldSent(sentIndex)[tokId] = docIdx; }
+
+function valueStr(head, deprel){
+  return `${head ?? "_"} / ${deprel ?? "_"}`;
 }
 
-function valueFromToken(t){
-  if(!t) return null;
-  return `${t.head ?? "_"} / ${t.deprel ?? "_"}`;
-}
-function valueFromCustom(c){
-  if(!c) return null;
-  return `${c.head ?? "_"} / ${c.deprel ?? "_"}`;
+// ---------- Statistics ----------
+function computeStats(sentIndex, idList, docMaps, goldMap){
+  const totalTokens = idList.length;
+  if(docMaps.length < 2) return { totalTokens, diffCount: 0, avgAnnotations: totalTokens };
+
+  let diffCount = 0;
+  for(const id of idList){
+    const goldTok = goldMap.get(id);
+    if(!goldTok) continue;
+    const goldVal = valueStr(goldTok.head, goldTok.deprel);
+    for(let i = 0; i < docMaps.length; i++){
+      const t = docMaps[i].get(id);
+      if(!t) continue;
+      const v = valueStr(t.head, t.deprel);
+      if(v !== goldVal){ diffCount++; break; }
+    }
+  }
+  return { totalTokens, diffCount };
 }
 
-// ---------- UI: file list + sentence selector ----------
+// ---------- UI ----------
 function renderFiles(){
   fileList.innerHTML = "";
   fileMeta.textContent = state.docs.length ? `${state.docs.length} Datei(en) geladen` : "Keine Dateien geladen";
-
   if(state.docs.length === 0){
     fileList.innerHTML = `<div class="muted small">Lade mindestens 2 Dateien zum Vergleichen.</div>`;
     return;
   }
-
   state.docs.forEach((d, idx) => {
     const div = document.createElement("div");
     div.className = "fileItem";
@@ -337,10 +364,8 @@ function renderSentSelect(){
   nextBtn.disabled = !ok;
   customInitBtn.disabled = !ok;
   customClearBtn.disabled = !ok;
-
   sentSelect.innerHTML = "";
-  if(!ok) return;
-
+  if(!ok){ sentStats.textContent = ""; return; }
   for(let i=0;i<state.maxSents;i++){
     const opt = document.createElement("option");
     opt.value = String(i);
@@ -348,6 +373,29 @@ function renderSentSelect(){
     sentSelect.appendChild(opt);
   }
   sentSelect.value = String(state.currentSent);
+}
+
+function renderColToggleBar(){
+  colToggleBar.innerHTML = "";
+  if(state.docs.length < 2){ return; }
+  const label = document.createElement("span");
+  label.className = "muted small";
+  label.textContent = "Spalten: ";
+  colToggleBar.appendChild(label);
+
+  state.docs.forEach((d, idx) => {
+    const btn = document.createElement("button");
+    btn.className = "colToggle" + (state.hiddenCols.has(idx) ? " colHidden" : " colVisible");
+    btn.textContent = d.name;
+    btn.title = state.hiddenCols.has(idx) ? "Spalte einblenden" : "Spalte ausblenden";
+    btn.addEventListener("click", () => {
+      if(state.hiddenCols.has(idx)) state.hiddenCols.delete(idx);
+      else state.hiddenCols.add(idx);
+      renderColToggleBar();
+      renderCompareTable();
+    });
+    colToggleBar.appendChild(btn);
+  });
 }
 
 function initCustomFromDoc0(){
@@ -372,9 +420,10 @@ function renderSentence(){
   if(!ok){
     sentText.textContent = "";
     sentMeta.textContent = "";
-    tokTable.innerHTML = "";
+    sentStats.textContent = "";
     treeGrid.innerHTML = "";
     cmpTable.innerHTML = "";
+    colToggleBar.innerHTML = "";
     return;
   }
 
@@ -385,63 +434,116 @@ function renderSentence(){
   sentText.textContent = s0 ? s0.text : "(Satz fehlt in Datei 1)";
   sentMeta.textContent = `S${state.currentSent+1} / ${state.maxSents}`;
 
+  renderColToggleBar();
   renderCompareTable();
   renderPreview();
 }
 
-function renderCompareTable(){
-  const maps = state.docs.map(d => {
-    const s = d.sentences[state.currentSent];
+function buildDocMapsAndIds(){
+  const sentIndex = state.currentSent;
+  const docMaps = state.docs.map(d => {
+    const s = d.sentences[sentIndex];
     const m = new Map();
     if(s) for(const t of s.tokens) m.set(t.id, t);
     return m;
   });
-
-  // Union IDs
   const ids = new Set();
-  for(const m of maps) for(const id of m.keys()) ids.add(id);
-  const customSent = state.custom[state.currentSent] || {};
+  for(const m of docMaps) for(const id of m.keys()) ids.add(id);
+  const customSent = state.custom[sentIndex] || {};
   for(const idStr of Object.keys(customSent)) ids.add(parseInt(idStr, 10));
-
   const idList = Array.from(ids).sort((a,b)=>a-b);
+  return { docMaps, idList };
+}
+
+function renderCompareTable(){
+  const sentIndex = state.currentSent;
+  const { docMaps, idList } = buildDocMapsAndIds();
+  const goldMap = buildGoldTokenMap(sentIndex, idList, docMaps);
+
+  // Stats
+  const stats = computeStats(sentIndex, idList, docMaps, goldMap);
+  sentStats.innerHTML = `
+    <span class="statBadge">${stats.totalTokens} Tokens</span>
+    <span class="statBadge ${stats.diffCount > 0 ? 'statDiff' : 'statOk'}">
+      ${stats.diffCount} Diff${stats.diffCount !== 1 ? 's' : ''}
+    </span>
+  `;
 
   // Header
   let html = "<thead><tr>";
   html += "<th>ID</th><th>FORM</th><th>UPOS</th><th>XPOS</th>";
   html += "<th>GOLD</th>";
-  for(const d of state.docs) html += `<th>${escapeHtml(d.name)}</th>`;
-  html += "<th>CUSTOM</th>";
+  for(let i=0; i<state.docs.length; i++){
+    if(state.hiddenCols.has(i)) continue;
+    html += `<th>${escapeHtml(state.docs[i].name)}</th>`;
+  }
+  html += "<th>Custom HEAD / DEP</th>";
   html += "</tr></thead><tbody>";
 
   for(const id of idList){
-    // token info from first available
     let form="—", upos="_", xpos="_";
-    for(const m of maps){
+    for(const m of docMaps){
       const t = m.get(id);
       if(t){ form=t.form; upos=t.upos??"_"; xpos=t.xpos??"_"; break; }
     }
 
-    const docVals = maps.map(m => valueFromToken(m.get(id)));
-    const ce = getCustomEntry(state.currentSent, id);
+    const goldTok = goldMap.get(id);
+    const goldVal = goldTok ? valueStr(goldTok.head, goldTok.deprel) : "—";
+
+    const ce = getCustomEntry(sentIndex, id);
     const customExists = !!ce;
-    const customVal = valueFromCustom(ce);
+    const customVal = ce ? valueStr(ce.head, ce.deprel) : null;
 
-    const chosenDoc = getDocChoice(state.currentSent, id);
-    const goldVal = customExists ? customVal : docVals[chosenDoc];
+    // Is there a diff across doc files?
+    const allVals = state.docs.map((_, i) => {
+      const t = docMaps[i].get(id);
+      return t ? valueStr(t.head, t.deprel) : null;
+    });
+    const hasDiff = allVals.filter(Boolean).length > 1 &&
+      new Set(allVals.filter(Boolean)).size > 1;
 
-    html += `<tr data-id="${id}">`;
+    // Custom UPOS/XPOS overrides
+    const customUpos = getCustomUpos(sentIndex, id);
+    const customXpos = getCustomXpos(sentIndex, id);
+    const displayUpos = customUpos ?? upos;
+    const displayXpos = customXpos ?? xpos;
+
+    // Build UPOS extra option if not in list
+    let uposExtra = "";
+    if(displayUpos && displayUpos !== "_" && UPOS_OPTIONS_HTML && !UPOS_OPTIONS_HTML.includes(`value="${escapeHtml(displayUpos)}"`)){
+      uposExtra = `<option value="${escapeHtml(displayUpos)}">${escapeHtml(displayUpos)}</option>`;
+    }
+    let xposExtra = "";
+    if(displayXpos && displayXpos !== "_" && XPOS_OPTIONS_HTML && !XPOS_OPTIONS_HTML.includes(`value="${escapeHtml(displayXpos)}"`)){
+      xposExtra = `<option value="${escapeHtml(displayXpos)}">${escapeHtml(displayXpos)}</option>`;
+    }
+
+    html += `<tr data-id="${id}" class="${hasDiff ? 'rowDiff' : ''}">`;
     html += `<td>${id}</td>`;
     html += `<td>${escapeHtml(form)}</td>`;
-    html += `<td class="posCell">${escapeHtml(upos)}</td>`;
-    html += `<td class="posCell">${escapeHtml(xpos)}</td>`;
-    html += `<td data-col="gold" class="goldCell">${escapeHtml(goldVal ?? "—")}</td>`;
+    if(UPOS_OPTIONS_HTML){
+      html += `<td class="posCell posEditCell"><select class="posSelect" data-id="${id}" data-field="upos">${uposExtra}${UPOS_OPTIONS_HTML}</select></td>`;
+    } else {
+      html += `<td class="posCell${customUpos ? ' posCustom' : ''}">${escapeHtml(displayUpos)}</td>`;
+    }
+    if(XPOS_OPTIONS_HTML){
+      html += `<td class="posCell posEditCell"><select class="posSelect" data-id="${id}" data-field="xpos">${xposExtra}${XPOS_OPTIONS_HTML}</select></td>`;
+    } else {
+      html += `<td class="posCell${customXpos ? ' posCustom' : ''}">${escapeHtml(displayXpos)}</td>`;
+    }
 
-    // doc cells (klickbar)
-    for(let i=0;i<docVals.length;i++){
-      const v = docVals[i];
+    // GOLD column: shows custom if set, else chosen doc
+    const goldSrc = customExists ? '<span class="srcTag srcCustom">C</span>' :
+      `<span class="srcTag srcDoc">D${getDocChoice(sentIndex,id)+1}</span>`;
+    html += `<td data-col="gold" class="goldCell">${goldSrc} ${escapeHtml(goldVal)}</td>`;
+
+    // Doc cells (klickbar, ausblendbar)
+    for(let i=0; i<state.docs.length; i++){
+      if(state.hiddenCols.has(i)) continue;
+      const v = allVals[i];
       const clsCompare = (goldVal && v) ? (v === goldVal ? "same" : "diff") : "";
       const clsDisabled = customExists ? "disabledPick" : "";
-      const clsPicked = (!customExists && i === chosenDoc) ? "picked" : "";
+      const clsPicked = (!customExists && i === getDocChoice(sentIndex, id)) ? "picked" : "";
       html += `
         <td data-col="doc${i}" data-doc-idx="${i}"
             class="pickable ${clsCompare} ${clsDisabled} ${clsPicked}">
@@ -449,23 +551,21 @@ function renderCompareTable(){
         </td>`;
     }
 
-    // custom cell
-    const customClsCompare = (goldVal && customVal) ? (customVal === goldVal ? "same" : "diff") : "";
-    const customPicked = customExists ? "picked" : "";
+    // Custom cell (single, combined)
     const headVal = ce?.head ?? "";
     const relVal  = ce?.deprel ?? "";
-
     let extraOpt = "";
     if(relVal && !DEPREL_VALUE_SET.has(relVal)){
       extraOpt = `<option value="${escapeHtml(relVal)}">${escapeHtml(relVal)} (unknown)</option>`;
     }
 
     html += `
-      <td data-col="custom" class="${customClsCompare} ${customPicked}">
+      <td data-col="custom" class="${customExists ? 'picked' : ''}">
         <div class="customCell">
           <input class="customHead" type="number" min="0" step="1"
                  data-id="${id}" data-field="head"
-                 value="${escapeHtml(headVal)}" placeholder="head">
+                 value="${escapeHtml(String(headVal))}" placeholder="head"
+                 tabindex="-1">
           <select class="customRelSelect" data-id="${id}" data-field="deprel">
             ${extraOpt}
             ${DEPREL_OPTIONS_HTML}
@@ -473,7 +573,6 @@ function renderCompareTable(){
         </div>
       </td>
     `;
-
     html += `</tr>`;
   }
 
@@ -483,108 +582,109 @@ function renderCompareTable(){
   // Set select values after DOM
   cmpTable.querySelectorAll("select.customRelSelect").forEach(sel => {
     const tokId = parseInt(sel.dataset.id, 10);
-    sel.value = getCustomEntry(state.currentSent, tokId)?.deprel ?? "";
+    sel.value = getCustomEntry(sentIndex, tokId)?.deprel ?? "";
+  });
+  cmpTable.querySelectorAll("select.posSelect").forEach(sel => {
+    const tokId = parseInt(sel.dataset.id, 10);
+    const field  = sel.dataset.field;
+    let fallback = "_";
+    for(const m of docMaps){ const t = m.get(tokId); if(t){ fallback = field === "upos" ? (t.upos ?? "_") : (t.xpos ?? "_"); break; } }
+    const customVal = field === "upos" ? getCustomUpos(sentIndex, tokId) : getCustomXpos(sentIndex, tokId);
+    sel.value = customVal ?? fallback;
   });
 }
 
 function onCustomFieldChange(el){
   const tokId = parseInt(el.dataset.id, 10);
-  const field = el.dataset.field;
-
+  const field  = el.dataset.field;
   if(field === "head"){
     const raw = el.value.trim();
     const val = raw === "" ? null : Math.max(0, parseInt(raw, 10) || 0);
     setCustomField(state.currentSent, tokId, "head", val);
-  } else if(field === "deprel"){
+  } else if(field === "deprel" || field === "upos" || field === "xpos"){
     const raw = el.value;
     const val = raw === "" ? null : raw;
-    setCustomField(state.currentSent, tokId, "deprel", val);
+    setCustomField(state.currentSent, tokId, field, val);
   }
-
-  updateRow(tokId);
-}
-
-function updateRow(tokId){
   renderSentence();
 }
 
-// ---------- Preview: Tokens + Trees ----------
+// ---------- Preview: Single stacked tree ----------
 function renderPreview(){
   const sentIndex = state.currentSent;
-
-  const docMaps = state.docs.map(d => {
-    const s = d.sentences[sentIndex];
-    const m = new Map();
-    if(s) for(const t of s.tokens) m.set(t.id, t);
-    return m;
-  });
-
-  const ids = new Set();
-  for(const m of docMaps) for(const id of m.keys()) ids.add(id);
-  const customSent = state.custom[sentIndex] || {};
-  for(const idStr of Object.keys(customSent)) ids.add(parseInt(idStr, 10));
-  const idList = Array.from(ids).sort((a,b)=>a-b);
-
+  const { docMaps, idList } = buildDocMapsAndIds();
   const goldMap = buildGoldTokenMap(sentIndex, idList, docMaps);
 
-  let tHtml = "<thead><tr>";
-  tHtml += "<th>ID</th><th>FORM</th><th>UPOS</th><th>XPOS</th><th>GOLD</th><th>Quelle</th>";
-  tHtml += "</tr></thead><tbody>";
-
-  for(const id of idList){
-    const baseTok = firstToken(docMaps, id);
-    const form = baseTok?.form ?? "—";
-    const upos = baseTok?.upos ?? "_";
-    const xpos = baseTok?.xpos ?? "_";
-
-    const goldTok = goldMap.get(id);
-    const goldVal = goldTok ? `${goldTok.head ?? "_"} / ${goldTok.deprel ?? "_"}` : "—";
-
-    const ce = getCustomEntry(sentIndex, id);
-    let src = "—";
-    if(ce) src = "CUSTOM";
-    else {
-      const pick = getDocChoice(sentIndex, id);
-      src = state.docs[pick]?.name ? state.docs[pick].name : `Datei ${pick+1}`;
-    }
-
-    tHtml += `<tr>`;
-    tHtml += `<td>${id}</td>`;
-    tHtml += `<td>${escapeHtml(form)}</td>`;
-    tHtml += `<td class="posCell">${escapeHtml(upos)}</td>`;
-    tHtml += `<td class="posCell">${escapeHtml(xpos)}</td>`;
-    tHtml += `<td class="goldCell">${escapeHtml(goldVal)}</td>`;
-    tHtml += `<td class="posCell">${escapeHtml(src)}</td>`;
-    tHtml += `</tr>`;
-  }
-
-  tHtml += "</tbody>";
-  tokTable.innerHTML = tHtml;
-
   treeGrid.innerHTML = "";
+  if(state.docs.length === 0) return;
+
   const sentenceText = getSentenceTextFallback(sentIndex);
 
-  addTreeBlock("GOLD", "plain", renderTreePlain(sentIndex, goldMap, sentenceText));
+  // One single block: GOLD on top, then each file below, all stacked vertically
+  const wrap = document.createElement("div");
+  wrap.className = "treeBlock treeBlockStacked";
 
-  for(let i=0;i<state.docs.length;i++){
+  // --- GOLD section ---
+  const goldSection = buildTreeSection("⭐ GOLD", null, renderTreePlain(sentIndex, goldMap, sentenceText));
+  wrap.appendChild(goldSection);
+
+  // --- Per-file sections ---
+  for(let i=0; i<state.docs.length; i++){
     const name = state.docs[i]?.name ?? `Datei ${i+1}`;
     const otherMap = docMaps[i];
     const diff = renderTreeDiff(sentIndex, goldMap, otherMap, sentenceText);
-    addTreeBlock(name, "vs GOLD", diff);
+    const section = buildTreeSection(name, "vs Gold", diff);
+    wrap.appendChild(section);
+  }
+
+  treeGrid.appendChild(wrap);
+}
+
+function scrollToToken(tokId){
+  const tr = cmpTable.querySelector(`tr[data-id="${tokId}"]`);
+  if(tr){
+    tr.scrollIntoView({ behavior:"smooth", block:"center" });
+    tr.classList.add("highlightRow");
+    setTimeout(() => tr.classList.remove("highlightRow"), 1600);
   }
 }
 
-function addTreeBlock(title, sub, text){
-  const wrap = document.createElement("div");
-  wrap.className = "treeBlock";
-  wrap.innerHTML = `
-    <div class="treeHead">
-      <div class="title">${escapeHtml(title)}</div>
-      <div class="sub">${escapeHtml(sub)}</div>
-    </div>
-    <pre class="treePre">${escapeHtml(text)}</pre>
+function buildTreeSection(title, sub, text){
+  const section = document.createElement("div");
+  section.className = "treeSection";
+
+  const head = document.createElement("div");
+  head.className = "treeHead";
+  head.innerHTML = `
+    <div class="title">${escapeHtml(title)}</div>
+    ${sub ? `<div class="sub">${escapeHtml(sub)}</div>` : ""}
   `;
-  treeGrid.appendChild(wrap);
+  section.appendChild(head);
+
+  const pre = document.createElement("pre");
+  pre.className = "treePre";
+
+  const lines = text.split("\n");
+  for(const line of lines){
+    const tokMatch = line.match(/→\s*(\d+):/);
+    if(tokMatch){
+      const tokId = parseInt(tokMatch[1], 10);
+      const span = document.createElement("span");
+      span.className = "treeLine treeLineClickable";
+      span.textContent = line + "\n";
+      span.title = `Zur Zeile springen: Token ${tokId}`;
+      span.addEventListener("click", () => scrollToToken(tokId));
+      pre.appendChild(span);
+    } else {
+      const span = document.createElement("span");
+      span.className = "treeLine";
+      span.textContent = line + "\n";
+      pre.appendChild(span);
+    }
+  }
+
+  section.appendChild(pre);
+  return section;
 }
 
 function getSentenceTextFallback(sentIndex){
@@ -596,45 +696,28 @@ function getSentenceTextFallback(sentIndex){
 }
 
 function firstToken(docMaps, tokId){
-  for(const m of docMaps){
-    const t = m.get(tokId);
-    if(t) return t;
-  }
+  for(const m of docMaps){ const t = m.get(tokId); if(t) return t; }
   return null;
 }
 
 function buildGoldTokenMap(sentIndex, idList, docMaps){
   const gold = new Map();
-
   for(const id of idList){
     const base = firstToken(docMaps, id);
     if(!base) continue;
-
     const ce = getCustomEntry(sentIndex, id);
-
-    let head = null;
-    let deprel = null;
-
+    let head, deprel;
     if(ce){
-      head = ce.head;
+      head   = ce.head;
       deprel = ce.deprel;
     } else {
       const pick = getDocChoice(sentIndex, id);
       const t = docMaps[pick]?.get(id) || base;
-      head = t.head ?? null;
+      head   = t.head   ?? null;
       deprel = t.deprel ?? null;
     }
-
-    gold.set(id, {
-      id,
-      form: base.form,
-      upos: base.upos,
-      xpos: base.xpos,
-      head,
-      deprel
-    });
+    gold.set(id, { id, form: base.form, upos: base.upos, xpos: base.xpos, head, deprel });
   }
-
   return gold;
 }
 
@@ -649,10 +732,90 @@ function edgesFromMap(tokMap){
   return edges;
 }
 
+function renderTreePlain(sentIndex, tokMap, sentenceText){
+  const edges = edgesFromMap(tokMap);
+  return _buildTree(sentIndex, tokMap, tokMap, edges, edges, sentenceText, false);
+}
+
+function renderTreeDiff(sentIndex, goldMap, otherMap, sentenceText){
+  const edgesG = edgesFromMap(goldMap);
+  const edgesO = edgesFromMap(otherMap);
+  return _buildTree(sentIndex, goldMap, otherMap, edgesG, edgesO, sentenceText, true);
+}
+
+function _buildTree(sentIndex, goldMap, otherMap, edgesG, edgesO, sentenceText, isDiff){
+  const union = isDiff ? new Set([...edgesG.keys(), ...edgesO.keys()]) : new Set(edgesG.keys());
+
+  const children = new Map();
+  const nodes = new Set();
+  const incoming = new Set();
+
+  for(const k of union){
+    const [depS, headS] = k.split("|");
+    const dep  = parseInt(depS, 10);
+    const head = parseInt(headS, 10);
+    if(!children.has(head)) children.set(head, []);
+    children.get(head).push(dep);
+    nodes.add(dep);
+    if(head !== 0){ nodes.add(head); incoming.add(dep); }
+  }
+  for(const [, arr] of children.entries()) arr.sort((a,b)=>a-b);
+
+  const rootsArr = Array.from(nodes).filter(n => !incoming.has(n)).sort((a,b)=>a-b);
+  const roots = rootsArr.length ? rootsArr : (nodes.size ? [Math.min(...nodes)] : []);
+
+  const lines = [];
+  lines.push(`📝 S${sentIndex+1}: ${sentenceText}`);
+
+  function rec(head, prefix, path){
+    const deps = children.get(head) || [];
+    for(let i=0; i<deps.length; i++){
+      const dep  = deps[i];
+      const last = (i === deps.length - 1);
+      const conn = last ? "└─" : "├─";
+      const nextPrefix = prefix + (last ? "  " : "│ ");
+
+      let emo = "", lab = "";
+      if(isDiff){
+        const key = `${dep}|${head}`;
+        [emo, lab] = edgeEmojiAndLabel(edgesG, edgesO, key);
+      } else {
+        lab = edgesG.get(`${dep}|${head}`) ?? "_";
+      }
+
+      const form = goldMap.get(dep)?.form ?? otherMap.get(dep)?.form ?? "?";
+      const tDisp = isDiff ? tokDisplayPair(goldMap, otherMap, dep) : `${dep}:${form}`;
+
+      if(isDiff){
+        lines.push(`${prefix}${conn} ${emo} ${lab} → ${tDisp}`);
+      } else {
+        lines.push(`${prefix}${conn} ${lab} → ${tDisp}`);
+      }
+
+      if(path.has(dep)){
+        lines.push(`${nextPrefix}🔁 (cycle)`);
+        continue;
+      }
+      const nextPath = new Set(path); nextPath.add(dep);
+      rec(dep, nextPrefix, nextPath);
+    }
+  }
+
+  for(let r=0; r<roots.length; r++){
+    const root = roots[r];
+    const form = goldMap.get(root)?.form ?? otherMap.get(root)?.form ?? "?";
+    lines.push(`🌱 ${root}:${form}`);
+    const path = new Set([root]);
+    rec(root, "", path);
+    if(r !== roots.length - 1) lines.push("");
+  }
+
+  return lines.join("\n");
+}
+
 function tokDisplayPair(goldMap, otherMap, tokId){
   const g = goldMap.get(tokId);
   const o = otherMap.get(tokId);
-
   if(g && o){
     const fg = g.form ?? "—";
     const fo = o.form ?? "—";
@@ -664,161 +827,24 @@ function tokDisplayPair(goldMap, otherMap, tokId){
   return `${tokId}:❓`;
 }
 
-function renderTreePlain(sentIndex, tokMap, sentenceText){
-  const edges = edgesFromMap(tokMap);
-
-  const children = new Map();
-  const nodes = new Set();
-  const incoming = new Set();
-
-  for(const [k] of edges.entries()){
-    const [depS, headS] = k.split("|");
-    const dep = parseInt(depS, 10);
-    const head = parseInt(headS, 10);
-
-    if(!children.has(head)) children.set(head, []);
-    children.get(head).push(dep);
-
-    nodes.add(dep);
-    if(head !== 0){
-      nodes.add(head);
-      incoming.add(dep);
-    }
-  }
-
-  for(const [h, arr] of children.entries()){
-    arr.sort((a,b)=>a-b);
-  }
-
-  const rootsArr = Array.from(nodes).filter(n => !incoming.has(n)).sort((a,b)=>a-b);
-  const roots = rootsArr.length ? rootsArr : (nodes.size ? [Math.min(...nodes)] : []);
-
-  const lines = [];
-  lines.push(`📝 S${sentIndex+1}: ${sentenceText}`);
-
-  function rec(head, prefix, path){
-    const deps = children.get(head) || [];
-    for(let i=0;i<deps.length;i++){
-      const dep = deps[i];
-      const last = (i === deps.length - 1);
-      const conn = last ? "└─" : "├─";
-      const nextPrefix = prefix + (last ? "  " : "│ ");
-
-      const lab = edges.get(`${dep}|${head}`) ?? "_";
-      const tDisp = tokDisplayPair(tokMap, tokMap, dep);
-      lines.push(`${prefix}${conn} ${lab} → ${tDisp}`);
-
-      if(path.has(dep)){
-        lines.push(`${nextPrefix}🔁 (cycle)`);
-        continue;
-      }
-      const nextPath = new Set(path);
-      nextPath.add(dep);
-      rec(dep, nextPrefix, nextPath);
-    }
-  }
-
-  for(let r=0;r<roots.length;r++){
-    const root = roots[r];
-    lines.push(`🌱 ${tokDisplayPair(tokMap, tokMap, root)}`);
-    const path = new Set([root]);
-    rec(root, "", path);
-    if(r !== roots.length - 1) lines.push("");
-  }
-
-  return lines.join("\n");
-}
-
 function edgeEmojiAndLabel(edgesG, edgesO, key){
   const inG = edgesG.has(key);
   const inO = edgesO.has(key);
-
   if(inG && inO){
     const lg = edgesG.get(key);
     const lo = edgesO.get(key);
     if(lg === lo) return ["✅", lg];
-    return ["⚠️", `🅶${lg} | 🅵${lo}`];
+    return ["⚠️", `🅶${lg}|🅵${lo}`];
   }
   if(inG) return ["🅶", edgesG.get(key)];
   return ["🅵", edgesO.get(key)];
 }
 
-function renderTreeDiff(sentIndex, goldMap, otherMap, sentenceText){
-  const edgesG = edgesFromMap(goldMap);
-  const edgesO = edgesFromMap(otherMap);
-
-  const union = new Set([...edgesG.keys(), ...edgesO.keys()]);
-
-  const children = new Map();
-  const nodes = new Set();
-  const incoming = new Set();
-
-  for(const k of union){
-    const [depS, headS] = k.split("|");
-    const dep = parseInt(depS, 10);
-    const head = parseInt(headS, 10);
-
-    if(!children.has(head)) children.set(head, []);
-    children.get(head).push(dep);
-
-    nodes.add(dep);
-    if(head !== 0){
-      nodes.add(head);
-      incoming.add(dep);
-    }
-  }
-
-  for(const [h, arr] of children.entries()){
-    arr.sort((a,b)=>a-b);
-  }
-
-  const rootsArr = Array.from(nodes).filter(n => !incoming.has(n)).sort((a,b)=>a-b);
-  const roots = rootsArr.length ? rootsArr : (nodes.size ? [Math.min(...nodes)] : []);
-
-  const lines = [];
-  lines.push(`📝 S${sentIndex+1}: ${sentenceText}`);
-
-  function rec(head, prefix, path){
-    const deps = children.get(head) || [];
-    for(let i=0;i<deps.length;i++){
-      const dep = deps[i];
-      const last = (i === deps.length - 1);
-      const conn = last ? "└─" : "├─";
-      const nextPrefix = prefix + (last ? "  " : "│ ");
-
-      const key = `${dep}|${head}`;
-      const [emo, lab] = edgeEmojiAndLabel(edgesG, edgesO, key);
-      const tDisp = tokDisplayPair(goldMap, otherMap, dep);
-
-      lines.push(`${prefix}${conn} ${emo} ${lab} → ${tDisp}`);
-
-      if(path.has(dep)){
-        lines.push(`${nextPrefix}🔁 (cycle)`);
-        continue;
-      }
-      const nextPath = new Set(path);
-      nextPath.add(dep);
-      rec(dep, nextPrefix, nextPath);
-    }
-  }
-
-  for(let r=0;r<roots.length;r++){
-    const root = roots[r];
-    lines.push(`🌱 ${tokDisplayPair(goldMap, otherMap, root)}`);
-    const path = new Set([root]);
-    rec(root, "", path);
-    if(r !== roots.length - 1) lines.push("");
-  }
-
-  return lines.join("\n");
-}
-
-// ---------- init ----------
+// ---------- Helpers ----------
 function escapeHtml(s){
   return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 }
 
-// Initial render
 renderFiles();
 renderSentSelect();
 renderSentence();
