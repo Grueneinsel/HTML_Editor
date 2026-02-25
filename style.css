@@ -23,7 +23,8 @@ h2{margin:0 0 10px 0; font-size:14px}
 
 .row{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
 
-button, select, input{
+/* FIX: label-button sieht aus wie button */
+button, select, input, .btnLike{
   border:1px solid var(--line);
   background:#0f1521;
   color:var(--text);
@@ -144,3 +145,19 @@ th{text-align:left; color:var(--muted); position:sticky; top:0; background:var(-
 .customHead{width:80px}
 .customRelSelect{width:180px}
 .goldCell{font-weight:800}
+
+/* FIX: file input nur per CSS verstecken (Label kann es dann öffnen) */
+.fileHidden{
+  position:absolute;
+  left:-9999px;
+  width:1px;
+  height:1px;
+  opacity:0;
+}
+
+/* FIX: Label wie Button */
+.btnLike{
+  display:inline-block;
+  user-select:none;
+}
+.btnLike:active{ transform: translateY(1px); }

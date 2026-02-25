@@ -4,6 +4,8 @@
 // - Satz wählen zeigt Vorschau: Token-Tabelle (UPOS/XPOS) + Trees wie trees.py
 //   * GOLD Tree (plain)
 //   * Diff-Tree pro Datei vs GOLD (✅ / ⚠️ / 🅶 / 🅵)
+//
+// FIX: Dateiauswahl wird über <label for="fileInput"> geöffnet (kein fileInput.click()).
 
 const DEFAULT_LABELS = {
   "Core arguments": ["nsubj","obj","iobj","csubj","ccomp","xcomp"],
@@ -29,7 +31,6 @@ const state = {
 
 // DOM
 const fileInput = document.getElementById("fileInput");
-const addBtn    = document.getElementById("addBtn");
 const resetBtn  = document.getElementById("resetBtn");
 const fileList  = document.getElementById("fileList");
 const fileMeta  = document.getElementById("fileMeta");
@@ -48,7 +49,6 @@ const customInitBtn  = document.getElementById("customInitBtn");
 const customClearBtn = document.getElementById("customClearBtn");
 
 // Events
-addBtn.addEventListener("click", () => fileInput.click());
 fileInput.addEventListener("change", onFilesChosen);
 resetBtn.addEventListener("click", resetAll);
 
@@ -505,8 +505,6 @@ function onCustomFieldChange(el){
 }
 
 function updateRow(tokId){
-  // simplest: für Konsistenz (Gold + Preview + Trees) -> alles neu rendern
-  // (bei späterem Optimieren kann man wieder row-only machen)
   renderSentence();
 }
 
@@ -514,7 +512,6 @@ function updateRow(tokId){
 function renderPreview(){
   const sentIndex = state.currentSent;
 
-  // Maps per doc for this sentence
   const docMaps = state.docs.map(d => {
     const s = d.sentences[sentIndex];
     const m = new Map();
@@ -522,17 +519,14 @@ function renderPreview(){
     return m;
   });
 
-  // Union IDs
   const ids = new Set();
   for(const m of docMaps) for(const id of m.keys()) ids.add(id);
   const customSent = state.custom[sentIndex] || {};
   for(const idStr of Object.keys(customSent)) ids.add(parseInt(idStr, 10));
   const idList = Array.from(ids).sort((a,b)=>a-b);
 
-  // build GOLD token map (Map id->token-like)
   const goldMap = buildGoldTokenMap(sentIndex, idList, docMaps);
 
-  // Token Preview Table
   let tHtml = "<thead><tr>";
   tHtml += "<th>ID</th><th>FORM</th><th>UPOS</th><th>XPOS</th><th>GOLD</th><th>Quelle</th>";
   tHtml += "</tr></thead><tbody>";
@@ -567,15 +561,11 @@ function renderPreview(){
   tHtml += "</tbody>";
   tokTable.innerHTML = tHtml;
 
-  // Trees
   treeGrid.innerHTML = "";
-
   const sentenceText = getSentenceTextFallback(sentIndex);
 
-  // GOLD plain tree
   addTreeBlock("GOLD", "plain", renderTreePlain(sentIndex, goldMap, sentenceText));
 
-  // Each file: diff vs GOLD
   for(let i=0;i<state.docs.length;i++){
     const name = state.docs[i]?.name ?? `Datei ${i+1}`;
     const otherMap = docMaps[i];
@@ -598,7 +588,6 @@ function addTreeBlock(title, sub, text){
 }
 
 function getSentenceTextFallback(sentIndex){
-  // prefer doc0 text if present, else any
   for(const d of state.docs){
     const s = d.sentences[sentIndex];
     if(s && s.text) return s.text;
@@ -618,7 +607,7 @@ function buildGoldTokenMap(sentIndex, idList, docMaps){
   const gold = new Map();
 
   for(const id of idList){
-    const base = firstToken(docMaps, id); // for form/upos/xpos
+    const base = firstToken(docMaps, id);
     if(!base) continue;
 
     const ce = getCustomEntry(sentIndex, id);
@@ -649,9 +638,8 @@ function buildGoldTokenMap(sentIndex, idList, docMaps){
   return gold;
 }
 
-// ---------- Tree rendering (like trees.py) ----------
+// ---------- Tree rendering ----------
 function edgesFromMap(tokMap){
-  // key "dep|head" -> label
   const edges = new Map();
   for(const [id, t] of tokMap.entries()){
     const head = (typeof t.head === "number") ? t.head : null;
@@ -679,12 +667,11 @@ function tokDisplayPair(goldMap, otherMap, tokId){
 function renderTreePlain(sentIndex, tokMap, sentenceText){
   const edges = edgesFromMap(tokMap);
 
-  // children[head] -> deps (union is just edges)
   const children = new Map();
   const nodes = new Set();
   const incoming = new Set();
 
-  for(const [k, _lab] of edges.entries()){
+  for(const [k] of edges.entries()){
     const [depS, headS] = k.split("|");
     const dep = parseInt(depS, 10);
     const head = parseInt(headS, 10);
@@ -718,7 +705,7 @@ function renderTreePlain(sentIndex, tokMap, sentenceText){
       const nextPrefix = prefix + (last ? "  " : "│ ");
 
       const lab = edges.get(`${dep}|${head}`) ?? "_";
-      const tDisp = tokDisplayPair(tokMap, tokMap, dep); // same map, no diff markers
+      const tDisp = tokDisplayPair(tokMap, tokMap, dep);
       lines.push(`${prefix}${conn} ${lab} → ${tDisp}`);
 
       if(path.has(dep)){
@@ -760,7 +747,6 @@ function renderTreeDiff(sentIndex, goldMap, otherMap, sentenceText){
   const edgesG = edgesFromMap(goldMap);
   const edgesO = edgesFromMap(otherMap);
 
-  // union keys
   const union = new Set([...edgesG.keys(), ...edgesO.keys()]);
 
   const children = new Map();

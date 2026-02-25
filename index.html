@@ -18,12 +18,18 @@
   <main class="wrap">
     <section class="card">
       <h2>1) Dateien</h2>
-      <input id="fileInput" type="file" accept=".conllu,.conll,.txt" multiple hidden />
+
+      <!-- FIX: kein "hidden" mehr, sondern per CSS versteckt -->
+      <input id="fileInput" type="file" accept=".conllu,.conll,.txt" multiple class="fileHidden" />
+
       <div class="row">
-        <button id="addBtn">Dateien hinzufügen</button>
+        <!-- FIX: Label öffnet Dateidialog zuverlässig -->
+        <label id="addBtn" class="btnLike" for="fileInput">Dateien hinzufügen</label>
+
         <button id="resetBtn" class="danger">Reset</button>
         <span id="fileMeta" class="muted"></span>
       </div>
+
       <div id="fileList" class="fileList" style="margin-top:10px"></div>
     </section>
 
