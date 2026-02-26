@@ -4,12 +4,15 @@ let keyFocusTokId = null;
 function setKeyFocus(tokId){
   cmpTable.querySelectorAll("tr.keyFocus").forEach(r => r.classList.remove("keyFocus"));
   keyFocusTokId = tokId;
+  // Sync sentText token highlight
+  sentText?.querySelectorAll(".sentToken").forEach(s => s.classList.remove("sentTokenActive"));
   if(tokId === null) return;
   const tr = cmpTable.querySelector(`tr[data-id="${tokId}"]`);
   if(tr){
     tr.classList.add("keyFocus");
     tr.scrollIntoView({ block:"nearest", behavior:"smooth" });
   }
+  sentText?.querySelector(`.sentToken[data-id="${tokId}"]`)?.classList.add("sentTokenActive");
 }
 
 function getTableRows(){

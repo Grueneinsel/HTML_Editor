@@ -92,6 +92,21 @@ button.danger:hover:not(:disabled){ border-color:#ff5f5f; background:#1e0e0e }
 /* Sentence text box — gold border when confirmed */
 .sentTextConfirmed{ border-color:#c07a10 !important; background:#13100a !important; }
 
+/* Clickable tokens in sentence text */
+.sentToken{
+  cursor:pointer;
+  border-radius:3px;
+  padding:1px 3px;
+  transition:background .12s;
+}
+.sentToken:hover{ background:rgba(255,255,255,.10); }
+.sentTokenActive{
+  background:#0d2040;
+  outline:1px solid var(--accent);
+  outline-offset:1px;
+  border-radius:3px;
+}
+
 /* Sentence stats */
 .sentStatsRow{ display:flex; gap:6px; align-items:center; flex-wrap:wrap }
 .statBadge{

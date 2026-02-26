@@ -42,6 +42,15 @@ nextBtn.addEventListener("click", () => {
 customClearBtn.addEventListener("click", clearCustomForSentence);
 confirmBtn.addEventListener("click", toggleConfirm);
 
+// Klick auf Token im Satztext → Tabellenzeile fokussieren + scrollen
+sentText.addEventListener("click", (e) => {
+  const span = e.target.closest(".sentToken");
+  if(!span) return;
+  const tokId = parseInt(span.dataset.id, 10);
+  setKeyFocus(tokId);
+  cmpTable.closest(".card")?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+});
+
 // Klick auf Datei-Zelle → Gold wählen
 cmpTable.addEventListener("click", (e) => {
   const td = e.target.closest?.("td[data-col^='doc']");
@@ -307,7 +316,13 @@ function renderSentence(){
   state.currentSent = Math.max(0, Math.min(state.currentSent, state.maxSents - 1));
 
   const s0 = state.docs[0].sentences[state.currentSent];
-  sentText.textContent = s0 ? s0.text : "(Satz fehlt in Datei 1)";
+  if(s0){
+    sentText.innerHTML = s0.tokens
+      .map(t => `<span class="sentToken" data-id="${t.id}">${escapeHtml(t.form)}</span>`)
+      .join(' ');
+  } else {
+    sentText.textContent = "(Satz fehlt in Datei 1)";
+  }
   sentMeta.textContent = `S${state.currentSent+1} / ${state.maxSents}`;
   sentText.classList.toggle("sentTextConfirmed", state.confirmed.has(state.currentSent));
 

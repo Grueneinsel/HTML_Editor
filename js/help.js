@@ -18,19 +18,16 @@ document.addEventListener("keydown", e => {
 
 let helpLoaded = false;
 
-async function openHelp(){
+function openHelp(){
   helpModal.classList.add("active");
   if(helpLoaded) return;
-  try {
-    const res = await fetch("README.md");
-    if(!res.ok) throw new Error("fetch failed");
-    const text = await res.text();
-    helpContent.innerHTML = mdToHtml(text);
+  if(typeof window.README_CONTENT !== "undefined"){
+    helpContent.innerHTML = mdToHtml(window.README_CONTENT);
     helpLoaded = true;
-  } catch {
+  } else {
     helpContent.innerHTML =
-      `<p class="muted">README.md konnte nicht geladen werden.<br>
-       Bitte den Webserver starten (<code>start.bat</code>) und die Seite neu laden.</p>`;
+      `<p class="muted">Hilfe nicht verfügbar.<br>
+       Bitte <code>python make_readme_js.py</code> ausführen und die Seite neu laden.</p>`;
   }
 }
 
