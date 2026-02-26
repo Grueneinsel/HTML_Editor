@@ -467,6 +467,9 @@ tr.keyFocus > td:first-child{ border-left:2px solid var(--accent) }
 .helpContent .helpTable tr:nth-child(even) td{ background:#0a1218; }
 .helpContent strong{ color:var(--text); font-weight:700; }
 
+/* Session row separator */
+.sessionRow{ margin-top:10px; padding-top:10px; border-top:1px solid var(--line); }
+
 /* POS edit cells */
 .posEditCell { padding: 4px 6px !important; }
 .posSelect {

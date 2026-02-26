@@ -66,7 +66,7 @@ async function processFiles(files){
     if(state.docs.some(d => d.key === key)) continue;
     const text = await readFileAsText(f);
     const doc = parseConllu(text);
-    state.docs.push({ key, name: f.name, sentences: doc.sentences });
+    state.docs.push({ key, name: f.name, content: text, sentences: doc.sentences });
   }
   recomputeMaxSents();
   state.currentSent = 0;

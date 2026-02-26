@@ -49,6 +49,29 @@ function _syncUndoBtns(){
   if(r) r.title = `Wiederholen (Ctrl+Y)  —  ${_redoStack.length} Schritt${_redoStack.length !== 1 ? 'e' : ''}`;
 }
 
+// ---------- Session serialisation helpers ----------
+function getUndoState(){
+  const ser = snap => ({
+    custom:    JSON.parse(JSON.stringify(snap.custom)),
+    goldPick:  JSON.parse(JSON.stringify(snap.goldPick)),
+    confirmed: Array.from(snap.confirmed),
+  });
+  return { undo: _undoStack.map(ser), redo: _redoStack.map(ser) };
+}
+
+function loadUndoState({ undo = [], redo = [] }){
+  const des = s => ({
+    custom:    JSON.parse(JSON.stringify(s.custom   || {})),
+    goldPick:  JSON.parse(JSON.stringify(s.goldPick || {})),
+    confirmed: new Set(s.confirmed || []),
+  });
+  _undoStack.length = 0;
+  _redoStack.length = 0;
+  for(const s of undo) _undoStack.push(des(s));
+  for(const s of redo) _redoStack.push(des(s));
+  _syncUndoBtns();
+}
+
 // Buttons werden nach DOM-Bereitschaft angebunden
 document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("undoBtn")?.addEventListener("click", undo);

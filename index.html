@@ -96,6 +96,15 @@
         Gold CoNLL-U enthält alle Sätze mit den aktuellen Gold-Annotationen (HEAD, DEPREL, UPOS, XPOS).
         LEMMA / FEATS / DEPS / MISC werden aus der Quelldatei übernommen.
       </p>
+      <div class="row sessionRow">
+        <button id="exportSessionBtn">💾 Session speichern</button>
+        <label class="btnLike" for="importSessionInput">📂 Session laden</label>
+        <input id="importSessionInput" type="file" accept=".json" class="fileHidden">
+        <span id="sessionMeta" class="muted small"></span>
+      </div>
+      <p class="muted small" style="margin-top:4px">
+        Session speichert alle geladenen Dateien, Annotationen und den kompletten Undo-/Redo-Verlauf als JSON.
+      </p>
     </section>
   </main>
 

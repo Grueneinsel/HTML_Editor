@@ -1,9 +1,23 @@
 // ---------- Export buttons ----------
-const exportConlluBtn = document.getElementById("exportConlluBtn");
-const exportTreeBtn   = document.getElementById("exportTreeBtn");
+const exportConlluBtn    = document.getElementById("exportConlluBtn");
+const exportTreeBtn      = document.getElementById("exportTreeBtn");
+const exportSessionBtn   = document.getElementById("exportSessionBtn");
+const importSessionInput = document.getElementById("importSessionInput");
+const sessionMeta        = document.getElementById("sessionMeta");
 
 exportConlluBtn.addEventListener("click", exportGoldConllu);
 exportTreeBtn.addEventListener("click",   exportTreesTxt);
+exportSessionBtn.addEventListener("click", exportSession);
+importSessionInput.addEventListener("change", () => {
+  const f = importSessionInput.files?.[0];
+  if(!f) return;
+  const fr = new FileReader();
+  fr.onload = () => {
+    importSession(fr.result);
+    importSessionInput.value = "";
+  };
+  fr.readAsText(f, "utf-8");
+});
 
 function updateExportButtons(){
   const ok = state.docs.length >= 1;
@@ -81,6 +95,72 @@ function exportGoldConllu(){
   }
 
   downloadText(out.join("\n"), "gold_annotation.conllu");
+}
+
+// ---------- Session Export ----------
+function exportSession(){
+  const session = {
+    version:    1,
+    savedAt:    new Date().toISOString(),
+    currentSent: state.currentSent,
+    docs: state.docs.map(d => ({ name: d.name, content: d.content || "" })),
+    custom:    JSON.parse(JSON.stringify(state.custom)),
+    goldPick:  JSON.parse(JSON.stringify(state.goldPick)),
+    confirmed: Array.from(state.confirmed),
+    labels:    JSON.parse(JSON.stringify(LABELS)),
+    ...getUndoState(),
+  };
+  const ts = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
+  downloadText(JSON.stringify(session, null, 2), `session_${ts}.json`);
+  _showSessionMeta(`Exportiert: ${session.docs.length} Datei(en), ${session.undo.length} Undo-Schritte`);
+}
+
+// ---------- Session Import ----------
+function importSession(jsonText){
+  let data;
+  try { data = JSON.parse(jsonText); }
+  catch { alert("Ungültige JSON-Datei."); return; }
+  if(data.version !== 1 || !Array.isArray(data.docs)){
+    alert("Unbekanntes Session-Format (version ≠ 1)."); return;
+  }
+  if(!data.docs.length){
+    alert("Session enthält keine Dateien."); return;
+  }
+
+  // Labels wiederherstellen (vor buildDeprelOptionsCache)
+  if(data.labels && typeof data.labels === "object"){
+    LABELS = data.labels;
+    buildDeprelOptionsCache();
+  }
+
+  // State zurücksetzen und neu befüllen
+  state.docs        = [];
+  state.custom      = data.custom   || {};
+  state.goldPick    = data.goldPick || {};
+  state.hiddenCols  = new Set();
+  state.confirmed   = new Set(data.confirmed || []);
+  state.currentSent = data.currentSent || 0;
+
+  for(const d of data.docs){
+    if(typeof d.content !== "string") continue;
+    const parsed = parseConllu(d.content);
+    state.docs.push({ key: `session::${d.name}`, name: d.name, content: d.content, sentences: parsed.sentences });
+  }
+
+  recomputeMaxSents();
+  state.currentSent = Math.min(state.currentSent, Math.max(0, state.maxSents - 1));
+  loadUndoState({ undo: data.undo || [], redo: data.redo || [] });
+
+  renderFiles();
+  renderSentSelect();
+  renderSentence();
+  _showSessionMeta(`Geladen: ${state.docs.length} Datei(en) · ${state.maxSents} Sätze · ${data.undo?.length || 0} Undo-Schritte`);
+}
+
+function _showSessionMeta(msg){
+  if(!sessionMeta) return;
+  sessionMeta.textContent = msg;
+  setTimeout(() => { sessionMeta.textContent = ""; }, 4000);
 }
 
 // ---------- Baumansicht als .txt (alle Sätze) ----------

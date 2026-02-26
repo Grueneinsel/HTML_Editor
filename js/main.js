@@ -136,10 +136,19 @@ document.addEventListener("drop", (e) => {
   e.preventDefault();
   dragCounter = 0;
   dropOverlay.classList.remove("active");
-  const files = Array.from(e.dataTransfer.files).filter(f =>
-    /\.(conllu|conll|txt)$/i.test(f.name)
-  );
-  if(files.length > 0) processFiles(files);
+  const allFiles = Array.from(e.dataTransfer.files);
+
+  // Session-JSON hat Vorrang — erste .json-Datei wird importiert
+  const jsonFile = allFiles.find(f => /\.json$/i.test(f.name));
+  if(jsonFile){
+    const fr = new FileReader();
+    fr.onload = () => importSession(fr.result);
+    fr.readAsText(jsonFile, "utf-8");
+    return;
+  }
+
+  const conlluFiles = allFiles.filter(f => /\.(conllu|conll|txt)$/i.test(f.name));
+  if(conlluFiles.length > 0) processFiles(conlluFiles);
 });
 
 // ---------- UI: Sentence selector ----------
