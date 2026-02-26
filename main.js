@@ -15,7 +15,7 @@ const treeGrid    = document.getElementById("treeGrid");
 const cmpTable    = document.getElementById("cmpTable");
 const colToggleBar = document.getElementById("colToggleBar");
 
-const customInitBtn  = document.getElementById("customInitBtn");
+const customInitBtns = document.getElementById("customInitBtns");
 const customClearBtn = document.getElementById("customClearBtn");
 
 // ---------- Events ----------
@@ -35,7 +35,6 @@ nextBtn.addEventListener("click", () => {
   renderSentence();
 });
 
-customInitBtn.addEventListener("click", initCustomFromDoc0);
 customClearBtn.addEventListener("click", clearCustomForSentence);
 
 // Delegation: Custom inputs
@@ -109,7 +108,15 @@ function renderSentSelect(){
   sentSelect.disabled = !ok;
   prevBtn.disabled = !ok;
   nextBtn.disabled = !ok;
-  customInitBtn.disabled = !ok;
+  customInitBtns.innerHTML = "";
+  if(ok){
+    state.docs.forEach((d, idx) => {
+      const btn = document.createElement("button");
+      btn.textContent = `Custom aus "${d.name}"`;
+      btn.addEventListener("click", () => initCustomFromDoc(idx));
+      customInitBtns.appendChild(btn);
+    });
+  }
   customClearBtn.disabled = !ok;
   sentSelect.innerHTML = "";
   if(!ok){ sentStats.textContent = ""; return; }
@@ -147,11 +154,11 @@ function renderColToggleBar(){
 }
 
 // ---------- Custom ----------
-function initCustomFromDoc0(){
-  const s0 = state.docs[0]?.sentences?.[state.currentSent];
-  if(!s0) return;
+function initCustomFromDoc(docIdx){
+  const s = state.docs[docIdx]?.sentences?.[state.currentSent];
+  if(!s) return;
   const sent = ensureCustomSent(state.currentSent);
-  for(const t of s0.tokens){
+  for(const t of s.tokens){
     sent[t.id] = { head: t.head ?? null, deprel: t.deprel ?? null };
   }
   renderSentence();
