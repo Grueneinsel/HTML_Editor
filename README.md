@@ -1,14 +1,17 @@
 # CoNLL-U Vergleich
 
-Browserbasiertes Tool zum Vergleichen und Annotieren mehrerer CoNLL-U-Dateien. Läuft vollständig lokal ohne Server — einfach `index.html` im Browser öffnen.
+Browserbasiertes Tool zum Vergleichen und Annotieren mehrerer CoNLL-U-Dateien.
+Läuft vollständig lokal ohne Server — einfach `index.html` im Browser öffnen.
 
 ---
 
 ## Schnellstart
 
-1. `index.html` im Browser öffnen
-2. Mindestens zwei `.conllu`-Dateien laden (Schaltfläche oder Drag & Drop)
+1. `index.html` im Browser öffnen (ggf. über einen lokalen HTTP-Server, z. B. `python -m http.server`)
+2. Mindestens zwei `.conllu`-Dateien laden — oder **„Demo laden"** klicken
 3. Satz auswählen → Baumansicht und Vergleichstabelle erscheinen automatisch
+4. Gold-Zellen klicken oder Tastaturkürzel nutzen, um Annotationen zu bearbeiten
+5. Fertigen Satz mit **„✓ Bestätigen"** markieren, am Ende exportieren
 
 ---
 
@@ -16,28 +19,59 @@ Browserbasiertes Tool zum Vergleichen und Annotieren mehrerer CoNLL-U-Dateien. L
 
 | Aktion | Beschreibung |
 |--------|-------------|
-| **Schaltfläche „Dateien hinzufügen"** | Öffnet den Datei-Dialog; mehrere Dateien gleichzeitig wählbar |
-| **Drag & Drop** | Dateien direkt auf die Seite ziehen; ein Overlay erscheint als Bestätigung |
-| **Löschen** | Einzelne Dateien über den „Löschen"-Button in der Dateiliste entfernen |
-| **Reset** | Alle Dateien und Annotationen auf einmal zurücksetzen |
+| **„Dateien hinzufügen"** | Öffnet den Datei-Dialog; mehrere Dateien gleichzeitig wählbar |
+| **Drag & Drop** | Dateien direkt auf die Seite ziehen |
+| **„Demo laden"** | Drei vorgefertigte Beispieldateien, die alle Vergleichsfälle abdecken |
+| **„Löschen"** | Einzelne Datei aus der Liste entfernen |
+| **„Reset"** | Alle Dateien und Annotationen zurücksetzen |
 
 Unterstützte Formate: `.conllu`, `.conll`, `.txt`
 
 ### Textkonsistenzwarnung
 
-Haben zwei Dateien bei gleicher Satznummer unterschiedliche Tokens, erscheint:
-- Ein **⚠️-Badge** direkt neben dem Dateinamen in der Liste
-- Ein oranges **Warnbanner** unterhalb der Dateiliste
+Haben zwei Dateien bei gleicher Satznummer unterschiedliche Tokens:
+- **⚠️-Badge** neben dem Dateinamen
+- Oranges **Warnbanner** unterhalb der Dateiliste
 
 ---
 
 ## 2) Satz wählen
 
-- **Dropdown** zeigt alle Sätze (Satz 1 … Satz N)
-- **← / →** Buttons zum Blättern
-- Rechts neben den Buttons: Satztext und Statistik-Badges
-  - `X Tokens` — Anzahl der Tokens im aktuellen Satz
-  - `X Diffs` — Anzahl der Tokens, die vom Gold-Stand abweichen (grün = keine Abweichungen)
+### Dropdown
+
+Jede Option zeigt:
+- Satznummer und Stern `★` wenn bestätigt
+- Tokenanzahl
+- Anzahl der Abweichungen (`· N Diffs`) oder Haken (`· ✓`) bei vollständiger Übereinstimmung
+
+**Farben im Dropdown:**
+
+| Farbe | Bedeutung |
+|-------|-----------|
+| Grün | Keine Abweichungen |
+| Rot | Mindestens eine Abweichung |
+| Gold | Satz wurde bestätigt (`★`) |
+
+Der **Rahmen des Dropdowns** spiegelt den Status des aktuellen Satzes wider (grün / rot / gold).
+
+### Satz-Map
+
+Unterhalb des Satztextes erscheint eine Reihe kleiner **farbiger Punkte** — einer pro Satz:
+
+| Farbe | Bedeutung |
+|-------|-----------|
+| Dunkelgrün | Kein Diff |
+| Dunkelrot | Hat Diffs |
+| Gold | Bestätigt |
+| Blauer Rahmen | Aktuell ausgewählter Satz |
+
+Klick auf einen Punkt springt direkt zu diesem Satz.
+
+### Gold bestätigen
+
+Über **„✓ Bestätigen"** (oder `Space`) wird der aktuelle Satz als abgeschlossen markiert.
+Bestätigte Sätze werden gold eingefärbt (Dropdown, Satz-Map, Satztext-Rahmen, Button).
+Erneutes Drücken hebt die Bestätigung wieder auf.
 
 ---
 
@@ -47,20 +81,20 @@ Zeigt den aktuellen Satz als Abhängigkeitsbäume. Für jede geladene Datei gibt
 
 ### Legende
 
-| Symbol | Bedeutung |
-|--------|-----------|
-| ✅ | Kante in Gold und Datei **identisch** |
-| ⚠️ | Kante existiert in beiden, aber **unterschiedliches Label** (`🅶Label\|🅵Label`) |
-| 🅶 | Kante **nur in Gold** vorhanden |
-| 🅵 | Kante **nur in dieser Datei** vorhanden |
+| Symbol/Farbe | Bedeutung |
+|---|---|
+| ✅ grün | Kante identisch mit Gold |
+| ⚠️ gelb | Gleicher HEAD, aber abweichendes DEPREL / UPOS / XPOS (`🅶X\|🅵Y`) |
+| 🅶 gold | Kante nur in Gold vorhanden |
+| 🅵 blau | Kante nur in dieser Datei vorhanden |
 | 🌱 | Wurzel eines Teilbaums |
 
-Zeilen sind entsprechend **farbig** hervorgehoben (grün / gelb / orange / blau).
+UPOS- und XPOS-Unterschiede werden ebenfalls als `[UPOS:🅶X\|🅵Y]` bzw. `[XPOS:🅶X\|🅵Y]` annotiert.
 
 ### Interaktion
 
-- **Klick auf eine Zeile** → springt zur zugehörigen Zeile in der Vergleichstabelle (mit kurzer Hervorhebung)
-- **„→ Gold"-Button** an jeder 🌱-Zeile (erscheint nur bei vorhandenen Unterschieden) → übernimmt den gesamten Teilbaum dieser Datei als Gold-Annotation für alle Tokens des Teilbaums
+- **Klick auf eine Zeile** → springt zur zugehörigen Zeile in der Vergleichstabelle
+- **„→ Gold"-Button** an jeder 🌱-Zeile → übernimmt den gesamten Teilbaum als Gold-Annotation
 
 ---
 
@@ -70,69 +104,99 @@ Zeilen sind entsprechend **farbig** hervorgehoben (grün / gelb / orange / blau)
 
 | Spalte | Inhalt |
 |--------|--------|
-| **ID** | Token-ID aus der CoNLL-U-Datei |
+| **ID** | Token-ID |
 | **FORM** | Wortform |
-| **UPOS** | Universal POS-Tag (Dropdown wenn `labels.json` `__upos__` enthält, sonst Text) |
-| **XPOS** | Sprach-spezifischer POS-Tag (Dropdown wenn `labels.json` `__xpos__` enthält, sonst Text) |
-| **GOLD** | Aktuelle Gold-Annotation (`HEAD / DEPREL`); Quelle als Badge: `C` = Custom, `D1`/`D2`/… = Datei |
-| **Datei-Spalten** | Annotation jeder geladenen Datei; farbig: grün = gleich wie Gold, rot = abweichend |
-| **Custom HEAD / DEP** | Manuelle Eingabe: Zahlfeld für HEAD, Dropdown für DEPREL |
+| **UPOS** | Gold-UPOS; gelber Rahmen wenn Dateien abweichen; pinker Rahmen bei Unterschied |
+| **XPOS** | Gold-XPOS; pinker Rahmen bei Unterschied |
+| **GOLD** | Aktuelle Gold-Annotation (`HEAD / DEPREL · UPOS·XPOS`); Badge `C` = Custom, `D1`/`D2`/… = Datei |
+| **Datei-Spalten** | Annotation jeder Datei; grün = identisch mit Gold, rot = abweichend |
+
+In den Datei-Spalten werden HEAD/DEPREL und UPOS·XPOS jeweils einzeln hervorgehoben — abweichende Felder erscheinen **rot** (`.fDiff`).
 
 ### Gold-Auswahl
 
-- **Klick auf eine Datei-Zelle** → wählt diese Datei als Gold-Quelle für diesen Token
-- Die gewählte Zelle wird hervorgehoben (Badge `D1`, `D2`, …)
-- Ist für einen Token ein **Custom-Wert** gesetzt, hat dieser **immer Vorrang** gegenüber der Datei-Auswahl; die Datei-Zellen sind dann ausgegraut
+- **Klick auf eine Datei-Zelle** → wählt diese Datei als Gold-Quelle für diesen Token (Badge `D1`, `D2`, …)
+- Ist ein Custom-Wert gesetzt, haben Custom-Werte immer Vorrang; Datei-Zellen sind dann ausgegraut
+
+### Gold-Popup (Bearbeiten)
+
+**Klick auf eine Gold-Zelle** öffnet ein Popup zum direkten Bearbeiten:
+
+| Feld | Eingabe |
+|------|---------|
+| HEAD | Dropdown aller Tokens des aktuellen Satzes |
+| DEPREL | Dropdown (aus `labels.json`) |
+| UPOS | Dropdown oder Freitextfeld |
+| XPOS | Dropdown oder Freitextfeld |
+
+Änderungen werden sofort als Custom-Eintrag gespeichert. **„Zurücksetzen"** löscht den Custom-Eintrag für diesen Token.
+
+**Tastatur im Popup:** `Tab`/`Shift+Tab` wechselt Felder · `Enter` schließt · `r` zurücksetzen · `Esc` schließen
 
 ### Custom-Annotation
 
-- **Custom-Felder** (ganz rechts): HEAD als Zahl, DEPREL als Dropdown eingeben
+- **„Custom aus [Datei]"-Buttons** kopieren alle Werte der gewählten Datei als Custom-Ausgangsbasis
+- **„Custom Satz löschen"** entfernt alle Custom-Einträge für den aktuellen Satz (mit Bestätigung)
 - Sobald ein Custom-Wert gesetzt ist, gilt dieser Token als Gold (`C`-Badge)
-- **„Custom aus [Datei]"-Buttons** initialisieren alle Custom-Felder des aktuellen Satzes mit den Werten der gewählten Datei — nützlich als Ausgangsbasis zum Bearbeiten
-- **„Custom Satz löschen"** entfernt alle Custom-Einträge für den aktuellen Satz (mit Bestätigungsdialog)
 
 ### Spalten ein-/ausblenden
 
-Über die **Spalten-Toggle-Leiste** oberhalb der Tabelle lassen sich einzelne Datei-Spalten aus- und wieder einblenden (sinnvoll bei vielen Dateien).
-
-### Zeilenmarkierung
-
-Zeilen mit mindestens einem Unterschied zwischen den Dateien sind **rot hinterlegt** (`rowDiff`).
+Über die **Spalten-Toggle-Leiste** lassen sich Datei-Spalten ein- und ausblenden.
 
 ---
 
-## labels.json
+## 5) Export
 
-Im gleichen Ordner wie `index.html` kann eine `labels.json` abgelegt werden, um die Dropdown-Inhalte anzupassen.
+| Button | Inhalt |
+|--------|--------|
+| **Gold CoNLL-U herunterladen** | Alle Sätze mit aktuellen Gold-Annotationen (HEAD, DEPREL, UPOS, XPOS); LEMMA/FEATS/DEPS/MISC aus Quelldatei |
+| **Baumansicht herunterladen** | Alle Sätze als Text-Bäume mit Gold-Baum und Diff-Bäumen pro Datei |
 
-```json
-{
-  "Core arguments": ["nsubj", "obj", "iobj", "csubj", "ccomp", "xcomp"],
-  "Non-core dependents": ["obl", "vocative", "expl", "dislocated"],
-  "Modifier words": ["advcl", "advmod", "discourse"],
-  "Function Words": ["aux", "cop", "mark"],
-  "Nominal dependents": ["nmod", "appos", "nummod", "acl", "amod", "det", "clf", "case"],
-  "Coordination": ["conj", "cc"],
-  "Other": ["fixed", "flat", "list", "parataxis", "compound", "orphan", "goeswith", "reparandum", "punct", "root", "dep"],
+---
 
-  "__upos__": ["ADJ", "ADP", "ADV", "AUX", "CCONJ", "DET", "INTJ", "NOUN", "NUM", "PART", "PRON", "PROPN", "PUNCT", "SCONJ", "SYM", "VERB", "X"],
+## Tastaturkürzel
 
-  "__xpos__": ["ADJA", "ADJD", "ADV", "NN", "NE", "VVFIN", "..."]
-}
+| Taste | Funktion |
+|-------|----------|
+| `←` / `→` | Vorheriger / nächster Satz |
+| `Ctrl+←` / `Ctrl+→` | Erster / letzter Satz |
+| `↑` / `↓` | Tabellenzeile navigieren |
+| `Enter` | Gold-Popup für fokussierte Zeile öffnen |
+| `Space` | Satz bestätigen / Bestätigung aufheben |
+| `1`–`9` | Datei N als Gold-Quelle für fokussierte Zeile wählen |
+| `Ctrl+1`–`9` | Custom aus Datei N laden |
+| `Del` / `Backspace` | Custom des aktuellen Satzes löschen |
+| `e` | Gold CoNLL-U exportieren |
+| `E` (Shift+e) | Baumansicht exportieren |
+| `?` | Hilfe öffnen / schließen |
+| `Esc` | Fokus / Popup / Hilfe schließen |
+
+---
+
+## labels.js
+
+Im gleichen Ordner wie `index.html` liegt `labels.js`, die Dropdown-Inhalte definiert:
+
+```javascript
+const LABELS = {
+  "Core arguments": ["nsubj", "obj", "iobj", ...],
+  "Non-core dependents": ["obl", "advmod", ...],
+  // ...
+  "__upos__": ["ADJ", "ADP", "ADV", "AUX", ...],
+  "__xpos__": ["ADJA", "ADJD", "NN", "NE", ...]
+};
 ```
 
 | Schlüssel | Beschreibung |
 |-----------|-------------|
 | Beliebige Strings | Gruppierter Abschnitt im DEPREL-Dropdown |
-| `__upos__` | Liste für das UPOS-Dropdown (leer → Textspalte statt Dropdown) |
-| `__xpos__` | Liste für das XPOS-Dropdown (leer → Textspalte statt Dropdown) |
-
-Fehlt die Datei oder ist sie ungültig, werden die Standard-UD-Labels verwendet.
+| `__upos__` | Optionen für das UPOS-Feld (leer → Freitextfeld) |
+| `__xpos__` | Optionen für das XPOS-Feld (leer → Freitextfeld) |
 
 ---
 
 ## Einschränkungen
 
 - **Multi-Word-Tokens** (IDs mit `-` oder `.`) werden ignoriert
-- Mindestens **zwei Dateien** müssen geladen sein, damit Vergleich und Baumansicht erscheinen
-- Alle Daten liegen nur **im Browser-Speicher** — beim Neuladen der Seite gehen Custom-Annotationen und Gold-Auswahl verloren
+- Mindestens **zwei Dateien** nötig für Vergleich und Baumansicht
+- Alle Daten liegen nur **im Browser-Speicher** — beim Neuladen gehen Custom-Annotationen und Gold-Auswahl verloren

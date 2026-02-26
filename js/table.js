@@ -100,9 +100,16 @@ function renderCompareTable(){
     html += `<td>${id}</td>`;
     html += `<td>${escapeHtml(form)}</td>`;
 
-    // UPOS / XPOS — read-only display; posDiff outline when files disagree
-    html += `<td class="posCell${customUpos ? ' posCustom' : ''}${uposDiff ? ' posDiff' : ''}">${escapeHtml(goldUpos)}</td>`;
-    html += `<td class="posCell${customXpos ? ' posCustom' : ''}${xposDiff ? ' posDiff' : ''}">${escapeHtml(goldXpos)}</td>`;
+    // UPOS / XPOS — inline editable dropdown (or text input if no options)
+    const uposEl = UPOS_OPTIONS_HTML
+      ? `<select data-col="upos" class="posInlineSelect">${UPOS_OPTIONS_HTML}</select>`
+      : `<input data-col="upos" type="text" class="posInlineInput" value="${escapeHtml(goldUpos)}">`;
+    html += `<td class="posCell${customUpos ? ' posCustom' : ''}${uposDiff ? ' posDiff' : ''}">${uposEl}</td>`;
+
+    const xposEl = XPOS_OPTIONS_HTML
+      ? `<select data-col="xpos" class="posInlineSelect">${XPOS_OPTIONS_HTML}</select>`
+      : `<input data-col="xpos" type="text" class="posInlineInput" value="${escapeHtml(goldXpos)}">`;
+    html += `<td class="posCell${customXpos ? ' posCustom' : ''}${xposDiff ? ' posDiff' : ''}">${xposEl}</td>`;
 
     // GOLD column — HEAD/DEPREL + UPOS·XPOS
     const goldSrc = customExists ? '<span class="srcTag srcCustom">C</span>' :
@@ -138,6 +145,14 @@ function renderCompareTable(){
   html += "</tbody>";
   cmpTable.innerHTML = html;
 
+  // Set UPOS/XPOS select values (can't use 'selected' in HTML string efficiently)
+  for(const tr of cmpTable.querySelectorAll("tr[data-id]")){
+    const id = parseInt(tr.dataset.id, 10);
+    const gt = goldMap.get(id);
+    _setPosEl(tr, "upos", gt?.upos ?? "_");
+    _setPosEl(tr, "xpos", gt?.xpos ?? "_");
+  }
+
   // Reposition popup after re-render (if currently open)
   if(_popupTokId !== null && _popup?.classList.contains("active")){
     const goldCell = cmpTable.querySelector(`tr[data-id="${_popupTokId}"] td[data-col='gold']`);
@@ -169,7 +184,8 @@ function _ensurePopup(){
     <div class="gpRow"><label>DEPREL</label><select id="gpDeprel">${DEPREL_OPTIONS_HTML}</select></div>
     <div class="gpRow"><label>UPOS</label>${uposField}</div>
     <div class="gpRow"><label>XPOS</label>${xposField}</div>
-    <div class="gpActions"><button id="gpClear" class="danger">Zurücksetzen</button></div>
+    <div class="gpActions"><button id="gpClear" class="danger" title="Shortcut: r">Zurücksetzen</button></div>
+    <div class="gpHint">Tab/Shift+Tab · Enter schließt · r zurücksetzen</div>
   `;
   document.body.appendChild(_popup);
 
@@ -196,10 +212,45 @@ function _ensurePopup(){
     _closePopup();
   });
 
-  // Close on Escape (capture phase, before keyboard.js)
+  // Keyboard handling inside popup (capture phase, before keyboard.js)
   document.addEventListener("keydown", (e) => {
-    if(e.key === "Escape" && _popup?.classList.contains("active")){
-      _closePopup(); e.stopPropagation();
+    if(!_popup?.classList.contains("active")) return;
+
+    if(e.key === "Escape"){
+      e.stopPropagation();
+      _closePopup();
+      return;
+    }
+
+    if(e.key === "Enter"){
+      e.preventDefault();
+      e.stopPropagation();
+      _closePopup();
+      return;
+    }
+
+    // r → Zurücksetzen (nur wenn kein Input-Feld fokussiert)
+    if(e.key === "r" || e.key === "R"){
+      const active = document.activeElement;
+      if(active?.tagName !== "INPUT"){
+        e.preventDefault();
+        e.stopPropagation();
+        document.getElementById("gpClear")?.click();
+        return;
+      }
+    }
+
+    // Tab-Trap: innerhalb des Popups bleiben
+    if(e.key === "Tab"){
+      const focusable = Array.from(_popup.querySelectorAll("select, input, button"));
+      if(!focusable.length) return;
+      const idx = focusable.indexOf(document.activeElement);
+      e.preventDefault();
+      if(e.shiftKey){
+        focusable[idx <= 0 ? focusable.length - 1 : idx - 1].focus();
+      } else {
+        focusable[(idx + 1) % focusable.length].focus();
+      }
     }
   }, true);
 
@@ -273,6 +324,8 @@ function _openPopup(tokId, cellEl){
   _popupTokId = tokId;
   _populatePopup(tokId);
   _positionPopup(cellEl);
+  // Auto-focus HEAD-Feld
+  setTimeout(() => document.getElementById("gpHead")?.focus(), 0);
 }
 
 function _positionPopup(cellEl){
@@ -302,4 +355,35 @@ cmpTable.addEventListener("click", (e) => {
     _closePopup(); return;
   }
   _openPopup(tokId, td);
+});
+
+// ── Inline UPOS / XPOS editing ──────────────────────────────────────────────
+
+function _setPosEl(tr, field, value){
+  const el = tr.querySelector(`[data-col="${field}"]`);
+  if(!el) return;
+  if(el.tagName === "SELECT"){
+    el.value = value;
+    if(el.value !== String(value)){
+      const opt = document.createElement("option");
+      opt.value = String(value); opt.textContent = String(value); opt.dataset.extra = "1";
+      el.insertBefore(opt, el.firstChild);
+      el.value = String(value);
+    }
+  } else {
+    el.value = value;
+  }
+}
+
+cmpTable.addEventListener("change", (e) => {
+  const el = e.target;
+  const field = el.dataset?.col;
+  if(field !== "upos" && field !== "xpos") return;
+  const tr = el.closest("tr[data-id]");
+  if(!tr) return;
+  const tokId = parseInt(tr.dataset.id, 10);
+  const raw = el.value.trim();
+  const val = (raw === "" || raw === "_") ? null : raw;
+  setCustomField(state.currentSent, tokId, field, val);
+  renderSentence();
 });

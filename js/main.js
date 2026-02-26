@@ -17,6 +17,7 @@ const colToggleBar = document.getElementById("colToggleBar");
 
 const customInitBtns  = document.getElementById("customInitBtns");
 const customClearBtn  = document.getElementById("customClearBtn");
+const confirmBtn      = document.getElementById("confirmBtn");
 const dropOverlay     = document.getElementById("dropOverlay");
 const textWarn        = document.getElementById("textWarn");
 const sentMap         = document.getElementById("sentMap");
@@ -39,6 +40,7 @@ nextBtn.addEventListener("click", () => {
 });
 
 customClearBtn.addEventListener("click", clearCustomForSentence);
+confirmBtn.addEventListener("click", toggleConfirm);
 
 // Klick auf Datei-Zelle → Gold wählen
 cmpTable.addEventListener("click", (e) => {
@@ -146,6 +148,7 @@ function renderSentSelect(){
     });
   }
   customClearBtn.disabled = !ok;
+  confirmBtn.disabled = !ok;
   sentSelect.innerHTML = "";
   if(!ok){ sentStats.textContent = ""; return; }
   renderSentSelectOptions();
@@ -169,26 +172,51 @@ function _sentStats(i){
   return computeStats(i, idList, docMaps, goldMap);
 }
 
+function toggleConfirm(){
+  if(state.docs.length < 2) return;
+  const i = state.currentSent;
+  if(state.confirmed.has(i)) state.confirmed.delete(i);
+  else state.confirmed.add(i);
+  updateConfirmBtn();
+  renderSentSelectOptions();
+}
+
+function updateConfirmBtn(){
+  if(!confirmBtn) return;
+  const isConfirmed = state.confirmed.has(state.currentSent);
+  confirmBtn.textContent  = isConfirmed ? "✓ Bestätigt" : "✓ Bestätigen";
+  confirmBtn.classList.toggle("confirmBtnActive", isConfirmed);
+}
+
 function renderSentSelectOptions(){
   if(state.docs.length < 2 || state.maxSents === 0) return;
   sentSelect.innerHTML = "";
   for(let i=0;i<state.maxSents;i++){
     const stats = _sentStats(i);
-    const hasDiff = stats.diffCount > 0;
+    const hasDiff   = stats.diffCount > 0;
+    const confirmed = state.confirmed.has(i);
     const opt = document.createElement("option");
     opt.value = String(i);
     const diffPart = hasDiff ? ` · ${stats.diffCount} Diff${stats.diffCount !== 1 ? 's' : ''}` : ' · ✓';
-    opt.textContent = `Satz ${i+1}  (${stats.totalTokens} Tok${diffPart})`;
-    opt.style.background = hasDiff ? '#1f0b0b' : '#091a10';
-    opt.style.color = hasDiff ? '#ff9090' : '#6fe8a8';
+    const confMark = confirmed ? ' ★' : '';
+    opt.textContent = `Satz ${i+1}${confMark}  (${stats.totalTokens} Tok${diffPart})`;
+    if(confirmed){
+      opt.style.background = '#1a1000';
+      opt.style.color = '#ffb347';
+    } else {
+      opt.style.background = hasDiff ? '#1f0b0b' : '#091a10';
+      opt.style.color = hasDiff ? '#ff9090' : '#6fe8a8';
+    }
     sentSelect.appendChild(opt);
   }
   sentSelect.value = String(state.currentSent);
 
   // Rahmenfarbe des Selects nach aktuellem Satz
+  const curConfirmed = state.confirmed.has(state.currentSent);
   const curStats = _sentStats(state.currentSent);
-  sentSelect.style.borderColor = curStats.diffCount > 0 ? '#ff5f5f' : '#3de89a';
+  sentSelect.style.borderColor = curConfirmed ? '#ff9f43' : (curStats.diffCount > 0 ? '#ff5f5f' : '#3de89a');
 
+  updateConfirmBtn();
   renderSentMap();
 }
 
@@ -198,11 +226,18 @@ function renderSentMap(){
   sentMap.innerHTML = "";
   for(let i=0;i<state.maxSents;i++){
     const stats = _sentStats(i);
-    const hasDiff = stats.diffCount > 0;
+    const hasDiff   = stats.diffCount > 0;
+    const confirmed = state.confirmed.has(i);
     const isCurrent = i === state.currentSent;
     const dot = document.createElement("button");
-    dot.className = "sentDot" + (hasDiff ? " sentDotDiff" : " sentDotOk") + (isCurrent ? " sentDotCurrent" : "");
-    dot.title = `Satz ${i+1}: ${stats.totalTokens} Tokens, ${stats.diffCount} Diffs`;
+    let cls = "sentDot ";
+    if(confirmed)   cls += "sentDotConfirmed";
+    else if(hasDiff) cls += "sentDotDiff";
+    else             cls += "sentDotOk";
+    if(isCurrent)   cls += " sentDotCurrent";
+    dot.className = cls;
+    const confLabel = confirmed ? ' (bestätigt)' : '';
+    dot.title = `Satz ${i+1}: ${stats.totalTokens} Tokens, ${stats.diffCount} Diffs${confLabel}`;
     dot.addEventListener("click", () => {
       state.currentSent = i;
       renderSentence();
@@ -270,6 +305,7 @@ function renderSentence(){
   const s0 = state.docs[0].sentences[state.currentSent];
   sentText.textContent = s0 ? s0.text : "(Satz fehlt in Datei 1)";
   sentMeta.textContent = `S${state.currentSent+1} / ${state.maxSents}`;
+  sentText.classList.toggle("sentTextConfirmed", state.confirmed.has(state.currentSent));
 
   renderColToggleBar();
   renderCompareTable();

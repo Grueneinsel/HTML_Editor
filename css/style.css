@@ -79,9 +79,18 @@ button.danger:hover:not(:disabled){ border-color:#ff5f5f; background:#1e0e0e }
   cursor:pointer; transition:transform .1s, border-color .1s;
 }
 .sentDot:hover{ transform:scale(1.3); }
-.sentDotOk  { background:#1a4a2e; border-color:#2a7a4a; }
-.sentDotDiff{ background:#4a1a1a; border-color:#8a3030; }
-.sentDotCurrent{ border-color:#4a9eff !important; transform:scale(1.25); }
+.sentDotOk       { background:#1a4a2e; border-color:#2a7a4a; }
+.sentDotDiff     { background:#4a1a1a; border-color:#8a3030; }
+.sentDotConfirmed{ background:#3a2600; border-color:#c07a10; }
+.sentDotCurrent  { border-color:#4a9eff !important; transform:scale(1.25); }
+
+/* Confirm button */
+.confirmBtn{ border-color:#5a3a00; background:#1a1000; color:#cc8800; }
+.confirmBtn:hover:not(:disabled){ border-color:#ff9f43; background:#261800; color:#ffb347; }
+.confirmBtnActive{ border-color:#ff9f43 !important; background:#261800 !important; color:#ffb347 !important; }
+
+/* Sentence text box — gold border when confirmed */
+.sentTextConfirmed{ border-color:#c07a10 !important; background:#13100a !important; }
 
 /* Sentence stats */
 .sentStatsRow{ display:flex; gap:6px; align-items:center; flex-wrap:wrap }
@@ -145,6 +154,7 @@ tr:last-child td{ border-bottom:none }
 }
 .gpActions{ margin-top:10px; display:flex; justify-content:flex-end; }
 .gpActions button{ font-size:11px; padding:4px 10px; }
+.gpHint{ font-size:10px; color:var(--muted); margin-top:6px; text-align:center; opacity:.7; }
 tr.keyFocus > td{ background:#0d2040 }
 tr.keyFocus > td:first-child{ border-left:2px solid var(--accent) }
 
@@ -407,15 +417,17 @@ tr.keyFocus > td:first-child{ border-left:2px solid var(--accent) }
   background:#1a2535; padding:1px 5px; border-radius:4px;
 }
 .helpContent .helpTable{
-  display:block; overflow-x:auto;
-  width:100%; max-width:100%;
+  width:100%; table-layout:fixed;
   border-collapse:collapse; margin:8px 0 14px; font-size:12px;
 }
 .helpContent .helpTable th{
   background:#0d1a2a; color:var(--muted); font-size:11px; letter-spacing:.3px;
 }
 .helpContent .helpTable th,
-.helpContent .helpTable td{ border:1px solid var(--line); padding:6px 10px; text-align:left; }
+.helpContent .helpTable td{
+  border:1px solid var(--line); padding:6px 10px; text-align:left;
+  word-break:break-word; overflow-wrap:break-word;
+}
 .helpContent .helpTable tr:nth-child(even) td{ background:#0a1218; }
 .helpContent strong{ color:var(--text); font-weight:700; }
 

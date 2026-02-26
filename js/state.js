@@ -10,9 +10,10 @@ const state = {
   docs: [],
   currentSent: 0,
   maxSents: 0,
-  custom: {},     // custom[sent][tokId] = {head, deprel, upos, xpos}
-  goldPick: {},   // goldPick[sent][tokId] = docIdx
+  custom: {},          // custom[sent][tokId] = {head, deprel, upos, xpos}
+  goldPick: {},        // goldPick[sent][tokId] = docIdx
   hiddenCols: new Set(),
+  confirmed: new Set(), // confirmed sentence indices
 };
 
 // ---------- Label helpers ----------

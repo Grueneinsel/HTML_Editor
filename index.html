@@ -10,8 +10,18 @@
   <header class="bar">
     <h1>CoNLL-U Vergleich</h1>
     <p class="muted">
-      Gold pro Zeile durch Klick auf eine Datei-Zelle. Custom befüllt → Custom ist Gold automatisch.
-      &nbsp;|&nbsp; Tastatur: <kbd>←</kbd><kbd>→</kbd> Satz &nbsp; <kbd>↑</kbd><kbd>↓</kbd> Zeile &nbsp; <kbd>1</kbd>–<kbd>9</kbd> Doc wählen &nbsp; <kbd>Esc</kbd> Fokus
+      <kbd>←</kbd><kbd>→</kbd> Satz &nbsp;
+      <kbd>Ctrl+←</kbd><kbd>Ctrl+→</kbd> Erster/Letzter &nbsp;|&nbsp;
+      <kbd>↑</kbd><kbd>↓</kbd> Zeile &nbsp;
+      <kbd>Enter</kbd> Gold-Popup &nbsp;|&nbsp;
+      <kbd>1</kbd>–<kbd>9</kbd> Doc wählen &nbsp;
+      <kbd>Ctrl+1</kbd>–<kbd>9</kbd> Custom laden &nbsp;|&nbsp;
+      <kbd>Space</kbd> Bestätigen &nbsp;
+      <kbd>Del</kbd> Custom löschen &nbsp;
+      <kbd>e</kbd> Export CoNLL-U &nbsp;
+      <kbd>E</kbd> Export Bäume &nbsp;|&nbsp;
+      <kbd>?</kbd> Hilfe &nbsp;
+      <kbd>Esc</kbd> Schließen
     </p>
     <button id="helpBtn" class="helpBtn" title="Hilfe / README anzeigen">?</button>
   </header>
@@ -35,6 +45,7 @@
         <button id="prevBtn" disabled>←</button>
         <select id="sentSelect" disabled></select>
         <button id="nextBtn" disabled>→</button>
+        <button id="confirmBtn" class="confirmBtn" disabled title="Gold bestätigen (Leertaste)">✓ Bestätigen</button>
         <span id="sentMeta" class="muted"></span>
         <div id="sentStats" class="sentStatsRow"></div>
       </div>
