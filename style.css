@@ -274,10 +274,10 @@ tr:last-child td{ border-bottom:none }
 .treeLineRoot{ display:flex; align-items:center; gap:8px; white-space:pre }
 .treeSubtreeBtn{
   padding:2px 8px; font-size:10px; font-family:var(--sans);
-  border-color:#1a3a5c; color:var(--accent); background:#0a1a2e;
-  border-radius:6px; flex-shrink:0;
+  border-color:#c07a10; color:#1a0e00; background:var(--gold);
+  border-radius:6px; flex-shrink:0; font-weight:700;
 }
-.treeSubtreeBtn:hover{ border-color:var(--accent); background:#0d2040 }
+.treeSubtreeBtn:hover{ border-color:#ffb94e; background:#ffb94e }
 .treePre{
   margin:0; padding:10px 12px;
   font-family:var(--mono); font-size:12px;
