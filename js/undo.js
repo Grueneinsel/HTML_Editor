@@ -48,3 +48,9 @@ function _syncUndoBtns(){
   if(u) u.title = `Rückgängig (Ctrl+Z)  —  ${_undoStack.length} Schritt${_undoStack.length !== 1 ? 'e' : ''}`;
   if(r) r.title = `Wiederholen (Ctrl+Y)  —  ${_redoStack.length} Schritt${_redoStack.length !== 1 ? 'e' : ''}`;
 }
+
+// Buttons werden nach DOM-Bereitschaft angebunden
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("undoBtn")?.addEventListener("click", undo);
+  document.getElementById("redoBtn")?.addEventListener("click", redo);
+});
