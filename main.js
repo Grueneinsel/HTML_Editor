@@ -19,13 +19,6 @@ const customInitBtns  = document.getElementById("customInitBtns");
 const customClearBtn  = document.getElementById("customClearBtn");
 const dropOverlay     = document.getElementById("dropOverlay");
 const textWarn        = document.getElementById("textWarn");
-const warnModal       = document.getElementById("warnModal");
-const warnModalBody   = document.getElementById("warnModalBody");
-const warnModalClose  = document.getElementById("warnModalClose");
-const warnModalOk     = document.getElementById("warnModalOk");
-
-warnModalClose.addEventListener("click", () => { warnModal.hidden = true; });
-warnModalOk.addEventListener("click",    () => { warnModal.hidden = true; });
 
 // ---------- Events ----------
 fileInput.addEventListener("change", onFilesChosen);
@@ -154,8 +147,6 @@ function renderFiles(){
 
   const warns = getTextWarnings();
   if(warns.length > 0){
-    warnModalBody.innerHTML = warns.map(w => `<p>${escapeHtml(w)}</p>`).join("");
-    warnModal.hidden = false;
     textWarn.innerHTML = `<div class="textWarnBanner">⚠️ Unterschiedliche Texte geladen — Vergleich möglicherweise fehlerhaft.</div>`;
   } else {
     textWarn.innerHTML = "";
