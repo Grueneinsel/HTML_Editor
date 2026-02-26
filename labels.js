@@ -1,0 +1,25 @@
+// Anpassbare Labels für DEPREL, UPOS und XPOS.
+// Sektions-Schlüssel erscheinen als Gruppe im Dropdown.
+// __upos__ und __xpos__ befüllen die jeweiligen POS-Dropdowns.
+LABELS = {
+  "Core arguments":      ["nsubj", "obj", "iobj", "csubj", "ccomp", "xcomp"],
+  "Non-core dependents": ["obl", "vocative", "expl", "dislocated"],
+  "Modifier words":      ["advcl", "advmod", "discourse"],
+  "Function Words":      ["aux", "cop", "mark"],
+  "Nominal dependents":  ["nmod", "appos", "nummod", "acl", "amod", "det", "clf", "case"],
+  "Coordination":        ["conj", "cc"],
+  "Other":               ["fixed", "flat", "list", "parataxis", "compound", "orphan", "goeswith", "reparandum", "punct", "root", "dep"],
+
+  "__upos__": ["ADJ", "ADP", "ADV", "AUX", "CCONJ", "DET", "INTJ", "NOUN", "NUM", "PART", "PRON", "PROPN", "PUNCT", "SCONJ", "SYM", "VERB", "X"],
+
+  "__xpos__": [
+    "ADJA", "ADJD", "ADV", "APPO", "APPR", "APPRART", "APZR",
+    "ART", "CARD", "FM", "ITJ", "KOKOM", "KON", "KOUI", "KOUS",
+    "NE", "NN", "NNE", "PDAT", "PDS", "PIAT", "PIS", "PPER",
+    "PPOSAT", "PPOSS", "PRELAT", "PRELS", "PRF", "PROAV",
+    "PTKA", "PTKANT", "PTKNEG", "PTKVZ", "PTKZU",
+    "PWAT", "PWAV", "PWS", "TRUNC", "VAFIN", "VAIMP", "VAINF",
+    "VAPP", "VMFIN", "VMINF", "VMPP", "VVFIN", "VVIMP", "VVINF",
+    "VVIZU", "VVPP", "XY", "$,", "$.", "$("
+  ]
+};

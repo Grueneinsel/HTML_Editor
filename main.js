@@ -66,21 +66,6 @@ cmpTable.addEventListener("click", (e) => {
   renderSentence();
 });
 
-// ---------- Labels init ----------
-(async function initLabels(){
-  try{
-    const res = await fetch("labels.json", {cache:"no-store"});
-    if(res.ok){
-      const data = await res.json();
-      if(data && typeof data === "object") LABELS = data;
-    }
-  }catch(_){}
-  finally{
-    buildDeprelOptionsCache();
-    renderSentence();
-  }
-})();
-
 // ---------- Text compatibility check ----------
 function getTextWarnings(){
   if(state.docs.length < 2) return [];
@@ -272,6 +257,7 @@ function renderSentence(){
 }
 
 // ---------- Init ----------
+buildDeprelOptionsCache();
 renderFiles();
 renderSentSelect();
 renderSentence();
