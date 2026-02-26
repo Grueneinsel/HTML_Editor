@@ -17,6 +17,7 @@ const colToggleBar = document.getElementById("colToggleBar");
 
 const customInitBtns = document.getElementById("customInitBtns");
 const customClearBtn = document.getElementById("customClearBtn");
+const dropOverlay    = document.getElementById("dropOverlay");
 
 // ---------- Events ----------
 fileInput.addEventListener("change", onFilesChosen);
@@ -84,7 +85,7 @@ function renderFiles(){
   fileList.innerHTML = "";
   fileMeta.textContent = state.docs.length ? `${state.docs.length} Datei(en) geladen` : "Keine Dateien geladen";
   if(state.docs.length === 0){
-    fileList.innerHTML = `<div class="muted small">Lade mindestens 2 Dateien zum Vergleichen.</div>`;
+    fileList.innerHTML = `<div class="muted small">Dateien hier ablegen oder Schaltfläche nutzen · .conllu / .conll / .txt</div>`;
     return;
   }
   state.docs.forEach((d, idx) => {
@@ -101,6 +102,31 @@ function renderFiles(){
     fileList.appendChild(div);
   });
 }
+
+// ---------- Drag & Drop (ganze Seite) ----------
+let dragCounter = 0;
+
+document.addEventListener("dragenter", (e) => {
+  e.preventDefault();
+  dragCounter++;
+  dropOverlay.classList.add("active");
+});
+document.addEventListener("dragover", (e) => {
+  e.preventDefault();
+});
+document.addEventListener("dragleave", () => {
+  dragCounter--;
+  if(dragCounter <= 0){ dragCounter = 0; dropOverlay.classList.remove("active"); }
+});
+document.addEventListener("drop", (e) => {
+  e.preventDefault();
+  dragCounter = 0;
+  dropOverlay.classList.remove("active");
+  const files = Array.from(e.dataTransfer.files).filter(f =>
+    /\.(conllu|conll|txt)$/i.test(f.name)
+  );
+  if(files.length > 0) processFiles(files);
+});
 
 // ---------- UI: Sentence selector ----------
 function renderSentSelect(){

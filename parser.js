@@ -52,9 +52,7 @@ function fileKey(f){
 }
 
 // ---------- File management ----------
-async function onFilesChosen(){
-  const files = Array.from(fileInput.files || []);
-  if(files.length === 0) return;
+async function processFiles(files){
   for(const f of files){
     const key = fileKey(f);
     if(state.docs.some(d => d.key === key)) continue;
@@ -62,12 +60,18 @@ async function onFilesChosen(){
     const doc = parseConllu(text);
     state.docs.push({ key, name: f.name, sentences: doc.sentences });
   }
-  fileInput.value = "";
   recomputeMaxSents();
   state.currentSent = 0;
   renderFiles();
   renderSentSelect();
   renderSentence();
+}
+
+async function onFilesChosen(){
+  const files = Array.from(fileInput.files || []);
+  if(files.length === 0) return;
+  await processFiles(files);
+  fileInput.value = "";
 }
 
 function removeDoc(index){

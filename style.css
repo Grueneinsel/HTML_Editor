@@ -116,8 +116,67 @@ tr:last-child td{ border-bottom:none }
 }
 .highlightRow td{ animation: highlightPulse 1.6s ease-out }
 
-/* File list */
-.fileList{ display:grid; gap:6px }
+/* Full-page drop overlay */
+.dropOverlay{
+  display:none;
+  position:fixed; inset:0; z-index:9999;
+  background: rgba(9,13,18,.82);
+  backdrop-filter: blur(6px);
+  align-items:center; justify-content:center;
+  animation: overlayIn .15s ease-out;
+}
+.dropOverlay.active{ display:flex; }
+.dropOverlayInner{
+  display:flex; flex-direction:column; align-items:center; gap:12px;
+  padding:40px 56px;
+  border:2px dashed var(--accent);
+  border-radius:20px;
+  background:#0a1622cc;
+  animation: dropPulse .9s ease-in-out infinite;
+}
+.dropOverlayIcon{
+  font-size:56px;
+  animation: dropBounce .7s ease-in-out infinite;
+}
+.dropOverlayText{
+  font-size:22px; font-weight:800;
+  color:var(--accent); letter-spacing:-.3px;
+}
+.dropOverlaySub{ font-size:12px; color:var(--muted); }
+@keyframes overlayIn{
+  from{ opacity:0; } to{ opacity:1; }
+}
+@keyframes dropBounce{
+  0%,100%{ transform: translateY(0) scale(1); }
+  50%    { transform: translateY(-10px) scale(1.08); }
+}
+
+/* File list + Drop zone */
+.fileList{
+  display:grid; gap:6px;
+  min-height:72px;
+  border:2px dashed transparent;
+  border-radius:12px;
+  padding:4px;
+  transition: border-color .2s, background .2s, box-shadow .2s;
+}
+.fileList.dragOver{
+  border-color: var(--accent);
+  background: #0d1e35;
+  animation: dropPulse .9s ease-in-out infinite;
+}
+@keyframes dropPulse{
+  0%,100%{ box-shadow: 0 0 0 0 #4a9eff33 }
+  50%    { box-shadow: 0 0 0 10px #4a9eff00 }
+}
+.dropHint{
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:6px; padding:18px 12px;
+  color:var(--muted); font-size:12px; text-align:center;
+  pointer-events:none;
+}
+.dropIcon{ font-size:30px; opacity:.55; transition: transform .2s; }
+.fileList.dragOver .dropIcon{ transform: scale(1.2); opacity:.9; }
 .fileItem{
   display:flex; gap:10px; align-items:center; justify-content:space-between;
   border:1px solid var(--line); border-radius:10px; padding:8px 12px; background:#0c1420;
