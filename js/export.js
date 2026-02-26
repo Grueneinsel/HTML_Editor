@@ -61,8 +61,8 @@ function exportGoldConllu(){
 
       const head   = goldTok?.head   ?? null;
       const deprel = goldTok?.deprel ?? "_";
-      const upos   = customEntry?.upos  ?? base.upos  ?? "_";
-      const xpos   = customEntry?.xpos  ?? base.xpos  ?? "_";
+      const upos   = goldTok?.upos ?? "_";
+      const xpos   = goldTok?.xpos ?? "_";
 
       out.push([
         id,

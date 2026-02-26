@@ -107,12 +107,15 @@ function computeStats(sentIndex, idList, docMaps, goldMap){
   for(const id of idList){
     const goldTok = goldMap.get(id);
     if(!goldTok) continue;
-    const goldVal = valueStr(goldTok.head, goldTok.deprel);
+    const goldHd   = valueStr(goldTok.head, goldTok.deprel);
+    const goldUpos = goldTok.upos ?? "_";
+    const goldXpos = goldTok.xpos ?? "_";
     for(let i = 0; i < docMaps.length; i++){
       const t = docMaps[i].get(id);
       if(!t) continue;
-      const v = valueStr(t.head, t.deprel);
-      if(v !== goldVal){ diffCount++; break; }
+      if(valueStr(t.head, t.deprel) !== goldHd ||
+         (t.upos ?? "_") !== goldUpos ||
+         (t.xpos ?? "_") !== goldXpos){ diffCount++; break; }
     }
   }
   return { totalTokens, diffCount };

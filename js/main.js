@@ -39,20 +39,6 @@ nextBtn.addEventListener("click", () => {
 
 customClearBtn.addEventListener("click", clearCustomForSentence);
 
-// Delegation: Custom inputs
-cmpTable.addEventListener("input", (e) => {
-  const el = e.target;
-  if(el instanceof HTMLInputElement && el.dataset.field && el.dataset.id){
-    onCustomFieldChange(el);
-  }
-});
-cmpTable.addEventListener("change", (e) => {
-  const el = e.target;
-  if(el instanceof HTMLSelectElement && el.dataset.field && el.dataset.id){
-    onCustomFieldChange(el);
-  }
-});
-
 // Klick auf Datei-Zelle → Gold wählen
 cmpTable.addEventListener("click", (e) => {
   const td = e.target.closest?.("td[data-col^='doc']");
@@ -201,7 +187,7 @@ function initCustomFromDoc(docIdx){
   if(!s) return;
   const sent = ensureCustomSent(state.currentSent);
   for(const t of s.tokens){
-    sent[t.id] = { head: t.head ?? null, deprel: t.deprel ?? null };
+    sent[t.id] = { head: t.head ?? null, deprel: t.deprel ?? null, upos: t.upos ?? null, xpos: t.xpos ?? null };
   }
   renderSentence();
 }

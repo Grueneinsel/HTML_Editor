@@ -104,8 +104,17 @@ function tokDisplayPair(goldMap, otherMap, tokId){
   if(g && o){
     const fg = g.form ?? "—";
     const fo = o.form ?? "—";
-    if(fg === fo) return `${tokId}:${fg}`;
-    return `${tokId}:🅶${fg}|🅵${fo}`;
+    let display = fg === fo ? `${tokId}:${fg}` : `${tokId}:🅶${fg}|🅵${fo}`;
+    // append UPOS/XPOS diff annotation when they differ
+    const uDiff = (g.upos ?? "_") !== (o.upos ?? "_");
+    const xDiff = (g.xpos ?? "_") !== (o.xpos ?? "_");
+    if(uDiff || xDiff){
+      const parts = [];
+      if(uDiff) parts.push(`UPOS:🅶${g.upos ?? "_"}|🅵${o.upos ?? "_"}`);
+      if(xDiff) parts.push(`XPOS:🅶${g.xpos ?? "_"}|🅵${o.xpos ?? "_"}`);
+      display += ` [${parts.join(", ")}]`;
+    }
+    return display;
   }
   if(g) return `${tokId}:${g.form ?? "—"}🅶`;
   if(o) return `${tokId}:${o.form ?? "—"}🅵`;
@@ -214,11 +223,17 @@ function buildTreeSection(title, sub, text, onAdoptSubtree, subtreeDiffCheck){
     } else if(tokMatch){
       const tokId = parseInt(tokMatch[1], 10);
       const span = document.createElement("span");
+      const hasOk   = line.includes("✅");
+      const hasWarn = line.includes("⚠");
+      const hasG    = line.includes("🅶");
+      const hasF    = line.includes("🅵");
       let colorClass = "";
-      if(line.includes("✅"))                                   colorClass = "treeLineOk";
-      else if(line.includes("⚠"))                              colorClass = "treeLineWarn";
-      else if(line.includes("🅶") && !line.includes("🅵"))     colorClass = "treeLineGold";
-      else if(line.includes("🅵") && !line.includes("🅶"))     colorClass = "treeLineFileOnly";
+      // ✅ edge but UPOS/XPOS differs → show as warning
+      if     (hasOk && !hasG && !hasF)  colorClass = "treeLineOk";
+      else if(hasOk && (hasG || hasF))  colorClass = "treeLineWarn";
+      else if(hasWarn)                   colorClass = "treeLineWarn";
+      else if(hasG && !hasF)             colorClass = "treeLineGold";
+      else if(hasF && !hasG)             colorClass = "treeLineFileOnly";
       span.className = `treeLine treeLineClickable${colorClass ? " "+colorClass : ""}`;
       span.textContent = line + "\n";
       span.title = `Zur Zeile springen: Token ${tokId}`;
