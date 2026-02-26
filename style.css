@@ -293,9 +293,16 @@ tr:last-child td{ border-bottom:none }
 .treeLineClickable:hover{ background:#1a2f48 }
 
 /* Legend icons in tree */
+.legendOk  { color:var(--ok);   font-weight:700 }
 .legendWarn{ color:var(--warn); font-weight:700 }
 .legendGold{ color:var(--gold); font-weight:700 }
 .legendFile{ color:var(--file); font-weight:700 }
+
+/* Tree line coloring */
+.treeLineOk      { color:var(--ok) }
+.treeLineWarn    { color:var(--warn) }
+.treeLineGold    { color:var(--gold) }
+.treeLineFileOnly{ color:var(--file) }
 
 /* Diff icon coloring inside tree text */
 /* We use CSS to style emoji glyphs when they appear — but emoji can't be targeted.

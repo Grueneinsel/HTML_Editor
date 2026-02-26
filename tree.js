@@ -153,7 +153,24 @@ function getSubtreeIds(rootId, tokMap){
   return ids;
 }
 
-function buildTreeSection(title, sub, text, onAdoptSubtree){
+function hasSubtreeDiff(rootId, goldMap, otherMap){
+  const subIds = new Set([
+    ...getSubtreeIds(rootId, goldMap),
+    ...getSubtreeIds(rootId, otherMap),
+  ]);
+  for(const id of subIds){
+    const g = goldMap.get(id);
+    const o = otherMap.get(id);
+    if(!g || !o) return true;
+    if((g.head   ?? null) !== (o.head   ?? null)) return true;
+    if((g.deprel ?? null) !== (o.deprel ?? null)) return true;
+    if((g.upos   ?? null) !== (o.upos   ?? null)) return true;
+    if((g.xpos   ?? null) !== (o.xpos   ?? null)) return true;
+  }
+  return false;
+}
+
+function buildTreeSection(title, sub, text, onAdoptSubtree, subtreeDiffCheck){
   const section = document.createElement("div");
   section.className = "treeSection";
 
@@ -184,18 +201,25 @@ function buildTreeSection(title, sub, text, onAdoptSubtree){
       txt.textContent = line;
       wrapper.appendChild(txt);
 
-      const btn = document.createElement("button");
-      btn.textContent = "→ Gold";
-      btn.className = "treeSubtreeBtn";
-      btn.title = `Teilbaum ab Token ${rootId} als Gold/Custom übernehmen`;
-      btn.addEventListener("click", (e) => { e.stopPropagation(); onAdoptSubtree(rootId); });
-      wrapper.appendChild(btn);
+      if(!subtreeDiffCheck || subtreeDiffCheck(rootId)){
+        const btn = document.createElement("button");
+        btn.textContent = "→ Gold";
+        btn.className = "treeSubtreeBtn";
+        btn.title = `Teilbaum ab Token ${rootId} als Gold übernehmen`;
+        btn.addEventListener("click", (e) => { e.stopPropagation(); onAdoptSubtree(rootId); });
+        wrapper.appendChild(btn);
+      }
 
       pre.appendChild(wrapper);
     } else if(tokMatch){
       const tokId = parseInt(tokMatch[1], 10);
       const span = document.createElement("span");
-      span.className = "treeLine treeLineClickable";
+      let colorClass = "";
+      if(line.includes("✅"))                                   colorClass = "treeLineOk";
+      else if(line.includes("⚠"))                              colorClass = "treeLineWarn";
+      else if(line.includes("🅶") && !line.includes("🅵"))     colorClass = "treeLineGold";
+      else if(line.includes("🅵") && !line.includes("🅶"))     colorClass = "treeLineFileOnly";
+      span.className = `treeLine treeLineClickable${colorClass ? " "+colorClass : ""}`;
       span.textContent = line + "\n";
       span.title = `Zur Zeile springen: Token ${tokId}`;
       span.addEventListener("click", () => scrollToToken(tokId));
@@ -250,7 +274,7 @@ function renderPreview(){
       if(state.custom[sentIndex] && !Object.keys(state.custom[sentIndex]).length)
         delete state.custom[sentIndex];
       renderSentence();
-    });
+    }, (rootId) => hasSubtreeDiff(rootId, goldMap, otherMap));
     wrap.appendChild(section);
   }
 
