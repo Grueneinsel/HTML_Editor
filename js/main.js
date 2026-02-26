@@ -89,6 +89,11 @@ function renderFiles(){
   fileMeta.textContent = state.docs.length ? `${state.docs.length} Datei(en) geladen` : "Keine Dateien geladen";
   if(state.docs.length === 0){
     fileList.innerHTML = `<div class="muted small">Dateien hier ablegen oder Schaltfläche nutzen · .conllu / .conll / .txt</div>`;
+    const demoBtn = document.createElement("button");
+    demoBtn.textContent = "Demo laden (3 Beispieldateien)";
+    demoBtn.style.marginTop = "8px";
+    demoBtn.addEventListener("click", loadExamples);
+    fileList.appendChild(demoBtn);
     return;
   }
   const warnedIndices = getWarnedDocIndices();
@@ -230,6 +235,12 @@ function renderSentence(){
   renderColToggleBar();
   renderCompareTable();
   renderPreview();
+}
+
+// ---------- Demo ----------
+async function loadExamples(){
+  const files = EXAMPLES.map(e => new File([e.content], e.name, { type: "text/plain" }));
+  await processFiles(files);
 }
 
 // ---------- Init ----------
