@@ -11,6 +11,7 @@
     <h1>CoNLL-U Vergleich</h1>
     <p class="muted">
       Gold pro Zeile durch Klick auf eine Datei-Zelle. Custom befüllt → Custom ist Gold automatisch.
+      &nbsp;|&nbsp; Tastatur: <kbd>←</kbd><kbd>→</kbd> Satz &nbsp; <kbd>↑</kbd><kbd>↓</kbd> Zeile &nbsp; <kbd>1</kbd>–<kbd>9</kbd> Doc wählen &nbsp; <kbd>Esc</kbd> Fokus
     </p>
   </header>
 
@@ -67,6 +68,18 @@
         Hinweis: Multi-Word-Tokens (IDs mit „-" oder „.") werden ignoriert.
       </p>
     </section>
+
+    <section class="card">
+      <h2>5) Export</h2>
+      <div class="row">
+        <button id="exportConlluBtn" disabled>Gold CoNLL-U herunterladen</button>
+        <button id="exportTreeBtn"   disabled>Baumansicht (alle Sätze) herunterladen</button>
+      </div>
+      <p class="muted small" style="margin-top:8px">
+        Gold CoNLL-U enthält alle Sätze mit den aktuellen Gold-Annotationen (HEAD, DEPREL, UPOS, XPOS).
+        LEMMA / FEATS / DEPS / MISC werden aus der Quelldatei übernommen.
+      </p>
+    </section>
   </main>
 
   <div id="dropOverlay" class="dropOverlay">
@@ -80,5 +93,7 @@
   <script src="js/table.js"></script>
   <script src="js/tree.js"></script>
   <script src="js/main.js"></script>
+  <script src="js/export.js"></script>
+  <script src="js/keyboard.js"></script>
 </body>
 </html>

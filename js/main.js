@@ -163,6 +163,7 @@ function renderSentSelect(){
     sentSelect.appendChild(opt);
   }
   sentSelect.value = String(state.currentSent);
+  updateExportButtons();
 }
 
 // ---------- UI: Column toggle ----------

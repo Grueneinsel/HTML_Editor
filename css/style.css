@@ -29,6 +29,7 @@ body{ margin:0; font-family:var(--sans); background:var(--bg); color:var(--text)
 }
 .bar h1{ margin:0; font-size:17px; font-weight:800; letter-spacing:-.3px }
 .bar p { margin:0; font-size:12px; color:var(--muted) }
+kbd{ display:inline-block; padding:1px 5px; border-radius:4px; border:1px solid var(--line2); background:#0f1a2a; font-family:var(--mono); font-size:10px; color:var(--text) }
 
 /* Layout */
 .wrap{ max-width:1440px; margin:0 auto; padding:14px; display:grid; gap:10px }
@@ -98,6 +99,8 @@ tr:last-child td{ border-bottom:none }
 .posCell{ color:var(--muted) }
 .rowDiff td:first-child{ border-left:3px solid #ff5f5f44 }
 .goldCell{ font-weight:700; color:var(--text) }
+tr.keyFocus > td{ background:#0d2040 }
+tr.keyFocus > td:first-child{ border-left:2px solid var(--accent) }
 
 /* Source tag in GOLD column */
 .srcTag{

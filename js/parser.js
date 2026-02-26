@@ -41,7 +41,15 @@ function parseConllu(text){
     const xpos   = cols[4] || "_";
     const head   = /^\d+$/.test(cols[6]) ? parseInt(cols[6], 10) : null;
     const deprel = cols[7] || "_";
-    tokens.push({ id, form, upos, xpos, head, deprel });
+    tokens.push({
+      id, form,
+      lemma:  cols[2] || "_",
+      upos,   xpos,
+      feats:  cols[5] || "_",
+      head,   deprel,
+      deps:   cols[8] || "_",
+      misc:   cols[9] || "_",
+    });
   }
   push();
   return { sentences };
