@@ -84,8 +84,17 @@ function _buildConlluText(){
       const goldTok = goldMap.get(id);
       const head    = goldTok?.head   ?? null;
       const deprel  = goldTok?.deprel ?? "_";
-      const upos    = goldTok?.upos   ?? "_";
-      const xpos    = goldTok?.xpos   ?? "_";
+      // Map LABEL_COLS[0]→UPOS, LABEL_COLS[1]→XPOS; fall back to direct .upos/.xpos
+      const upos = (LABEL_COLS[0] ? goldTok?.[LABEL_COLS[0].key] : goldTok?.upos) ?? "_";
+      const xpos = (LABEL_COLS[1] ? goldTok?.[LABEL_COLS[1].key] : goldTok?.xpos) ?? "_";
+      // Extra label cols (index 2+) → append to MISC as key=value
+      let misc = base.misc || "_";
+      for(let ci = 2; ci < LABEL_COLS.length; ci++){
+        const col = LABEL_COLS[ci];
+        const val = goldTok?.[col.key];
+        if(val && val !== "_") misc = (misc === "_" ? "" : misc + "|") + `${col.key}=${val}`;
+      }
+      if(!misc) misc = "_";
 
       out.push([
         id,
@@ -97,7 +106,7 @@ function _buildConlluText(){
         head === null ? "_" : String(head),
         deprel,
         base.deps   || "_",
-        base.misc   || "_",
+        misc,
       ].join("\t"));
     }
     out.push("");

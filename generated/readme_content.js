@@ -151,17 +151,32 @@ Zeigt den aktuellen Satz als Abhängigkeitsbäume. Für jede geladene Datei gibt
 | Symbol/Farbe | Bedeutung |
 |---|---|
 | ✅ grün | Kante identisch mit Gold |
-| ⚠️ gelb | Gleicher HEAD, aber abweichendes DEPREL / UPOS / XPOS (\`🅶X\\|🅵Y\`) |
+| ⚠️ gelb | Gleicher HEAD, aber abweichendes DEPREL / Label-Spalten (\`🅶X\\|🅵Y\`) |
 | 🅶 gold | Kante nur in Gold vorhanden |
 | 🅵 blau | Kante nur in dieser Datei vorhanden |
 | 🌱 | Wurzel eines Teilbaums |
 
-UPOS- und XPOS-Unterschiede werden ebenfalls als \`[UPOS:🅶X\\|🅵Y]\` bzw. \`[XPOS:🅶X\\|🅵Y]\` annotiert.
+Unterschiede in Label-Spalten (z. B. UPOS/XPOS) werden als \`[SPALTE:🅶X\\|🅵Y]\` annotiert.
 
 ### Interaktion
 
 - **Klick auf eine Zeile** → springt zur zugehörigen Zeile in der Vergleichstabelle
 - **„→ Gold"-Button** an jeder 🌱-Zeile → übernimmt den gesamten Teilbaum als Gold-Annotation
+
+### Interaktives Arc-Diagramm (Gold-Ansicht)
+
+Das Gold-Arc-Diagramm ist direkt bearbeitbar:
+
+| Aktion | Funktion |
+|--------|---------|
+| **Token ziehen** (Drag & Drop) | Zieht einen neuen Pfeil von Token zu Token → setzt neuen HEAD |
+| **Deprel-Popup** | Erscheint automatisch nach dem Ziehen — oder per Klick auf ein Arc-Label |
+| **× Button** (Hover über Arc) | Löscht die Kante (setzt auf Root zurück) |
+| **Klick auf Token** (ohne Ziehen) | Springt zur zugehörigen Tabellenzeile |
+
+**Zyklus-Erkennung:** Würde ein neuer Pfeil einen Zyklus erzeugen, wird das Ziel rot aufgeleuchtet und die Zuweisung abgelehnt.
+
+**Pfeilfarben** entsprechen der Legende (grün = Gold-übereinstimmend, gelb = DEPREL-Diff, gold = nur Gold, blau = nur Datei).
 
 ---
 
@@ -173,12 +188,11 @@ UPOS- und XPOS-Unterschiede werden ebenfalls als \`[UPOS:🅶X\\|🅵Y]\` bzw. \
 |--------|--------|
 | **ID** | Token-ID |
 | **FORM** | Wortform |
-| **UPOS** | Gold-UPOS; gelber Rahmen wenn Dateien abweichen; pinker Rahmen bei Unterschied |
-| **XPOS** | Gold-XPOS; pinker Rahmen bei Unterschied |
-| **GOLD** | Aktuelle Gold-Annotation (\`HEAD / DEPREL · UPOS·XPOS\`); Badge \`C\` = Custom, \`D1\`/\`D2\`/… = Datei |
+| **Label-Spalten** | Eine Spalte pro konfigurierter Label-Kategorie (Standard: UPOS, XPOS); gelber Rahmen wenn Dateien abweichen |
+| **GOLD** | Aktuelle Gold-Annotation (\`HEAD / DEPREL\`); Badge \`C\` = Custom, \`D1\`/\`D2\`/… = Datei; darunter alle Label-Werte |
 | **Datei-Spalten** | Annotation jeder Datei; grün = identisch mit Gold, rot = abweichend |
 
-In den Datei-Spalten werden HEAD/DEPREL und UPOS·XPOS jeweils einzeln hervorgehoben — abweichende Felder erscheinen **rot** (\`.fDiff\`).
+In den Datei-Spalten werden HEAD/DEPREL und alle Label-Spalten einzeln hervorgehoben — abweichende Felder erscheinen **rot** (\`.fDiff\`).
 
 ### Gold-Auswahl
 
@@ -192,9 +206,10 @@ In den Datei-Spalten werden HEAD/DEPREL und UPOS·XPOS jeweils einzeln hervorgeh
 | Feld | Eingabe |
 |------|---------|
 | HEAD | Dropdown aller Tokens des aktuellen Satzes |
-| DEPREL | Dropdown (aus \`labels.js\`) |
-| UPOS | Dropdown oder Freitextfeld |
-| XPOS | Dropdown oder Freitextfeld |
+| DEPREL (+ weitere Dep-Layer) | Dropdown(s) aus der Tagset-Konfiguration |
+| Label-Spalten | Je ein Dropdown oder Freitextfeld pro konfigurierter Label-Kategorie |
+
+Die Anzahl der Felder passt sich automatisch an die geladene Tagset-Konfiguration an (beliebig viele Label-Spalten und Dependency-Layer möglich).
 
 Änderungen werden sofort als Custom-Eintrag gespeichert. **„Zurücksetzen"** löscht den Custom-Eintrag für diesen Token.
 
@@ -325,7 +340,9 @@ registerLang('xx', window.LANG_XX);
 
 ## labels.js
 
-Im gleichen Ordner wie \`index.html\` liegt \`labels.js\`, die Dropdown-Inhalte definiert:
+Im gleichen Ordner wie \`index.html\` liegt \`labels.js\`, die Dropdown-Inhalte definiert.
+
+### Klassisches Format (Rückwärtskompatibel)
 
 \`\`\`javascript
 const LABELS = {
@@ -333,7 +350,9 @@ const LABELS = {
   "Non-core dependents": ["obl", "advmod", ...],
   // ...
   "__upos__": ["ADJ", "ADP", "ADV", "AUX", ...],
-  "__xpos__": ["ADJA", "ADJD", "NN", "NE", ...]
+  "__xpos__": ["ADJA", "ADJD", "NN", "NE", ...],
+  "__upos_name__": "UPOS",   // optionaler Anzeigename
+  "__xpos_name__": "XPOS",
 };
 \`\`\`
 
@@ -342,8 +361,67 @@ const LABELS = {
 | Beliebige Strings | Gruppierter Abschnitt im DEPREL-Dropdown |
 | \`__upos__\` | Optionen für das UPOS-Feld (leer → Freitextfeld) |
 | \`__xpos__\` | Optionen für das XPOS-Feld (leer → Freitextfeld) |
+| \`__upos_name__\` | Anzeigename der UPOS-Spalte |
+| \`__xpos_name__\` | Anzeigename der XPOS-Spalte |
+
+### Erweitertes Format — beliebig viele Label- und Dependency-Spalten
+
+Über \`__cols__\` und \`__dep_cols__\` lassen sich beliebig viele Spalten definieren:
+
+\`\`\`json
+{
+  "__cols__": [
+    { "key": "upos",    "name": "UPOS",       "values": ["ADJ", "NOUN", "VERB"] },
+    { "key": "xpos",    "name": "XPOS",       "values": ["ADJA", "NN", "VVFIN"] },
+    { "key": "entity",  "name": "Entity",     "values": ["PER", "ORG", "LOC", "O"] },
+    { "key": "animacy", "name": "Animacy",    "values": ["Anim", "Inan"] }
+  ],
+  "__dep_cols__": [
+    {
+      "key": "ud",
+      "name": "UD DepRel",
+      "groups": {
+        "Core arguments": ["nsubj", "obj", "iobj"],
+        "Other":          ["punct", "root", "dep"]
+      }
+    },
+    {
+      "key": "srl",
+      "name": "SRL",
+      "groups": {
+        "Arguments": ["ARG0", "ARG1", "ARG2", "ARGM"]
+      }
+    }
+  ]
+}
+\`\`\`
+
+| Schlüssel | Beschreibung |
+|-----------|-------------|
+| \`__cols__\` | Array von Label-Spalten; \`key\` = internes Feldname, \`name\` = Anzeigename, \`values\` = Dropdown-Optionen |
+| \`__dep_cols__\` | Array von Dependency-Annotationslagen; erste Lage = primäre HEAD/DEPREL-Felder; weitere Lagen erhalten eigene HEAD- und DEPREL-Dropdowns im Popup |
+
+**CoNLL-U-Export:** \`__cols__[0]\` → UPOS-Spalte, \`__cols__[1]\` → XPOS-Spalte, weitere → MISC als \`key=value\`.
 
 Labels werden mit der Session gespeichert und beim Laden wiederhergestellt.
+
+---
+
+## Tagset hochladen / herunterladen
+
+Das Tagset (Label- und Dependency-Konfiguration) kann zur Laufzeit ausgetauscht werden — ohne Neustart.
+
+### Hochladen
+
+1. Schaltfläche **„📤 Tagset hochladen"** klicken
+2. JSON-Datei wählen (klassisches oder erweitertes Format)
+3. Tabelle, Popups und Dropdowns aktualisieren sich sofort
+
+### Herunterladen
+
+Schaltfläche **„📥 Tagset herunterladen"** exportiert die aktuelle Konfiguration als \`tagset.json\` — inklusive aller manuell geladenen Anpassungen.
+
+Das heruntergeladene JSON kann direkt bearbeitet und wieder hochgeladen werden.
 
 ---
 
@@ -358,6 +436,80 @@ python make_readme_js.py
 \`\`\`
 
 Das Skript liest \`README.md\` und schreibt \`generated/readme_content.js\`. Nach Änderungen an der README einmal ausführen und die Seite neu laden.
+
+---
+
+## Projektstruktur
+
+\`\`\`
+HTML_Editor/
+├── index.html                 ← Einstiegspunkt; lädt alle Skripte
+├── labels.js                  ← Standard-Tagset (DEPREL-Gruppen, UPOS, XPOS)
+├── examples.js                ← Eingebettete Demo-Daten (drei Annotator-Dateien)
+├── start.bat                  ← Windows-Startskript (öffnet Browser lokal)
+├── bundler.py                 ← Baut dist/index.html (alles inline, kein Server nötig)
+├── make_readme_js.py          ← Generiert generated/readme_content.js aus README.md
+├── LICENSE
+│
+├── css/
+│   └── style.css              ← Gesamtes CSS (Dark/Light-Mode, Tabellen, Arcs, Tabs)
+│
+├── js/                        ← Anwendungslogik (Ladereihenfolge: state → undo → projects → … → main)
+│   ├── state.js               ← Globaler Zustand, LABEL_COLS, DEP_COLS, buildDeprelOptionsCache()
+│   ├── undo.js                ← Undo/Redo-Stack (getUndoState / loadUndoState)
+│   ├── projects.js            ← Projekt-Tabs, Snapshot-Swap, autoAssignToProjects()
+│   ├── parser.js              ← CoNLL-U-Parser, processFiles(), recomputeMaxSents()
+│   ├── table.js               ← Vergleichstabelle, Gold-Popup, renderCompareTable()
+│   ├── tree.js                ← Text-Baumansicht, Diff-Bäume, renderSentence()
+│   ├── arcview.js             ← SVG-Arc-Diagramm, Drag & Drop, Zyklus-Erkennung
+│   ├── export.js              ← CoNLL-U-Export, Session-Import/-Export
+│   ├── keyboard.js            ← Alle Tastaturkürzel
+│   ├── i18n.js                ← Übersetzungs-Engine (t(), setLang(), registerLang())
+│   ├── theme.js               ← Dark/Light-Mode-Umschalter
+│   ├── help.js                ← Hilfe-Modal (lädt readme_content.js)
+│   └── main.js                ← Initialisierung, Event-Listener, UI-Rendering
+│
+├── lang/
+│   ├── de.js                  ← Deutsche UI-Texte (window.LANG_DE)
+│   └── en.js                  ← Englische UI-Texte (window.LANG_EN)
+│
+├── generated/
+│   └── readme_content.js      ← Auto-generiert von make_readme_js.py; enthält README-HTML
+│
+├── dist/
+│   └── index.html             ← Minifiziertes All-in-one-Bundle (erzeugt von bundler.py)
+│
+└── testdata/                  ← Beispieldaten zum Ausprobieren
+    ├── template.json          ← Leere Tagset-Vorlage (Formatreferenz)
+    ├── vamos_ma_ruban.conllu  ← Standard-Demo: Annotatorvergleich (UD-Schema)
+    ├── ai_ma_konopka.conllu   ← Standard-Demo: zweiter Annotator
+    ├── ner/                   ← Beispiel: Named Entity Recognition
+    │   ├── tagset.json        ← NER-Tagset (UPOS + XPOS + BIO-Entity-Spalte)
+    │   ├── annotator_A.conllu
+    │   └── annotator_B.conllu
+    ├── srl/                   ← Beispiel: Semantic Role Labeling
+    │   ├── tagset.json        ← SRL-Tagset (UD DepRel + SRL-Dep-Schicht)
+    │   ├── annotator_A.conllu
+    │   └── annotator_B.conllu
+    └── custom/                ← Beispiel: Eigenes vereinfachtes Schema
+        ├── tagset.json        ← Custom-Tagset (Wortart, Belebtheit, Sentiment, Vereinfachte Syntax)
+        ├── annotator_A.conllu
+        └── annotator_B.conllu
+\`\`\`
+
+### Wichtige Dateien im Überblick
+
+| Datei | Zweck |
+|-------|-------|
+| \`index.html\` | Einstiegspunkt; definiert HTML-Struktur und Lade-Reihenfolge der Skripte |
+| \`labels.js\` | Standard-Tagset; wird beim Start geladen und kann per Tagset-Upload ersetzt werden |
+| \`examples.js\` | Demo-Daten als JS-Array; „Demo laden" verwendet diese Daten |
+| \`js/state.js\` | Zentraler Zustandsspeicher; \`LABEL_COLS\` und \`DEP_COLS\` steuern die Spalten-Konfiguration |
+| \`js/projects.js\` | Projekt-Verwaltung; Snapshot-Swap beim Tab-Wechsel; Auto-Zuweisung bei unterschiedlicher Satzzahl |
+| \`js/arcview.js\` | SVG-Arc-Diagramm mit Drag & Drop und Zyklus-Erkennung |
+| \`js/export.js\` | Session-Format v2 (multi-project); abwärtskompatibel zu v1 |
+| \`bundler.py\` | Bündelt alle Ressourcen in \`dist/index.html\` für offline/eingebetteten Einsatz |
+| \`make_readme_js.py\` | Wandelt \`README.md\` → \`generated/readme_content.js\` (für Hilfe-Modal) |
 
 ---
 
@@ -518,17 +670,32 @@ Shows the current sentence as dependency trees. For each loaded file a diff tree
 | Symbol/Colour | Meaning |
 |---|---|
 | ✅ green | Edge identical to Gold |
-| ⚠️ yellow | Same HEAD but different DEPREL / UPOS / XPOS (\`🅶X\\|🅵Y\`) |
+| ⚠️ yellow | Same HEAD but different DEPREL / label columns (\`🅶X\\|🅵Y\`) |
 | 🅶 gold | Edge only in Gold |
 | 🅵 blue | Edge only in this file |
 | 🌱 | Subtree root |
 
-UPOS and XPOS differences are also annotated as \`[UPOS:🅶X\\|🅵Y]\` and \`[XPOS:🅶X\\|🅵Y]\`.
+Differences in label columns (e.g. UPOS/XPOS) are annotated as \`[COLUMN:🅶X\\|🅵Y]\`.
 
 ### Interaction
 
 - **Click a line** → jumps to the corresponding row in the comparison table
 - **"→ Gold" button** at each 🌱 line → adopts the entire subtree as the Gold annotation
+
+### Interactive Arc Diagram (Gold view)
+
+The Gold arc diagram is directly editable:
+
+| Action | Function |
+|--------|---------|
+| **Drag a token** (drag & drop) | Draw a new arc from token to token → sets new HEAD |
+| **Deprel popup** | Appears automatically after dragging — or by clicking an arc label |
+| **× button** (hover over arc) | Deletes the arc (resets to root) |
+| **Click a token** (no drag) | Jumps to the corresponding table row |
+
+**Cycle detection:** If a new arc would create a cycle, the target flashes red and the assignment is rejected.
+
+**Arc colours** match the legend (green = matches Gold, yellow = DEPREL diff, gold = Gold only, blue = file only).
 
 ---
 
@@ -540,12 +707,11 @@ UPOS and XPOS differences are also annotated as \`[UPOS:🅶X\\|🅵Y]\` and \`[
 |--------|---------|
 | **ID** | Token ID |
 | **FORM** | Word form |
-| **UPOS** | Gold UPOS; yellow border when files differ; pink border on mismatch |
-| **XPOS** | Gold XPOS; pink border on mismatch |
-| **GOLD** | Current Gold annotation (\`HEAD / DEPREL · UPOS·XPOS\`); badge \`C\` = custom, \`D1\`/\`D2\`/… = file |
+| **Label columns** | One column per configured label category (default: UPOS, XPOS); yellow border when files differ |
+| **GOLD** | Current Gold annotation (\`HEAD / DEPREL\`); badge \`C\` = custom, \`D1\`/\`D2\`/… = file; label values shown below |
 | **File columns** | Each file's annotation; green = matches Gold, red = differs |
 
-In file columns, HEAD/DEPREL and UPOS·XPOS are highlighted individually — differing fields appear **red** (\`.fDiff\`).
+In file columns, HEAD/DEPREL and all label columns are highlighted individually — differing fields appear **red** (\`.fDiff\`).
 
 ### Gold Selection
 
@@ -559,9 +725,10 @@ In file columns, HEAD/DEPREL and UPOS·XPOS are highlighted individually — dif
 | Field | Input |
 |-------|-------|
 | HEAD | Dropdown of all tokens in the current sentence |
-| DEPREL | Dropdown (from \`labels.js\`) |
-| UPOS | Dropdown or free-text field |
-| XPOS | Dropdown or free-text field |
+| DEPREL (+ further dep layers) | Dropdown(s) from the tagset configuration |
+| Label columns | One dropdown or free-text field per configured label category |
+
+The number of fields adapts automatically to the loaded tagset configuration (any number of label columns and dependency layers supported).
 
 Changes are saved immediately as a custom entry. **"Reset"** removes the custom entry for this token.
 
@@ -692,7 +859,9 @@ registerLang('xx', window.LANG_XX);
 
 ## labels.js
 
-\`labels.js\` in the same folder as \`index.html\` defines the dropdown contents:
+\`labels.js\` in the same folder as \`index.html\` defines the dropdown contents.
+
+### Classic format (backward compatible)
 
 \`\`\`javascript
 const LABELS = {
@@ -700,7 +869,9 @@ const LABELS = {
   "Non-core dependents": ["obl", "advmod", ...],
   // ...
   "__upos__": ["ADJ", "ADP", "ADV", "AUX", ...],
-  "__xpos__": ["ADJA", "ADJD", "NN", "NE", ...]
+  "__xpos__": ["ADJA", "ADJD", "NN", "NE", ...],
+  "__upos_name__": "UPOS",   // optional display name
+  "__xpos_name__": "XPOS",
 };
 \`\`\`
 
@@ -709,8 +880,67 @@ const LABELS = {
 | Any string | Grouped section in the DEPREL dropdown |
 | \`__upos__\` | Options for the UPOS field (empty → free-text input) |
 | \`__xpos__\` | Options for the XPOS field (empty → free-text input) |
+| \`__upos_name__\` | Display name for the UPOS column |
+| \`__xpos_name__\` | Display name for the XPOS column |
+
+### Extended format — arbitrary number of label and dependency columns
+
+Use \`__cols__\` and \`__dep_cols__\` to define any number of columns:
+
+\`\`\`json
+{
+  "__cols__": [
+    { "key": "upos",    "name": "UPOS",       "values": ["ADJ", "NOUN", "VERB"] },
+    { "key": "xpos",    "name": "XPOS",       "values": ["ADJA", "NN", "VVFIN"] },
+    { "key": "entity",  "name": "Entity",     "values": ["PER", "ORG", "LOC", "O"] },
+    { "key": "animacy", "name": "Animacy",    "values": ["Anim", "Inan"] }
+  ],
+  "__dep_cols__": [
+    {
+      "key": "ud",
+      "name": "UD DepRel",
+      "groups": {
+        "Core arguments": ["nsubj", "obj", "iobj"],
+        "Other":          ["punct", "root", "dep"]
+      }
+    },
+    {
+      "key": "srl",
+      "name": "SRL",
+      "groups": {
+        "Arguments": ["ARG0", "ARG1", "ARG2", "ARGM"]
+      }
+    }
+  ]
+}
+\`\`\`
+
+| Key | Description |
+|-----|-------------|
+| \`__cols__\` | Array of label columns; \`key\` = internal field name, \`name\` = display name, \`values\` = dropdown options |
+| \`__dep_cols__\` | Array of dependency annotation layers; first layer = primary HEAD/DEPREL fields; additional layers get their own HEAD and DEPREL dropdowns in the popup |
+
+**CoNLL-U export:** \`__cols__[0]\` → UPOS column, \`__cols__[1]\` → XPOS column, further columns → MISC as \`key=value\`.
 
 Labels are saved with the session and restored on load.
+
+---
+
+## Upload / Download Tagset
+
+The tagset (label and dependency configuration) can be swapped at runtime — without restarting.
+
+### Upload
+
+1. Click **"📤 Upload tagset"**
+2. Select a JSON file (classic or extended format)
+3. The table, popups, and dropdowns update immediately
+
+### Download
+
+Click **"📥 Download tagset"** to export the current configuration as \`tagset.json\` — including any manually loaded customisations.
+
+The downloaded JSON can be edited directly and re-uploaded.
 
 ---
 
@@ -725,6 +955,80 @@ python make_readme_js.py
 \`\`\`
 
 This script reads \`README.md\` and \`README.en.md\` and writes \`generated/readme_content.js\`. Run it once after editing either README, then reload the page.
+
+---
+
+## Project Structure
+
+\`\`\`
+HTML_Editor/
+├── index.html                 ← Entry point; loads all scripts
+├── labels.js                  ← Default tagset (DEPREL groups, UPOS, XPOS)
+├── examples.js                ← Embedded demo data (three annotator files)
+├── start.bat                  ← Windows startup script (opens browser locally)
+├── bundler.py                 ← Builds dist/index.html (everything inline, no server needed)
+├── make_readme_js.py          ← Generates generated/readme_content.js from READMEs
+├── LICENSE
+│
+├── css/
+│   └── style.css              ← All CSS (dark/light mode, tables, arcs, tabs)
+│
+├── js/                        ← Application logic (load order: state → undo → projects → … → main)
+│   ├── state.js               ← Global state, LABEL_COLS, DEP_COLS, buildDeprelOptionsCache()
+│   ├── undo.js                ← Undo/redo stack (getUndoState / loadUndoState)
+│   ├── projects.js            ← Project tabs, snapshot-swap, autoAssignToProjects()
+│   ├── parser.js              ← CoNLL-U parser, processFiles(), recomputeMaxSents()
+│   ├── table.js               ← Comparison table, Gold popup, renderCompareTable()
+│   ├── tree.js                ← Text tree view, diff trees, renderSentence()
+│   ├── arcview.js             ← SVG arc diagram, drag & drop, cycle detection
+│   ├── export.js              ← CoNLL-U export, session import/export
+│   ├── keyboard.js            ← All keyboard shortcuts
+│   ├── i18n.js                ← Translation engine (t(), setLang(), registerLang())
+│   ├── theme.js               ← Dark/light mode toggle
+│   ├── help.js                ← Help modal (loads readme_content.js)
+│   └── main.js                ← Initialisation, event listeners, UI rendering
+│
+├── lang/
+│   ├── de.js                  ← German UI strings (window.LANG_DE)
+│   └── en.js                  ← English UI strings (window.LANG_EN)
+│
+├── generated/
+│   └── readme_content.js      ← Auto-generated by make_readme_js.py; contains README HTML
+│
+├── dist/
+│   └── index.html             ← Minified all-in-one bundle (built by bundler.py)
+│
+└── testdata/                  ← Example data for exploration
+    ├── template.json          ← Blank tagset template (format reference)
+    ├── vamos_ma_ruban.conllu  ← Standard demo: annotator comparison (UD schema)
+    ├── ai_ma_konopka.conllu   ← Standard demo: second annotator
+    ├── ner/                   ← Example: Named Entity Recognition
+    │   ├── tagset.json        ← NER tagset (UPOS + XPOS + BIO entity column)
+    │   ├── annotator_A.conllu
+    │   └── annotator_B.conllu
+    ├── srl/                   ← Example: Semantic Role Labeling
+    │   ├── tagset.json        ← SRL tagset (UD DepRel + SRL dependency layer)
+    │   ├── annotator_A.conllu
+    │   └── annotator_B.conllu
+    └── custom/                ← Example: Custom simplified schema
+        ├── tagset.json        ← Custom tagset (word class, animacy, sentiment, simplified syntax)
+        ├── annotator_A.conllu
+        └── annotator_B.conllu
+\`\`\`
+
+### Key Files at a Glance
+
+| File | Purpose |
+|------|---------|
+| \`index.html\` | Entry point; defines HTML structure and script load order |
+| \`labels.js\` | Default tagset; loaded at startup, replaceable via tagset upload |
+| \`examples.js\` | Demo data as a JS array; used by "Load demo" |
+| \`js/state.js\` | Central state store; \`LABEL_COLS\` and \`DEP_COLS\` control column configuration |
+| \`js/projects.js\` | Project management; snapshot-swap on tab switch; auto-assignment for different sentence counts |
+| \`js/arcview.js\` | SVG arc diagram with drag & drop and cycle detection |
+| \`js/export.js\` | Session format v2 (multi-project); backward-compatible with v1 |
+| \`bundler.py\` | Bundles all resources into \`dist/index.html\` for offline/embedded use |
+| \`make_readme_js.py\` | Converts \`README.md\` + \`README.en.md\` → \`generated/readme_content.js\` (for help modal) |
 
 ---
 

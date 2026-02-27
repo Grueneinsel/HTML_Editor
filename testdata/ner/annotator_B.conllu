@@ -1,0 +1,44 @@
+# newdoc
+# text = Angela Merkel besuchte Berlin im Jahr 2023 .
+# sent_id = ner-1
+# annotator = B
+# Unterschiede zu A: "Berlin" als obl statt obj; "Jahr" als nmod statt obl
+1	Angela	Angela	PROPN	NE	_	3	nsubj	_	_
+2	Merkel	Merkel	PROPN	NE	_	1	flat:name	_	_
+3	besuchte	besuchen	VERB	VVFIN	_	0	root	_	_
+4	Berlin	Berlin	PROPN	NE	_	3	obl	_	_
+5	im	in	ADP	APPRART	_	6	case	_	_
+6	Jahr	Jahr	NOUN	NN	_	3	nmod	_	_
+7	2023	2023	NUM	CARD	_	6	nummod	_	_
+8	.	.	PUNCT	$.	_	3	punct	_	_
+
+# text = Die Bundesregierung hat ein neues Reformpaket beschlossen .
+# sent_id = ner-2
+# annotator = B
+# Unterschied zu A: "Bundesregierung" als PROPN statt NOUN
+1	Die	die	DET	ART	_	2	det	_	_
+2	Bundesregierung	Bundesregierung	PROPN	NE	_	7	nsubj	_	_
+3	hat	haben	AUX	VAFIN	_	7	aux	_	_
+4	ein	ein	DET	ART	_	6	det	_	_
+5	neues	neu	ADJ	ADJA	_	6	amod	_	_
+6	Reformpaket	Reformpaket	NOUN	NN	_	7	obj	_	_
+7	beschlossen	beschließen	VERB	VVPP	_	0	root	_	_
+8	.	.	PUNCT	$.	_	7	punct	_	_
+
+# text = Peter Müller arbeitet seit Jahren bei der Deutschen Bank in Frankfurt .
+# sent_id = ner-3
+# annotator = B
+# Unterschiede zu A: "Deutschen" als PROPN+flat statt ADJ+amod; "Frankfurt" direkt an root statt nmod
+1	Peter	Peter	PROPN	NE	_	3	nsubj	_	_
+2	Müller	Müller	PROPN	NE	_	1	flat	_	_
+3	arbeitet	arbeiten	VERB	VVFIN	_	0	root	_	_
+4	seit	seit	ADP	APPR	_	5	case	_	_
+5	Jahren	Jahr	NOUN	NN	_	3	obl	_	_
+6	bei	bei	ADP	APPR	_	9	case	_	_
+7	der	die	DET	ART	_	9	det	_	_
+8	Deutschen	Deutsch	PROPN	NE	_	9	flat	_	_
+9	Bank	Bank	NOUN	NN	_	3	obl	_	_
+10	in	in	ADP	APPR	_	11	case	_	_
+11	Frankfurt	Frankfurt	PROPN	NE	_	3	obl	_	_
+12	.	.	PUNCT	$.	_	3	punct	_	_
+

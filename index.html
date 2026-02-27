@@ -44,11 +44,17 @@
   <main class="wrap">
     <section class="card">
       <h2 data-i18n="sec.files">1) Dateien</h2>
-      <input id="fileInput" type="file" accept=".conllu,.conll,.txt,.json" multiple class="fileHidden" />
+      <input id="fileInput"   type="file" accept=".conllu,.conll,.txt,.json" multiple class="fileHidden" />
+      <input id="tagsetInput" type="file" accept=".json" class="fileHidden" />
       <div class="row">
         <label id="addBtn" class="btnLike" for="fileInput" data-i18n="files.add">Dateien hinzufügen</label>
         <button id="resetBtn" class="danger" data-i18n="files.reset">Reset</button>
         <span id="fileMeta" class="muted"></span>
+      </div>
+      <div class="row" style="margin-top:6px">
+        <label class="btnLike" for="tagsetInput" data-i18n="tagset.upload">📤 Tagset hochladen</label>
+        <button id="tagsetDownloadBtn" data-i18n="tagset.download">📥 Tagset herunterladen</button>
+        <span id="tagsetMeta" class="muted small"></span>
       </div>
       <div id="fileList" class="fileList" style="margin-top:10px"></div>
       <div id="textWarn"></div>

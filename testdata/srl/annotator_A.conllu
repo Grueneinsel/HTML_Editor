@@ -1,0 +1,43 @@
+# newdoc
+# text = Der Polizist verhörte den Verdächtigen in der Nacht .
+# sent_id = srl-1
+# annotator = A
+# SRL (via Tool): Polizist=ARG0 verhörte=V Verdächtigen=ARG1 in-der-Nacht=ARGM-TMP
+1	Der	die	DET	ART	_	2	det	_	_
+2	Polizist	Polizist	NOUN	NN	_	3	nsubj	_	_
+3	verhörte	verhören	VERB	VVFIN	_	0	root	_	_
+4	den	die	DET	ART	_	5	det	_	_
+5	Verdächtigen	Verdächtig	NOUN	NN	_	3	obj	_	_
+6	in	in	ADP	APPR	_	8	case	_	_
+7	der	die	DET	ART	_	8	det	_	_
+8	Nacht	Nacht	NOUN	NN	_	3	obl:tmod	_	_
+9	.	.	PUNCT	$.	_	3	punct	_	_
+
+# text = Das Gericht verurteilte den Angeklagten zu einer Geldstrafe .
+# sent_id = srl-2
+# annotator = A
+# SRL (via Tool): Gericht=ARG0 verurteilte=V Angeklagten=ARG1 Geldstrafe=ARG2
+1	Das	die	DET	ART	_	2	det	_	_
+2	Gericht	Gericht	NOUN	NN	_	3	nsubj	_	_
+3	verurteilte	verurteilen	VERB	VVFIN	_	0	root	_	_
+4	den	die	DET	ART	_	5	det	_	_
+5	Angeklagten	Angeklagt	NOUN	NN	_	3	obj	_	_
+6	zu	zu	ADP	APPR	_	8	case	_	_
+7	einer	ein	DET	ART	_	8	det	_	_
+8	Geldstrafe	Geldstrafe	NOUN	NN	_	3	obl:arg	_	_
+9	.	.	PUNCT	$.	_	3	punct	_	_
+
+# text = Maria schenkte ihrem Bruder ein Buch zum Geburtstag .
+# sent_id = srl-3
+# annotator = A
+# SRL (via Tool): Maria=ARG0 schenkte=V Bruder=ARG2 Buch=ARG1 Geburtstag=ARGM-TMP
+1	Maria	Maria	PROPN	NE	_	2	nsubj	_	_
+2	schenkte	schenken	VERB	VVFIN	_	0	root	_	_
+3	ihrem	ihr	DET	PPOSAT	_	4	det	_	_
+4	Bruder	Bruder	NOUN	NN	_	2	iobj	_	_
+5	ein	ein	DET	ART	_	6	det	_	_
+6	Buch	Buch	NOUN	NN	_	2	obj	_	_
+7	zum	zu	ADP	APPRART	_	8	case	_	_
+8	Geburtstag	Geburtstag	NOUN	NN	_	2	obl:tmod	_	_
+9	.	.	PUNCT	$.	_	2	punct	_	_
+

@@ -1,0 +1,22 @@
+{
+  "_comment": "Leere Formatvorlage für den Tagset-Upload. Alle Felder sind optional.",
+
+  "__cols__": [
+    {
+      "key":    "FELDNAME",
+      "name":   "Anzeigename in der Spaltenüberschrift",
+      "values": ["Option1", "Option2", "Option3"]
+    }
+  ],
+
+  "__dep_cols__": [
+    {
+      "key":  "SCHEMANAME",
+      "name": "Anzeigename des Dependency-Schemas",
+      "groups": {
+        "Gruppe 1": ["label1", "label2", "label3"],
+        "Gruppe 2": ["label4", "label5"]
+      }
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+# newdoc
+# text = Der alte Mann liebte seinen treuen Hund sehr .
+# sent_id = custom-1
+# annotator = A
+# Schema: Wortart / Belebtheit / Sentiment  (via Tool-Popup eintragen)
+# DEPREL aus "Vereinfachte Syntax"; HEAD = Wort-ID des übergeordneten Tokens
+1	Der	_	_	_	_	2	Artikel	_	_
+2	alte	_	_	_	_	3	Attribut	_	_
+3	Mann	_	_	_	_	4	Subjekt	_	_
+4	liebte	_	_	_	_	0	Wurzel	_	_
+5	seinen	_	_	_	_	7	Artikel	_	_
+6	treuen	_	_	_	_	7	Attribut	_	_
+7	Hund	_	_	_	_	4	Objekt	_	_
+8	sehr	_	_	_	_	4	Adverbial	_	_
+9	.	_	_	_	_	4	Satzzeichen	_	_
+
+# text = Das schöne Wetter machte alle sehr glücklich .
+# sent_id = custom-2
+# annotator = A
+1	Das	_	_	_	_	3	Artikel	_	_
+2	schöne	_	_	_	_	3	Attribut	_	_
+3	Wetter	_	_	_	_	4	Subjekt	_	_
+4	machte	_	_	_	_	0	Wurzel	_	_
+5	alle	_	_	_	_	4	Objekt	_	_
+6	sehr	_	_	_	_	7	Adverbial	_	_
+7	glücklich	_	_	_	_	4	Prädikativ	_	_
+8	.	_	_	_	_	4	Satzzeichen	_	_
+
+# text = Die kleine Katze schlief leise auf dem warmen Sofa .
+# sent_id = custom-3
+# annotator = A
+1	Die	_	_	_	_	3	Artikel	_	_
+2	kleine	_	_	_	_	3	Attribut	_	_
+3	Katze	_	_	_	_	4	Subjekt	_	_
+4	schlief	_	_	_	_	0	Wurzel	_	_
+5	leise	_	_	_	_	4	Adverbial	_	_
+6	auf	_	_	_	_	9	Präposition	_	_
+7	dem	_	_	_	_	9	Artikel	_	_
+8	warmen	_	_	_	_	9	Attribut	_	_
+9	Sofa	_	_	_	_	4	Adverbial	_	_
+10	.	_	_	_	_	4	Satzzeichen	_	_
+

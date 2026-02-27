@@ -1,0 +1,31 @@
+{
+  "__cols__": [
+    {
+      "key": "pos",
+      "name": "Wortart",
+      "values": ["Substantiv","Verb","Adjektiv","Adverb","Pronomen","Artikel","Präposition","Konjunktion","Partikel","Interpunktion","Sonstiges"]
+    },
+    {
+      "key": "animacy",
+      "name": "Belebtheit",
+      "values": ["belebt","unbelebt","abstrakt","_"]
+    },
+    {
+      "key": "sentiment",
+      "name": "Sentiment",
+      "values": ["positiv","negativ","neutral","_"]
+    }
+  ],
+
+  "__dep_cols__": [
+    {
+      "key": "simple",
+      "name": "Vereinfachte Syntax",
+      "groups": {
+        "Satzglieder":   ["Subjekt","Objekt","Adverbial","Attribut","Prädikativ"],
+        "Funktionswort": ["Hilfsverb","Kopula","Artikel","Präposition","Konjunktion","Partikel"],
+        "Sonstiges":     ["Wurzel","Satzzeichen","Andere"]
+      }
+    }
+  ]
+}

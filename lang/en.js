@@ -95,6 +95,13 @@ window.LANG_EN = {
   'export.conlluDesc': 'Gold CoNLL-U contains all sentences with current Gold annotations (HEAD, DEPREL, UPOS, XPOS). LEMMA / FEATS / DEPS / MISC are taken from the source file.',
   'export.mwtNote':    'Note: Multi-word tokens (IDs with "-" or ".") are ignored.',
 
+  // Tagset
+  'tagset.upload':    '📤 Upload tagset',
+  'tagset.download':  '📥 Download tagset',
+  'tagset.loaded':    '{deprel} deprels · {upos} UPOS · {xpos} XPOS loaded',
+  'tagset.errJson':   'Invalid JSON file.',
+  'tagset.errFormat': 'Tagset must be a JSON object.',
+
   // Session
   'session.save':      '💾 Save session',
   'session.load':      '📂 Load session',

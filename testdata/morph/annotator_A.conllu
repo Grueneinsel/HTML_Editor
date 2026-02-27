@@ -1,0 +1,43 @@
+# newdoc
+# text = Der Bürgermeister hat die fleißige Lehrerin gelobt .
+# sent_id = morph-1
+# annotator = A
+# Schema: Genus (UPOS-Spalte) / Kasus (XPOS-Spalte) / Topologisches Feld (DEPREL)
+# HEAD zeigt auf das übergeordnete Stellungsfeld-Anker-Token; LK-Verb hat HEAD=0
+1	Der	_	Mask	Nom	_	2	VF	_	_
+2	Bürgermeister	_	Mask	Nom	_	3	VF	_	_
+3	hat	_	_	_	_	0	LK	_	_
+4	die	_	Fem	Akk	_	6	MF	_	_
+5	fleißige	_	Fem	Akk	_	6	MF	_	_
+6	Lehrerin	_	Fem	Akk	_	3	MF	_	_
+7	gelobt	_	_	_	_	3	RK	_	_
+8	.	_	_	_	_	3	Satzzeichen	_	_
+
+# text = Ein junges Mädchen spielte gestern mit seinem Hund .
+# sent_id = morph-2
+# annotator = A
+1	Ein	_	Neut	Nom	_	3	VF	_	_
+2	junges	_	Neut	Nom	_	3	VF	_	_
+3	Mädchen	_	Neut	Nom	_	4	VF	_	_
+4	spielte	_	_	_	_	0	LK	_	_
+5	gestern	_	_	_	_	4	MF	_	_
+6	mit	_	_	_	_	4	MF	_	_
+7	seinem	_	Mask	Dat	_	8	MF	_	_
+8	Hund	_	Mask	Dat	_	4	MF	_	_
+9	.	_	_	_	_	4	Satzzeichen	_	_
+
+# text = Wegen des schlechten Wetters blieb das Kind zu Hause .
+# sent_id = morph-3
+# annotator = A
+1	Wegen	_	_	_	_	5	VF	_	_
+2	des	_	Neut	Gen	_	4	VF	_	_
+3	schlechten	_	Neut	Gen	_	4	VF	_	_
+4	Wetters	_	Neut	Gen	_	5	VF	_	_
+5	blieb	_	_	_	_	0	LK	_	_
+6	das	_	Neut	Nom	_	7	MF	_	_
+7	Kind	_	Neut	Nom	_	5	MF	_	_
+8	zu	_	_	_	_	5	MF	_	_
+9	Hause	_	Neut	Dat	_	5	MF	_	_
+10	.	_	_	_	_	5	Satzzeichen	_	_
+
+

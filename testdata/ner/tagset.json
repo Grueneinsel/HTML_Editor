@@ -1,0 +1,27 @@
+{
+  "__cols__": [
+    {
+      "key": "upos",
+      "name": "UPOS",
+      "values": ["ADJ","ADP","ADV","AUX","CCONJ","DET","INTJ","NOUN","NUM","PART","PRON","PROPN","PUNCT","SCONJ","SYM","VERB","X"]
+    },
+    {
+      "key": "xpos",
+      "name": "XPOS",
+      "values": ["ADJA","ADJD","ADV","APPO","APPR","APPRART","APZR","ART","CARD","FM","ITJ","KOKOM","KON","KOUI","KOUS","NE","NN","NNE","PDAT","PDS","PIAT","PIS","PPER","PPOSAT","PPOSS","PRELAT","PRELS","PRF","PROAV","PTKA","PTKANT","PTKNEG","PTKVZ","PTKZU","PWAT","PWAV","PWS","TRUNC","VAFIN","VAIMP","VAINF","VAPP","VMFIN","VMINF","VMPP","VVFIN","VVIMP","VVINF","VVIZU","VVPP","XY","$,","$.","$("]
+    },
+    {
+      "key": "ner",
+      "name": "NER",
+      "values": ["O","B-PER","I-PER","B-ORG","I-ORG","B-LOC","I-LOC","B-MISC","I-MISC"]
+    }
+  ],
+
+  "Core arguments":      ["nsubj","obj","iobj","csubj","ccomp","xcomp"],
+  "Non-core dependents": ["obl","vocative","expl","dislocated"],
+  "Modifier words":      ["advcl","advmod","discourse"],
+  "Function Words":      ["aux","cop","mark"],
+  "Nominal dependents":  ["nmod","appos","nummod","acl","amod","det","clf","case"],
+  "Coordination":        ["conj","cc"],
+  "Other":               ["fixed","flat","list","parataxis","compound","orphan","goeswith","reparandum","punct","root","dep"]
+}

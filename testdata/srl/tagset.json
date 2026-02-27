@@ -1,0 +1,36 @@
+{
+  "__cols__": [
+    {
+      "key": "upos",
+      "name": "UPOS",
+      "values": ["ADJ","ADP","ADV","AUX","CCONJ","DET","INTJ","NOUN","NUM","PART","PRON","PROPN","PUNCT","SCONJ","SYM","VERB","X"]
+    }
+  ],
+
+  "__dep_cols__": [
+    {
+      "key": "ud",
+      "name": "UD DepRel",
+      "groups": {
+        "Core arguments":      ["nsubj","nsubj:pass","obj","iobj","csubj","ccomp","xcomp"],
+        "Non-core dependents": ["obl","obl:arg","obl:tmod","obl:loc","vocative","expl","dislocated"],
+        "Modifier words":      ["advcl","advmod","discourse"],
+        "Function Words":      ["aux","aux:pass","cop","mark"],
+        "Nominal dependents":  ["nmod","nmod:poss","appos","nummod","acl","acl:relcl","amod","det","clf","case"],
+        "Coordination":        ["conj","cc"],
+        "Other":               ["fixed","flat","flat:name","list","parataxis","compound","orphan","goeswith","reparandum","punct","root","dep"]
+      }
+    },
+    {
+      "key": "srl",
+      "name": "Semantic Role",
+      "groups": {
+        "Core roles":   ["ARG0","ARG1","ARG2","ARG3","ARG4"],
+        "Modifiers":    ["ARGM-TMP","ARGM-LOC","ARGM-MNR","ARGM-CAU","ARGM-PRP","ARGM-NEG","ARGM-MOD","ARGM-DIS","ARGM-ADV"],
+        "Predicate":    ["V"],
+        "Referential":  ["C-ARG0","C-ARG1","C-ARG2","R-ARG0","R-ARG1"],
+        "Other":        ["_"]
+      }
+    }
+  ]
+}

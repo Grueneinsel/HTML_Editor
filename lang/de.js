@@ -121,6 +121,13 @@ window.LANG_DE = {
   'kbd.help':         'Hilfe',
   'kbd.close':        'Schließen',
 
+  // Tagset
+  'tagset.upload':    '📤 Tagset hochladen',
+  'tagset.download':  '📥 Tagset herunterladen',
+  'tagset.loaded':    '{deprel} Deprel · {upos} UPOS · {xpos} XPOS geladen',
+  'tagset.errJson':   'Ungültige JSON-Datei.',
+  'tagset.errFormat': 'Tagset muss ein JSON-Objekt sein.',
+
   // Dropdown-Leerauswahl
   'label.empty': '(leer)',
 

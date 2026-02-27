@@ -1,0 +1,26 @@
+{
+  "__cols__": [
+    {
+      "key":    "upos",
+      "name":   "Genus",
+      "values": ["Mask", "Fem", "Neut", "Pl", "_"]
+    },
+    {
+      "key":    "xpos",
+      "name":   "Kasus",
+      "values": ["Nom", "Gen", "Dat", "Akk", "_"]
+    }
+  ],
+
+  "__dep_cols__": [
+    {
+      "key":  "topo",
+      "name": "Topologisches Feld",
+      "groups": {
+        "Stellungsfelder": ["VF", "LK", "MF", "RK", "NF"],
+        "Komplex":         ["C", "LV", "Einschub"],
+        "Sonstiges":       ["Ungebunden", "Wurzel", "Satzzeichen"]
+      }
+    }
+  ]
+}

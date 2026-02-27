@@ -28,12 +28,21 @@ function buildGoldTokenMap(sentIndex, idList, docMaps){
     const ce   = getCustomEntry(sentIndex, id);
     const pick = getDocChoice(sentIndex, id);
     const t    = docMaps[pick]?.get(id) || base;
-    // custom fields override the picked doc; nullish-coalesce falls through to picked doc
-    const head   = ce?.head   ?? t.head   ?? null;
-    const deprel = ce?.deprel ?? t.deprel ?? null;
-    const upos   = ce?.upos   ?? t.upos   ?? null;
-    const xpos   = ce?.xpos   ?? t.xpos   ?? null;
-    gold.set(id, { id, form: base.form, upos, xpos, head, deprel });
+    const tok  = { id, form: base.form };
+    // Primary dep (always head + deprel for backward compat)
+    tok.head   = ce?.head   ?? t.head   ?? null;
+    tok.deprel = ce?.deprel ?? t.deprel ?? null;
+    // Dynamic label columns
+    for(const col of LABEL_COLS){
+      tok[col.key] = ce?.[col.key] ?? t[col.key] ?? null;
+    }
+    // Additional dep columns (beyond the primary head/deprel)
+    for(let di = 1; di < DEP_COLS.length; di++){
+      const dc = DEP_COLS[di];
+      tok[dc.headField]   = ce?.[dc.headField]   ?? t[dc.headField]   ?? null;
+      tok[dc.deprelField] = ce?.[dc.deprelField] ?? t[dc.deprelField] ?? null;
+    }
+    gold.set(id, tok);
   }
   return gold;
 }
@@ -55,7 +64,8 @@ function renderCompareTable(){
   `;
 
   let html = "<thead><tr>";
-  html += `<th>${t('col.id')}</th><th>${t('col.form')}</th><th>${t('col.upos')}</th><th>${t('col.xpos')}</th>`;
+  html += `<th>${t('col.id')}</th><th>${t('col.form')}</th>`;
+  for(const col of LABEL_COLS) html += `<th>${escapeHtml(col.name)}</th>`;
   html += `<th>${t('col.gold')}</th>`;
   for(let i=0; i<state.docs.length; i++){
     if(state.hiddenCols.has(i)) continue;
@@ -70,31 +80,24 @@ function renderCompareTable(){
 
     const goldTok  = goldMap.get(id);
     const goldVal  = goldTok ? valueStr(goldTok.head, goldTok.deprel) : "—";
-    const goldUpos = goldTok?.upos ?? "_";
-    const goldXpos = goldTok?.xpos ?? "_";
 
     const ce           = getCustomEntry(sentIndex, id);
     const customExists = !!ce;
-    const customUpos   = getCustomUpos(sentIndex, id);
-    const customXpos   = getCustomXpos(sentIndex, id);
 
-    // per-file values (hd = "head / deprel", upos, xpos)
+    // per-file values
     const allVals = state.docs.map((_, i) => {
-      const t = docMaps[i].get(id);
-      if(!t) return null;
-      return { hd: valueStr(t.head, t.deprel), upos: t.upos ?? "_", xpos: t.xpos ?? "_" };
+      const tok = docMaps[i].get(id);
+      if(!tok) return null;
+      const v = { hd: valueStr(tok.head, tok.deprel) };
+      for(const col of LABEL_COLS) v[col.key] = tok[col.key] ?? "_";
+      return v;
     });
 
-    // row is "diff" if any file differs from gold in ANY of the four fields
+    // row is "diff" if any file differs from gold in any field
     const hasDiff = goldTok != null && allVals.some(v => v !== null && (
-      v.hd   !== goldVal  ||
-      v.upos !== goldUpos ||
-      v.xpos !== goldXpos
+      v.hd !== goldVal ||
+      LABEL_COLS.some(col => v[col.key] !== (goldTok[col.key] ?? "_"))
     ));
-
-    // does any file disagree with gold UPOS / XPOS?
-    const uposDiff = allVals.some(v => v !== null && v.upos !== goldUpos);
-    const xposDiff = allVals.some(v => v !== null && v.xpos !== goldXpos);
 
     const isFlagged = !!state.flags[sentIndex]?.has(id);
     let rowCls = hasDiff ? 'rowDiff' : '';
@@ -103,24 +106,25 @@ function renderCompareTable(){
     html += `<td>${id}<button class="flagBtn${isFlagged ? ' flagBtnActive' : ''}" title="${escapeHtml(t('flag.toggle'))}">!</button></td>`;
     html += `<td>${escapeHtml(form)}</td>`;
 
-    // UPOS / XPOS — inline editable dropdown (or text input if no options)
-    const uposEl = UPOS_OPTIONS_HTML
-      ? `<select data-col="upos" class="posInlineSelect">${UPOS_OPTIONS_HTML}</select>`
-      : `<input data-col="upos" type="text" class="posInlineInput" value="${escapeHtml(goldUpos)}">`;
-    html += `<td class="posCell${customUpos ? ' posCustom' : ''}${uposDiff ? ' posDiff' : ''}">${uposEl}</td>`;
+    // Dynamic label columns — inline editable dropdown or text input
+    for(const col of LABEL_COLS){
+      const goldColVal   = goldTok?.[col.key] ?? "_";
+      const customColVal = ce?.[col.key] ?? null;
+      const colDiff      = allVals.some(v => v !== null && v[col.key] !== goldColVal);
+      const colEl = col.optionsHtml
+        ? `<select data-col="${escapeHtml(col.key)}" class="posInlineSelect">${col.optionsHtml}</select>`
+        : `<input data-col="${escapeHtml(col.key)}" type="text" class="posInlineInput" value="${escapeHtml(goldColVal)}" placeholder="${escapeHtml(col.name)}">`;
+      html += `<td class="posCell${customColVal ? ' posCustom' : ''}${colDiff ? ' posDiff' : ''}" title="${escapeHtml(col.name)}">${colEl}</td>`;
+    }
 
-    const xposEl = XPOS_OPTIONS_HTML
-      ? `<select data-col="xpos" class="posInlineSelect">${XPOS_OPTIONS_HTML}</select>`
-      : `<input data-col="xpos" type="text" class="posInlineInput" value="${escapeHtml(goldXpos)}">`;
-    html += `<td class="posCell${customXpos ? ' posCustom' : ''}${xposDiff ? ' posDiff' : ''}">${xposEl}</td>`;
-
-    // GOLD column — HEAD/DEPREL + UPOS·XPOS
+    // GOLD column — HEAD/DEPREL + label cols posLine
     const goldSrc = customExists ? '<span class="srcTag srcCustom">C</span>' :
       `<span class="srcTag srcDoc">D${getDocChoice(sentIndex,id)+1}</span>`;
+    const posLineHtml = LABEL_COLS.map(col => escapeHtml(goldTok?.[col.key] ?? "_")).join('·');
     html += `<td data-col="gold" class="goldCell goldEditable" title="${escapeHtml(t('popup.editTitle'))}">${goldSrc} ${escapeHtml(goldVal)}` +
-      `<div class="posLine">${escapeHtml(goldUpos)}·${escapeHtml(goldXpos)}</div></td>`;
+      `<div class="posLine">${posLineHtml}</div></td>`;
 
-    // Per-file columns — HEAD/DEPREL + UPOS·XPOS with per-field diff coloring
+    // Per-file columns — HEAD/DEPREL + dynamic label cols with per-field diff coloring
     for(let i=0; i<state.docs.length; i++){
       if(state.hiddenCols.has(i)) continue;
       const v          = allVals[i];
@@ -129,16 +133,17 @@ function renderCompareTable(){
       if(v === null){
         html += `<td data-col="doc${i}" data-doc-idx="${i}" class="pickable ${clsDisabled} ${clsPicked}">—</td>`;
       } else {
-        const hdOk  = goldTok && v.hd   === goldVal;
-        const uOk   = goldTok && v.upos === goldUpos;
-        const xOk   = goldTok && v.xpos === goldXpos;
-        const clsCmp = goldTok ? (hdOk && uOk && xOk ? "same" : "diff") : "";
+        const hdOk      = goldTok && v.hd === goldVal;
+        const labelsOk  = LABEL_COLS.every(col => !goldTok || v[col.key] === (goldTok[col.key] ?? "_"));
+        const clsCmp    = goldTok ? (hdOk && labelsOk ? "same" : "diff") : "";
+        const labelSpans = LABEL_COLS.map(col => {
+          const gv = goldTok?.[col.key] ?? "_";
+          const ok = goldTok && v[col.key] === gv;
+          return `<span class="${ok ? '' : 'fDiff'}">${escapeHtml(v[col.key] ?? "_")}</span>`;
+        }).join('·');
         html += `<td data-col="doc${i}" data-doc-idx="${i}" class="pickable ${clsCmp} ${clsDisabled} ${clsPicked}">` +
           `<div class="${hdOk ? '' : 'fDiff'}">${escapeHtml(v.hd)}</div>` +
-          `<div class="posLine">` +
-            `<span class="${uOk ? '' : 'fDiff'}">${escapeHtml(v.upos)}</span>` +
-            `·<span class="${xOk ? '' : 'fDiff'}">${escapeHtml(v.xpos)}</span>` +
-          `</div></td>`;
+          `<div class="posLine">${labelSpans}</div></td>`;
       }
     }
 
@@ -148,12 +153,13 @@ function renderCompareTable(){
   html += "</tbody>";
   cmpTable.innerHTML = html;
 
-  // Set UPOS/XPOS select values (can't use 'selected' in HTML string efficiently)
+  // Set label-col select values after render (can't use 'selected' in innerHTML efficiently)
   for(const tr of cmpTable.querySelectorAll("tr[data-id]")){
     const id = parseInt(tr.dataset.id, 10);
     const gt = goldMap.get(id);
-    _setPosEl(tr, "upos", gt?.upos ?? "_");
-    _setPosEl(tr, "xpos", gt?.xpos ?? "_");
+    for(const col of LABEL_COLS){
+      _setPosEl(tr, col.key, gt?.[col.key] ?? "_");
+    }
   }
 
   // Reposition popup after re-render (if currently open)
@@ -177,29 +183,49 @@ function _ensurePopup(){
   _popup = document.createElement("div");
   _popup.className = "goldPopup";
 
-  const uposField = UPOS_OPTIONS_HTML
-    ? `<select id="gpUpos">${UPOS_OPTIONS_HTML}</select>`
-    : `<input id="gpUpos" type="text" class="gpTextInput" placeholder="UPOS">`;
-  const xposField = XPOS_OPTIONS_HTML
-    ? `<select id="gpXpos">${XPOS_OPTIONS_HTML}</select>`
-    : `<input id="gpXpos" type="text" class="gpTextInput" placeholder="XPOS">`;
+  // Build popup HTML dynamically from DEP_COLS and LABEL_COLS
+  const primaryDep = DEP_COLS[0];
+  let popupHtml = `<div class="gpTitle">Token <b id="gpNum"></b>: <span id="gpForm"></span></div>`;
+  // Primary dep col: head + deprel
+  popupHtml += `<div class="gpRow"><label>${t('popup.head')}</label><select id="gpHead"></select></div>`;
+  popupHtml += `<div class="gpRow"><label>${escapeHtml(primaryDep?.name || t('popup.deprel'))}</label><select id="gpDeprel">${primaryDep?.optionsHtml || DEPREL_OPTIONS_HTML}</select></div>`;
+  // Additional dep cols (key != "")
+  for(let di = 1; di < DEP_COLS.length; di++){
+    const dc = DEP_COLS[di];
+    popupHtml += `<div class="gpRow"><label>${escapeHtml(t('popup.head'))} (${escapeHtml(dc.name)})</label><select id="gpHead_${escapeHtml(dc.key)}"></select></div>`;
+    popupHtml += `<div class="gpRow"><label>${escapeHtml(dc.name)}</label><select id="gpDeprel_${escapeHtml(dc.key)}">${dc.optionsHtml}</select></div>`;
+  }
+  // Label cols
+  for(const col of LABEL_COLS){
+    const fieldEl = col.optionsHtml
+      ? `<select id="gpLabelCol_${escapeHtml(col.key)}">${col.optionsHtml}</select>`
+      : `<input id="gpLabelCol_${escapeHtml(col.key)}" type="text" class="gpTextInput" placeholder="${escapeHtml(col.name)}">`;
+    popupHtml += `<div class="gpRow"><label>${escapeHtml(col.name)}</label>${fieldEl}</div>`;
+  }
+  popupHtml += `<div class="gpActions"><button id="gpClear" class="danger" title="Shortcut: r">${t('popup.reset')}</button></div>`;
+  popupHtml += `<div class="gpHint">${t('popup.hint')}</div>`;
 
-  _popup.innerHTML = `
-    <div class="gpTitle">Token <b id="gpNum"></b>: <span id="gpForm"></span></div>
-    <div class="gpRow"><label>${t('popup.head')}</label><select id="gpHead"></select></div>
-    <div class="gpRow"><label>${t('popup.deprel')}</label><select id="gpDeprel">${DEPREL_OPTIONS_HTML}</select></div>
-    <div class="gpRow"><label>${t('popup.upos')}</label>${uposField}</div>
-    <div class="gpRow"><label>${t('popup.xpos')}</label>${xposField}</div>
-    <div class="gpActions"><button id="gpClear" class="danger" title="Shortcut: r">${t('popup.reset')}</button></div>
-    <div class="gpHint">${t('popup.hint')}</div>
-  `;
+  _popup.innerHTML = popupHtml;
   document.body.appendChild(_popup);
 
-  ["gpHead","gpDeprel","gpUpos","gpXpos"].forEach(eid => {
+  // Event listeners for primary dep col
+  ["gpHead", "gpDeprel"].forEach(eid => {
     const el = document.getElementById(eid);
-    if(!el) return;
-    el.addEventListener(el.tagName === "SELECT" ? "change" : "input", _onPopupChange);
+    if(el) el.addEventListener("change", _onPopupChange);
   });
+  // Event listeners for additional dep cols
+  for(let di = 1; di < DEP_COLS.length; di++){
+    const dc = DEP_COLS[di];
+    [`gpHead_${dc.key}`, `gpDeprel_${dc.key}`].forEach(eid => {
+      const el = document.getElementById(eid);
+      if(el) el.addEventListener("change", _onPopupChange);
+    });
+  }
+  // Event listeners for label cols
+  for(const col of LABEL_COLS){
+    const el = document.getElementById(`gpLabelCol_${col.key}`);
+    if(el) el.addEventListener(el.tagName === "SELECT" ? "change" : "input", _onPopupChange);
+  }
 
   document.getElementById("gpClear").addEventListener("click", () => {
     if(_popupTokId === null) return;
@@ -265,10 +291,29 @@ function _ensurePopup(){
 
 function _onPopupChange(e){
   if(_popupTokId === null) return;
-  const field = { gpHead:"head", gpDeprel:"deprel", gpUpos:"upos", gpXpos:"xpos" }[e.target.id];
-  if(!field) return;
+  const eid = e.target.id;
+  let field = null;
+  let isHead = false;
+
+  if(eid === "gpHead")   { field = "head";   isHead = true; }
+  else if(eid === "gpDeprel") { field = "deprel"; }
+  else {
+    // Additional dep cols
+    for(let di = 1; di < DEP_COLS.length; di++){
+      const dc = DEP_COLS[di];
+      if(eid === `gpHead_${dc.key}`)   { field = dc.headField;   isHead = true; break; }
+      if(eid === `gpDeprel_${dc.key}`) { field = dc.deprelField;               break; }
+    }
+    // Label cols
+    if(field === null){
+      for(const col of LABEL_COLS){
+        if(eid === `gpLabelCol_${col.key}`) { field = col.key; break; }
+      }
+    }
+  }
+  if(field === null) return;
   const raw = e.target.value.trim();
-  const val = field === "head"
+  const val = isHead
     ? (raw === "" ? null : (parseInt(raw, 10) >= 0 ? parseInt(raw, 10) : null))
     : (raw === "" ? null : raw);
   setCustomField(state.currentSent, _popupTokId, field, val);
@@ -299,6 +344,21 @@ function _setSelectOrInput(eid, value){
   }
 }
 
+function _buildHeadDropdown(selId, goldTok, headField){
+  const sel = document.getElementById(selId);
+  if(!sel) return;
+  sel.innerHTML = `<option value="0">0 — ${t('popup.root')}</option>`;
+  for(const id of _lastIdList){
+    let f = "?";
+    for(const m of _lastDocMaps){ const tok = m.get(id); if(tok){ f = tok.form; break; } }
+    const opt = document.createElement("option");
+    opt.value = String(id); opt.textContent = `${id}: ${f}`;
+    sel.appendChild(opt);
+  }
+  const hv = goldTok?.[headField];
+  sel.value = hv != null ? String(hv) : "0";
+}
+
 function _populatePopup(tokId){
   _ensurePopup();
   const si      = state.currentSent;
@@ -306,24 +366,24 @@ function _populatePopup(tokId){
 
   document.getElementById("gpNum").textContent = tokId;
   let form = "?";
-  for(const m of _lastDocMaps){ const t = m.get(tokId); if(t){ form = t.form; break; } }
+  for(const m of _lastDocMaps){ const tok = m.get(tokId); if(tok){ form = tok.form; break; } }
   document.getElementById("gpForm").textContent = form;
 
-  // Build HEAD dropdown from current sentence tokens
-  const headSel = document.getElementById("gpHead");
-  headSel.innerHTML = `<option value="0">0 — ${t('popup.root')}</option>`;
-  for(const id of _lastIdList){
-    let f = "?";
-    for(const m of _lastDocMaps){ const t = m.get(id); if(t){ f = t.form; break; } }
-    const opt = document.createElement("option");
-    opt.value = String(id); opt.textContent = `${id}: ${f}`;
-    headSel.appendChild(opt);
-  }
-  headSel.value = goldTok?.head != null ? String(goldTok.head) : "0";
-
+  // Primary dep col: head + deprel
+  _buildHeadDropdown("gpHead", goldTok, "head");
   _setSelectOrInput("gpDeprel", goldTok?.deprel ?? "");
-  _setSelectOrInput("gpUpos",   goldTok?.upos   ?? "_");
-  _setSelectOrInput("gpXpos",   goldTok?.xpos   ?? "_");
+
+  // Additional dep cols
+  for(let di = 1; di < DEP_COLS.length; di++){
+    const dc = DEP_COLS[di];
+    _buildHeadDropdown(`gpHead_${dc.key}`, goldTok, dc.headField);
+    _setSelectOrInput(`gpDeprel_${dc.key}`, goldTok?.[dc.deprelField] ?? "");
+  }
+
+  // Label cols
+  for(const col of LABEL_COLS){
+    _setSelectOrInput(`gpLabelCol_${col.key}`, goldTok?.[col.key] ?? "_");
+  }
 }
 
 function _openPopup(tokId, cellEl){
@@ -395,7 +455,7 @@ function _setPosEl(tr, field, value){
 cmpTable.addEventListener("change", (e) => {
   const el = e.target;
   const field = el.dataset?.col;
-  if(field !== "upos" && field !== "xpos") return;
+  if(!LABEL_COLS.some(col => col.key === field)) return;
   const tr = el.closest("tr[data-id]");
   if(!tr) return;
   const tokId = parseInt(tr.dataset.id, 10);

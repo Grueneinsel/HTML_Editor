@@ -148,17 +148,32 @@ Shows the current sentence as dependency trees. For each loaded file a diff tree
 | Symbol/Colour | Meaning |
 |---|---|
 | ✅ green | Edge identical to Gold |
-| ⚠️ yellow | Same HEAD but different DEPREL / UPOS / XPOS (`🅶X\|🅵Y`) |
+| ⚠️ yellow | Same HEAD but different DEPREL / label columns (`🅶X\|🅵Y`) |
 | 🅶 gold | Edge only in Gold |
 | 🅵 blue | Edge only in this file |
 | 🌱 | Subtree root |
 
-UPOS and XPOS differences are also annotated as `[UPOS:🅶X\|🅵Y]` and `[XPOS:🅶X\|🅵Y]`.
+Differences in label columns (e.g. UPOS/XPOS) are annotated as `[COLUMN:🅶X\|🅵Y]`.
 
 ### Interaction
 
 - **Click a line** → jumps to the corresponding row in the comparison table
 - **"→ Gold" button** at each 🌱 line → adopts the entire subtree as the Gold annotation
+
+### Interactive Arc Diagram (Gold view)
+
+The Gold arc diagram is directly editable:
+
+| Action | Function |
+|--------|---------|
+| **Drag a token** (drag & drop) | Draw a new arc from token to token → sets new HEAD |
+| **Deprel popup** | Appears automatically after dragging — or by clicking an arc label |
+| **× button** (hover over arc) | Deletes the arc (resets to root) |
+| **Click a token** (no drag) | Jumps to the corresponding table row |
+
+**Cycle detection:** If a new arc would create a cycle, the target flashes red and the assignment is rejected.
+
+**Arc colours** match the legend (green = matches Gold, yellow = DEPREL diff, gold = Gold only, blue = file only).
 
 ---
 
@@ -170,12 +185,11 @@ UPOS and XPOS differences are also annotated as `[UPOS:🅶X\|🅵Y]` and `[XPOS
 |--------|---------|
 | **ID** | Token ID |
 | **FORM** | Word form |
-| **UPOS** | Gold UPOS; yellow border when files differ; pink border on mismatch |
-| **XPOS** | Gold XPOS; pink border on mismatch |
-| **GOLD** | Current Gold annotation (`HEAD / DEPREL · UPOS·XPOS`); badge `C` = custom, `D1`/`D2`/… = file |
+| **Label columns** | One column per configured label category (default: UPOS, XPOS); yellow border when files differ |
+| **GOLD** | Current Gold annotation (`HEAD / DEPREL`); badge `C` = custom, `D1`/`D2`/… = file; label values shown below |
 | **File columns** | Each file's annotation; green = matches Gold, red = differs |
 
-In file columns, HEAD/DEPREL and UPOS·XPOS are highlighted individually — differing fields appear **red** (`.fDiff`).
+In file columns, HEAD/DEPREL and all label columns are highlighted individually — differing fields appear **red** (`.fDiff`).
 
 ### Gold Selection
 
@@ -189,9 +203,10 @@ In file columns, HEAD/DEPREL and UPOS·XPOS are highlighted individually — dif
 | Field | Input |
 |-------|-------|
 | HEAD | Dropdown of all tokens in the current sentence |
-| DEPREL | Dropdown (from `labels.js`) |
-| UPOS | Dropdown or free-text field |
-| XPOS | Dropdown or free-text field |
+| DEPREL (+ further dep layers) | Dropdown(s) from the tagset configuration |
+| Label columns | One dropdown or free-text field per configured label category |
+
+The number of fields adapts automatically to the loaded tagset configuration (any number of label columns and dependency layers supported).
 
 Changes are saved immediately as a custom entry. **"Reset"** removes the custom entry for this token.
 
@@ -322,7 +337,9 @@ registerLang('xx', window.LANG_XX);
 
 ## labels.js
 
-`labels.js` in the same folder as `index.html` defines the dropdown contents:
+`labels.js` in the same folder as `index.html` defines the dropdown contents.
+
+### Classic format (backward compatible)
 
 ```javascript
 const LABELS = {
@@ -330,7 +347,9 @@ const LABELS = {
   "Non-core dependents": ["obl", "advmod", ...],
   // ...
   "__upos__": ["ADJ", "ADP", "ADV", "AUX", ...],
-  "__xpos__": ["ADJA", "ADJD", "NN", "NE", ...]
+  "__xpos__": ["ADJA", "ADJD", "NN", "NE", ...],
+  "__upos_name__": "UPOS",   // optional display name
+  "__xpos_name__": "XPOS",
 };
 ```
 
@@ -339,8 +358,67 @@ const LABELS = {
 | Any string | Grouped section in the DEPREL dropdown |
 | `__upos__` | Options for the UPOS field (empty → free-text input) |
 | `__xpos__` | Options for the XPOS field (empty → free-text input) |
+| `__upos_name__` | Display name for the UPOS column |
+| `__xpos_name__` | Display name for the XPOS column |
+
+### Extended format — arbitrary number of label and dependency columns
+
+Use `__cols__` and `__dep_cols__` to define any number of columns:
+
+```json
+{
+  "__cols__": [
+    { "key": "upos",    "name": "UPOS",       "values": ["ADJ", "NOUN", "VERB"] },
+    { "key": "xpos",    "name": "XPOS",       "values": ["ADJA", "NN", "VVFIN"] },
+    { "key": "entity",  "name": "Entity",     "values": ["PER", "ORG", "LOC", "O"] },
+    { "key": "animacy", "name": "Animacy",    "values": ["Anim", "Inan"] }
+  ],
+  "__dep_cols__": [
+    {
+      "key": "ud",
+      "name": "UD DepRel",
+      "groups": {
+        "Core arguments": ["nsubj", "obj", "iobj"],
+        "Other":          ["punct", "root", "dep"]
+      }
+    },
+    {
+      "key": "srl",
+      "name": "SRL",
+      "groups": {
+        "Arguments": ["ARG0", "ARG1", "ARG2", "ARGM"]
+      }
+    }
+  ]
+}
+```
+
+| Key | Description |
+|-----|-------------|
+| `__cols__` | Array of label columns; `key` = internal field name, `name` = display name, `values` = dropdown options |
+| `__dep_cols__` | Array of dependency annotation layers; first layer = primary HEAD/DEPREL fields; additional layers get their own HEAD and DEPREL dropdowns in the popup |
+
+**CoNLL-U export:** `__cols__[0]` → UPOS column, `__cols__[1]` → XPOS column, further columns → MISC as `key=value`.
 
 Labels are saved with the session and restored on load.
+
+---
+
+## Upload / Download Tagset
+
+The tagset (label and dependency configuration) can be swapped at runtime — without restarting.
+
+### Upload
+
+1. Click **"📤 Upload tagset"**
+2. Select a JSON file (classic or extended format)
+3. The table, popups, and dropdowns update immediately
+
+### Download
+
+Click **"📥 Download tagset"** to export the current configuration as `tagset.json` — including any manually loaded customisations.
+
+The downloaded JSON can be edited directly and re-uploaded.
 
 ---
 
@@ -355,6 +433,80 @@ python make_readme_js.py
 ```
 
 This script reads `README.md` and `README.en.md` and writes `generated/readme_content.js`. Run it once after editing either README, then reload the page.
+
+---
+
+## Project Structure
+
+```
+HTML_Editor/
+├── index.html                 ← Entry point; loads all scripts
+├── labels.js                  ← Default tagset (DEPREL groups, UPOS, XPOS)
+├── examples.js                ← Embedded demo data (three annotator files)
+├── start.bat                  ← Windows startup script (opens browser locally)
+├── bundler.py                 ← Builds dist/index.html (everything inline, no server needed)
+├── make_readme_js.py          ← Generates generated/readme_content.js from READMEs
+├── LICENSE
+│
+├── css/
+│   └── style.css              ← All CSS (dark/light mode, tables, arcs, tabs)
+│
+├── js/                        ← Application logic (load order: state → undo → projects → … → main)
+│   ├── state.js               ← Global state, LABEL_COLS, DEP_COLS, buildDeprelOptionsCache()
+│   ├── undo.js                ← Undo/redo stack (getUndoState / loadUndoState)
+│   ├── projects.js            ← Project tabs, snapshot-swap, autoAssignToProjects()
+│   ├── parser.js              ← CoNLL-U parser, processFiles(), recomputeMaxSents()
+│   ├── table.js               ← Comparison table, Gold popup, renderCompareTable()
+│   ├── tree.js                ← Text tree view, diff trees, renderSentence()
+│   ├── arcview.js             ← SVG arc diagram, drag & drop, cycle detection
+│   ├── export.js              ← CoNLL-U export, session import/export
+│   ├── keyboard.js            ← All keyboard shortcuts
+│   ├── i18n.js                ← Translation engine (t(), setLang(), registerLang())
+│   ├── theme.js               ← Dark/light mode toggle
+│   ├── help.js                ← Help modal (loads readme_content.js)
+│   └── main.js                ← Initialisation, event listeners, UI rendering
+│
+├── lang/
+│   ├── de.js                  ← German UI strings (window.LANG_DE)
+│   └── en.js                  ← English UI strings (window.LANG_EN)
+│
+├── generated/
+│   └── readme_content.js      ← Auto-generated by make_readme_js.py; contains README HTML
+│
+├── dist/
+│   └── index.html             ← Minified all-in-one bundle (built by bundler.py)
+│
+└── testdata/                  ← Example data for exploration
+    ├── template.json          ← Blank tagset template (format reference)
+    ├── vamos_ma_ruban.conllu  ← Standard demo: annotator comparison (UD schema)
+    ├── ai_ma_konopka.conllu   ← Standard demo: second annotator
+    ├── ner/                   ← Example: Named Entity Recognition
+    │   ├── tagset.json        ← NER tagset (UPOS + XPOS + BIO entity column)
+    │   ├── annotator_A.conllu
+    │   └── annotator_B.conllu
+    ├── srl/                   ← Example: Semantic Role Labeling
+    │   ├── tagset.json        ← SRL tagset (UD DepRel + SRL dependency layer)
+    │   ├── annotator_A.conllu
+    │   └── annotator_B.conllu
+    └── custom/                ← Example: Custom simplified schema
+        ├── tagset.json        ← Custom tagset (word class, animacy, sentiment, simplified syntax)
+        ├── annotator_A.conllu
+        └── annotator_B.conllu
+```
+
+### Key Files at a Glance
+
+| File | Purpose |
+|------|---------|
+| `index.html` | Entry point; defines HTML structure and script load order |
+| `labels.js` | Default tagset; loaded at startup, replaceable via tagset upload |
+| `examples.js` | Demo data as a JS array; used by "Load demo" |
+| `js/state.js` | Central state store; `LABEL_COLS` and `DEP_COLS` control column configuration |
+| `js/projects.js` | Project management; snapshot-swap on tab switch; auto-assignment for different sentence counts |
+| `js/arcview.js` | SVG arc diagram with drag & drop and cycle detection |
+| `js/export.js` | Session format v2 (multi-project); backward-compatible with v1 |
+| `bundler.py` | Bundles all resources into `dist/index.html` for offline/embedded use |
+| `make_readme_js.py` | Converts `README.md` + `README.en.md` → `generated/readme_content.js` (for help modal) |
 
 ---
 

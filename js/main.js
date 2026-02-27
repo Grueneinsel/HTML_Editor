@@ -26,12 +26,59 @@ const sentMap         = document.getElementById("sentMap");
 const sentNoteRow     = document.getElementById("sentNoteRow");
 const sentNote        = document.getElementById("sentNote");
 
-const globalResetBtn = document.getElementById("globalResetBtn");
+const globalResetBtn    = document.getElementById("globalResetBtn");
+const tagsetInput       = document.getElementById("tagsetInput");
+const tagsetDownloadBtn = document.getElementById("tagsetDownloadBtn");
+const tagsetMeta        = document.getElementById("tagsetMeta");
 
 // ---------- Events ----------
 fileInput.addEventListener("change", onFilesChosen);
 resetBtn.addEventListener("click", resetProject);
 if(globalResetBtn) globalResetBtn.addEventListener("click", resetAll);
+
+// ── Tagset upload ─────────────────────────────────────────────────────────────
+if(tagsetInput){
+  tagsetInput.addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    e.target.value = "";
+    if(!file) return;
+    let data;
+    try {
+      const text = await file.text();
+      data = JSON.parse(text);
+    } catch {
+      alert(t("tagset.errJson"));
+      return;
+    }
+    if(typeof data !== "object" || Array.isArray(data) || !data){
+      alert(t("tagset.errFormat"));
+      return;
+    }
+    LABELS = data;
+    buildDeprelOptionsCache();
+    if(typeof _resetPopup === "function") _resetPopup();
+    renderSentence();
+    const deprelCount = Object.keys(LABELS).filter(k => !k.startsWith("__")).reduce((s, k) => s + (LABELS[k]?.length || 0), 0);
+    if(tagsetMeta) tagsetMeta.textContent = t("tagset.loaded", {
+      deprel: deprelCount,
+      upos: (LABELS["__upos__"] || []).length,
+      xpos: (LABELS["__xpos__"] || []).length,
+    });
+  });
+}
+
+// ── Tagset download ───────────────────────────────────────────────────────────
+if(tagsetDownloadBtn){
+  tagsetDownloadBtn.addEventListener("click", () => {
+    const json = JSON.stringify(LABELS, null, 2);
+    const blob = new Blob([json], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "tagset.json";
+    a.click();
+    URL.revokeObjectURL(a.href);
+  });
+}
 
 if(sentNote){
   sentNote.addEventListener("input", () => {

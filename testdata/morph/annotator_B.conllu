@@ -1,0 +1,44 @@
+# newdoc
+# text = Der Bürgermeister hat die fleißige Lehrerin gelobt .
+# sent_id = morph-1
+# annotator = B
+# Unterschiede zu A: "die" HEAD=3 (direkt an Verb statt an Lehrerin); "fleißige" Genus=Mask statt Fem; "gelobt" MF statt RK
+1	Der	_	Mask	Nom	_	2	VF	_	_
+2	Bürgermeister	_	Mask	Nom	_	3	VF	_	_
+3	hat	_	_	_	_	0	LK	_	_
+4	die	_	Fem	Akk	_	3	MF	_	_
+5	fleißige	_	Mask	Akk	_	6	MF	_	_
+6	Lehrerin	_	Fem	Akk	_	3	MF	_	_
+7	gelobt	_	_	_	_	3	MF	_	_
+8	.	_	_	_	_	3	Satzzeichen	_	_
+
+# text = Ein junges Mädchen spielte gestern mit seinem Hund .
+# sent_id = morph-2
+# annotator = B
+# Unterschiede zu A: "Mädchen" Genus=Fem (natürliches Geschlecht); "gestern" NF statt MF; "seinem" HEAD=4 statt 8
+1	Ein	_	Neut	Nom	_	3	VF	_	_
+2	junges	_	Neut	Nom	_	3	VF	_	_
+3	Mädchen	_	Fem	Nom	_	4	VF	_	_
+4	spielte	_	_	_	_	0	LK	_	_
+5	gestern	_	_	_	_	4	NF	_	_
+6	mit	_	_	_	_	4	MF	_	_
+7	seinem	_	Mask	Dat	_	4	MF	_	_
+8	Hund	_	Mask	Dat	_	4	MF	_	_
+9	.	_	_	_	_	4	Satzzeichen	_	_
+
+# text = Wegen des schlechten Wetters blieb das Kind zu Hause .
+# sent_id = morph-3
+# annotator = B
+# Unterschiede zu A: "schlechten" Genus=Mask statt Neut; "zu Hause" NF statt MF
+1	Wegen	_	_	_	_	5	VF	_	_
+2	des	_	Neut	Gen	_	4	VF	_	_
+3	schlechten	_	Mask	Gen	_	4	VF	_	_
+4	Wetters	_	Neut	Gen	_	5	VF	_	_
+5	blieb	_	_	_	_	0	LK	_	_
+6	das	_	Neut	Nom	_	7	MF	_	_
+7	Kind	_	Neut	Nom	_	5	MF	_	_
+8	zu	_	_	_	_	5	NF	_	_
+9	Hause	_	Neut	Dat	_	5	NF	_	_
+10	.	_	_	_	_	5	Satzzeichen	_	_
+
+
