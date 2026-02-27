@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
-# bundle.py — fixed entry: ./index.html, fixed output: ./dist/index.html
+# bundle.py — entry: ./index.html, output: ./dist/index.html
 #
-# Fix: When inlining JS into <script>...</script>, any literal "</script" inside
-# the JS (e.g. contained in README strings) would prematurely terminate the tag.
-# We escape it to "<\/script" (same runtime string, safe for HTML parser).
-#
-# Optional: same for CSS "</style".
+# Includes:
+# - inline local CSS/JS
+# - fixes "</script" inside inlined JS to "<\/script"
+# - minifies HTML aggressively + minifies inline CSS conservatively
 
 from __future__ import annotations
 import re
@@ -22,6 +21,10 @@ OUT_HTML = OUT_DIR / "index.html"
 # Optional: README -> generated/readme_content.js aktualisieren
 MAKE_README_JS = ROOT / "make_readme_js.py"
 
+# Aggressive: removes whitespace text nodes between tags: `>   <` -> `><`
+# WARNING: can change visual spacing if you rely on whitespace between inline elements.
+AGGRESSIVE_REMOVE_INTERTAG_WHITESPACE = True
+
 LINK_RE = re.compile(
     r"""<link\b([^>]*?)\brel\s*=\s*["']stylesheet["']([^>]*?)>""",
     re.IGNORECASE,
@@ -30,6 +33,11 @@ HREF_RE = re.compile(r"""href\s*=\s*["']([^"']+)["']""", re.IGNORECASE)
 
 SCRIPT_RE = re.compile(
     r"""<script\b([^>]*?)\bsrc\s*=\s*["']([^"']+)["']([^>]*)>\s*</script>""",
+    re.IGNORECASE | re.DOTALL,
+)
+
+RAW_BLOCK_RE = re.compile(
+    r"""<(script|style|pre|textarea)\b[^>]*>.*?</\1>""",
     re.IGNORECASE | re.DOTALL,
 )
 
@@ -44,6 +52,46 @@ def is_external(url: str) -> bool:
 
 def read_text(p: Path) -> str:
     return p.read_text(encoding="utf-8")
+
+def minify_css(css: str) -> str:
+    # remove /* ... */ comments
+    css = re.sub(r"/\*.*?\*/", "", css, flags=re.DOTALL)
+    # collapse whitespace
+    css = re.sub(r"\s+", " ", css)
+    # tighten around safe punctuation
+    css = re.sub(r"\s*([{}:;,])\s*", r"\1", css)
+    css = css.replace(";}", "}")
+    return css.strip()
+
+def protect_raw_blocks(html: str) -> tuple[str, list[str]]:
+    blocks: list[str] = []
+
+    def repl(m: re.Match) -> str:
+        blocks.append(m.group(0))
+        return f"__RAW_BLOCK_{len(blocks)-1}__"
+
+    return RAW_BLOCK_RE.sub(repl, html), blocks
+
+def restore_raw_blocks(html: str, blocks: list[str]) -> str:
+    for i, b in enumerate(blocks):
+        html = html.replace(f"__RAW_BLOCK_{i}__", b)
+    return html
+
+def minify_html_markup(html: str) -> str:
+    # Protect raw blocks (script/style/pre/textarea) from HTML minify
+    outside, blocks = protect_raw_blocks(html)
+
+    # Remove HTML comments
+    outside = re.sub(r"<!--.*?-->", "", outside, flags=re.DOTALL)
+
+    # Collapse whitespace generally
+    outside = re.sub(r"\s+", " ", outside)
+
+    if AGGRESSIVE_REMOVE_INTERTAG_WHITESPACE:
+        outside = re.sub(r">\s+<", "><", outside)
+
+    outside = outside.strip()
+    return restore_raw_blocks(outside, blocks)
 
 def inline_css(html: str, base_dir: Path) -> str:
     def repl(m: re.Match) -> str:
@@ -60,11 +108,12 @@ def inline_css(html: str, base_dir: Path) -> str:
             raise FileNotFoundError(f"CSS not found: {href} -> {css_path}")
 
         css = read_text(css_path)
+        css = minify_css(css)
 
         # Optional safety: prevent premature </style> close if it ever appears in CSS text
         css = re.sub(r"</style", r"<\\/style", css, flags=re.IGNORECASE)
 
-        return f"<!-- inlined: {href} -->\n<style>\n{css}\n</style>"
+        return f"<!-- inlined: {href} --><style>{css}</style>"
 
     return LINK_RE.sub(repl, html)
 
@@ -83,15 +132,16 @@ def inline_js(html: str, base_dir: Path) -> str:
 
         js = read_text(js_path)
 
-        # CRITICAL FIX: prevent premature </script> termination when inlined
+        # CRITICAL FIX for README etc: prevent premature </script> termination when inlined
         js = re.sub(r"</script", r"<\\/script", js, flags=re.IGNORECASE)
 
-        # andere Attribute behalten (type="module", defer, nomodule, ...)
+        # keep other attributes except src
         attrs = (before_attrs + " " + after_attrs).strip()
         attrs = re.sub(r"""\bsrc\s*=\s*["'][^"']+["']""", "", attrs, flags=re.IGNORECASE).strip()
         attrs_str = f" {attrs}" if attrs else ""
 
-        return f"<!-- inlined: {src} -->\n<script{attrs_str}>\n{js}\n</script>"
+        # keep a short marker comment (will be removed by HTML minifier anyway)
+        return f"<!-- inlined: {src} --><script{attrs_str}>\n{js}\n</script>"
 
     return SCRIPT_RE.sub(repl, html)
 
@@ -100,16 +150,19 @@ def main() -> int:
         print(f"Missing entry: {ENTRY}", file=sys.stderr)
         return 2
 
-    # README JS Generator laufen lassen (optional)
+    # Optional: generate readme JS first
     if MAKE_README_JS.exists():
-        # check=False: bundlen soll trotzdem gehen, falls README-Gen mal fehlschlägt
         subprocess.run([sys.executable, str(MAKE_README_JS)], cwd=str(ROOT), check=False)
 
     base_dir = ENTRY.parent
     html = read_text(ENTRY)
 
+    # Inline assets
     html = inline_css(html, base_dir)
     html = inline_js(html, base_dir)
+
+    # Minify HTML markup
+    html = minify_html_markup(html)
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     OUT_HTML.write_text(html, encoding="utf-8")

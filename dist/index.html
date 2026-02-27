@@ -1,645 +1,4 @@
-<!doctype html>
-<html lang="de">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>CoNLL-U Vergleich</title>
-  <!-- inlined: css/style.css -->
-<style>
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;800&display=swap');
-
-:root{
-  --bg:#090d12;
-  --card:#0f1620;
-  --card2:#111a26;
-  --line:#1e2e42;
-  --line2:#243548;
-  --text:#dde8f5;
-  --muted:#7a96b5;
-  --bad:#ff5f5f;
-  --ok:#3de89a;
-  --warn:#f5c842;
-  --gold:#ff9f43;
-  --file:#5b9fff;
-  --accent:#4a9eff;
-  --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
-}
-*{ box-sizing:border-box }
-body{ margin:0; font-family:var(--sans); background:var(--bg); color:var(--text); font-size:13px }
-
-/* Header */
-.bar{
-  padding:14px 20px;
-  border-bottom:1px solid var(--line);
-  background: linear-gradient(135deg, #0a1118 0%, #0f1928 100%);
-  display:flex; gap:16px; align-items:center; flex-wrap:wrap;
-}
-.bar h1{ margin:0; font-size:17px; font-weight:800; letter-spacing:-.3px }
-.bar p { margin:0; font-size:12px; color:var(--muted) }
-
-/* Language switcher */
-.langBar{ display:flex; gap:4px; margin-left:auto; }
-.langBtn{
-  width:28px; height:28px; padding:0;
-  border-radius:6px; font-size:16px;
-  border-color:transparent; background:transparent;
-  opacity:.55; transition:opacity .15s, border-color .15s;
-}
-.langBtn:hover:not(:disabled){ opacity:1; border-color:var(--line2); background:#0f1a2a; }
-.langBtnActive{ opacity:1 !important; border-color:var(--accent) !important; background:#0d1e33 !important; }
-kbd{ display:inline-block; padding:1px 5px; border-radius:4px; border:1px solid var(--line2); background:#0f1a2a; font-family:var(--mono); font-size:10px; color:var(--text) }
-
-/* Layout */
-.wrap{ max-width:1440px; margin:0 auto; padding:14px; display:grid; gap:10px }
-.card{
-  background:var(--card);
-  border:1px solid var(--line);
-  border-radius:14px;
-  padding:14px;
-}
-h2{ margin:0 0 10px 0; font-size:13px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.5px }
-
-.muted{ color:var(--muted) }
-.small{ font-size:11px }
-.row{ display:flex; gap:8px; align-items:center; flex-wrap:wrap }
-
-/* Controls */
-button, select, input, .btnLike{
-  border:1px solid var(--line2);
-  background:#0c1420;
-  color:var(--text);
-  border-radius:8px;
-  padding:7px 12px;
-  cursor:pointer;
-  font-size:12px;
-  font-family:var(--sans);
-  transition: border-color .15s, background .15s;
-}
-button:hover:not(:disabled), .btnLike:hover{ border-color:var(--accent); background:#101e2f }
-button:disabled, select:disabled{ opacity:.45; cursor:not-allowed }
-button.danger{ border-color:#4a1f1f; background:#160b0b; color:#ff7e7e }
-button.danger:hover:not(:disabled){ border-color:#ff5f5f; background:#1e0e0e }
-
-.sentText{
-  margin-top:8px; padding:10px 14px;
-  border:1px solid var(--line);
-  border-radius:10px;
-  background:#0c1420;
-  font-family:var(--mono);
-  font-size:13px;
-  line-height:1.5;
-}
-
-/* Sentence map */
-.sentMap{ display:flex; flex-wrap:wrap; gap:4px; margin-top:10px; max-height:96px; overflow-y:auto; padding-right:4px; }
-
-/* Progress indicator */
-.progressMeta{ margin-left:auto; font-size:.75rem; opacity:.7; }
-.sentDot{
-  width:14px; height:14px; border-radius:3px; padding:0; border:2px solid transparent;
-  cursor:pointer; transition:transform .1s, border-color .1s;
-}
-.sentDot:hover{ transform:scale(1.3); }
-.sentDotOk       { background:#1a4a2e; border-color:#2a7a4a; }
-.sentDotDiff     { background:#4a1a1a; border-color:#8a3030; }
-.sentDotConfirmed{ background:#3a2600; border-color:#c07a10; }
-.sentDotCurrent  { border-color:#4a9eff !important; transform:scale(1.25); }
-
-/* Confirm button */
-.confirmBtn{ border-color:#5a3a00; background:#1a1000; color:#cc8800; }
-.confirmBtn:hover:not(:disabled){ border-color:#ff9f43; background:#261800; color:#ffb347; }
-.confirmBtnActive{ border-color:#ff9f43 !important; background:#261800 !important; color:#ffb347 !important; }
-
-/* Sentence text box — gold border when confirmed */
-.sentTextConfirmed{ border-color:#c07a10 !important; background:#13100a !important; }
-
-/* Clickable tokens in sentence text */
-.sentToken{
-  cursor:pointer;
-  border-radius:3px;
-  padding:1px 3px;
-  transition:background .12s;
-}
-.sentToken:hover{ background:rgba(255,255,255,.10); }
-.sentTokenActive{
-  background:#0d2040;
-  outline:1px solid var(--accent);
-  outline-offset:1px;
-  border-radius:3px;
-}
-
-/* Sentence stats */
-.sentStatsRow{ display:flex; gap:6px; align-items:center; flex-wrap:wrap }
-.statBadge{
-  display:inline-block; padding:3px 10px; border-radius:20px;
-  font-size:11px; font-weight:700; font-family:var(--mono);
-  background:#1a2535; border:1px solid var(--line2);
-}
-.statOk{ color:var(--ok); border-color:#1a4030; background:#0d2420 }
-.statDiff{ color:var(--bad); border-color:#4a1a1a; background:#200d0d }
-
-/* Tables */
-.tableWrap{ overflow:auto; border:1px solid var(--line); border-radius:12px }
-table{ width:100%; border-collapse:collapse; font-family:var(--mono); font-size:12px }
-th, td{
-  border-bottom:1px solid var(--line);
-  padding:7px 10px;
-  white-space:nowrap;
-  vertical-align:middle;
-}
-th{ text-align:left; color:var(--muted); position:sticky; top:0; background:var(--card); font-size:11px; font-weight:700; letter-spacing:.3px }
-tr:last-child td{ border-bottom:none }
-
-.same{ color:var(--ok); font-weight:700 }
-.diff{ color:var(--bad); font-weight:700 }
-/* field-level diff coloring inside file cells */
-.fDiff{ color:var(--bad); font-weight:600 }
-/* UPOS·XPOS sub-line inside cells */
-.posLine{ font-size:10px; color:var(--muted); margin-top:2px; line-height:1.3 }
-/* UPOS/XPOS gold column — slightly dimmer */
-.goldPos{ opacity:.8 }
-/* UPOS or XPOS column cell when files disagree */
-.posDiff{ outline:1px solid #ff79c6; outline-offset:-2px; border-radius:4px }
-.posCell{ color:var(--muted) }
-
-/* Inline UPOS/XPOS select / input inside table cells */
-td select.posInlineSelect, td input.posInlineInput{
-  border:none !important;
-  background:transparent !important;
-  color:inherit !important;
-  font-family:var(--mono) !important;
-  font-size:12px !important;
-  padding:0 !important;
-  margin:0 !important;
-  border-radius:0 !important;
-  width:100%;
-  min-width:0;
-  cursor:pointer;
-  box-shadow:none;
-}
-td select.posInlineSelect:focus, td input.posInlineInput:focus{
-  outline:1px solid var(--accent) !important;
-  border-radius:3px !important;
-}
-td input.posInlineInput{ cursor:text !important; }
-.rowDiff td:first-child{ border-left:3px solid #ff5f5f44 }
-.goldCell{ font-weight:700; color:var(--text) }
-/* Gold cell — editable (click to open popup) */
-.goldEditable{ cursor:pointer; }
-.goldEditable:hover{ background:#0e1e32; outline:1px solid var(--accent); outline-offset:-2px; border-radius:4px; }
-
-/* ── Gold-edit popup ── */
-.goldPopup{
-  display:none;
-  position:fixed; z-index:5000;
-  background:var(--card2);
-  border:1px solid var(--line2);
-  border-radius:12px;
-  padding:14px 16px;
-  min-width:230px;
-  box-shadow:0 8px 40px rgba(0,0,0,.65);
-}
-.goldPopup.active{ display:block; }
-.gpTitle{ font-size:11px; color:var(--muted); font-weight:700; margin-bottom:10px; }
-.gpTitle b{ color:var(--accent); }
-.gpRow{ display:flex; align-items:center; gap:8px; margin-bottom:6px; }
-.gpRow label{ font-size:11px; color:var(--muted); width:46px; flex-shrink:0; text-align:right; }
-.gpRow select, .gpRow input.gpTextInput{
-  flex:1; font-size:11px; padding:3px 6px;
-  border-radius:6px; border:1px solid var(--line2);
-  background:#0c1420; color:var(--text);
-}
-.gpActions{ margin-top:10px; display:flex; justify-content:flex-end; }
-.gpActions button{ font-size:11px; padding:4px 10px; }
-.gpHint{ font-size:10px; color:var(--muted); margin-top:6px; text-align:center; opacity:.7; }
-tr.keyFocus > td{ background:#0d2040 }
-tr.keyFocus > td:first-child{ border-left:2px solid var(--accent) }
-
-/* Source tag in GOLD column */
-.srcTag{
-  display:inline-block; padding:1px 5px; border-radius:4px;
-  font-size:10px; font-weight:800; font-family:var(--mono);
-  margin-right:4px; vertical-align:middle;
-}
-.srcCustom{ background:#1a3a5c; color:var(--accent); border:1px solid #234; }
-.srcDoc{ background:#1a2a1e; color:#6dce8a; border:1px solid #1d3825; }
-
-/* Highlight on scroll-to */
-@keyframes highlightPulse {
-  0%   { background: #1e3a5a }
-  50%  { background: #244a70 }
-  100% { background: transparent }
-}
-.highlightRow td{ animation: highlightPulse 1.6s ease-out }
-
-/* Full-page drop overlay */
-.dropOverlay{
-  display:none;
-  position:fixed; inset:0; z-index:9999;
-  background: rgba(9,13,18,.82);
-  backdrop-filter: blur(6px);
-  align-items:center; justify-content:center;
-  animation: overlayIn .15s ease-out;
-}
-.dropOverlay.active{ display:flex; }
-.dropOverlayInner{
-  display:flex; flex-direction:column; align-items:center; gap:12px;
-  padding:40px 56px;
-  border:2px dashed var(--accent);
-  border-radius:20px;
-  background:#0a1622cc;
-  animation: dropPulse .9s ease-in-out infinite;
-}
-.dropOverlayIcon{
-  font-size:56px;
-  animation: dropBounce .7s ease-in-out infinite;
-}
-.dropOverlayText{
-  font-size:22px; font-weight:800;
-  color:var(--accent); letter-spacing:-.3px;
-}
-.dropOverlaySub{ font-size:12px; color:var(--muted); }
-@keyframes overlayIn{
-  from{ opacity:0; } to{ opacity:1; }
-}
-@keyframes dropBounce{
-  0%,100%{ transform: translateY(0) scale(1); }
-  50%    { transform: translateY(-10px) scale(1.08); }
-}
-
-/* Persistent text-mismatch indicator */
-.textWarnBanner{
-  margin-top:8px; padding:8px 12px;
-  border:1px solid #6b2e0a; border-radius:8px;
-  background:#1a0c04; color:#ff9f43;
-  font-size:11px; line-height:1.5;
-}
-
-/* File list + Drop zone */
-.fileList{
-  display:grid; gap:6px;
-  min-height:72px;
-  border:2px dashed transparent;
-  border-radius:12px;
-  padding:4px;
-  transition: border-color .2s, background .2s, box-shadow .2s;
-}
-.fileList.dragOver{
-  border-color: var(--accent);
-  background: #0d1e35;
-  animation: dropPulse .9s ease-in-out infinite;
-}
-@keyframes dropPulse{
-  0%,100%{ box-shadow: 0 0 0 0 #4a9eff33 }
-  50%    { box-shadow: 0 0 0 10px #4a9eff00 }
-}
-.fileItem{
-  display:flex; gap:10px; align-items:center; justify-content:space-between;
-  border:1px solid var(--line); border-radius:10px; padding:8px 12px; background:#0c1420;
-}
-.fileItem .left{ display:flex; flex-direction:column; gap:2px }
-.fileItem .name{ font-weight:700; font-size:12px }
-.fileItem .meta{ font-size:11px; color:var(--muted) }
-.fileItem button{ padding:5px 10px }
-.fileWarnIcon{ font-size:13px; vertical-align:middle; margin-left:4px; cursor:default }
-
-/* Tree blocks */
-.treeGrid{
-  display:block;
-}
-.treeBlock{
-  border:1px solid var(--line);
-  border-radius:12px;
-  background:var(--card2);
-  overflow:hidden;
-}
-.treeBlockStacked{
-  display:flex;
-  flex-direction:column;
-}
-.treeSection{
-  border-bottom:1px solid var(--line);
-}
-.treeSection:last-child{
-  border-bottom:none;
-}
-.treeHead{
-  padding:7px 12px; border-bottom:1px solid var(--line);
-  display:flex; gap:8px; align-items:center; justify-content:space-between;
-  background:#0f1e30;
-}
-.treeHead .title{ font-weight:800; font-size:12px }
-.treeHead .sub{ color:var(--muted); font-size:11px }
-.treeLineRoot{ display:flex; align-items:center; gap:8px; white-space:pre }
-.treeSubtreeBtn{
-  padding:2px 8px; font-size:10px; font-family:var(--sans);
-  border-color:#c07a10; color:#1a0e00; background:var(--gold);
-  border-radius:6px; flex-shrink:0; font-weight:700;
-}
-.treeSubtreeBtn:hover{ border-color:#ffb94e; background:#ffb94e }
-.treePre{
-  margin:0; padding:10px 12px;
-  font-family:var(--mono); font-size:12px;
-  white-space:pre; overflow:auto;
-  line-height:1.6;
-}
-.treeLine{ display:block }
-.treeLineClickable{
-  cursor:pointer;
-  border-radius:4px;
-  transition: background .1s;
-}
-.treeLineClickable:hover{ background:#1a2f48 }
-
-/* Legend icons in tree */
-.legendOk  { color:var(--ok);   font-weight:700 }
-.legendWarn{ color:var(--warn); font-weight:700 }
-.legendGold{ color:var(--gold); font-weight:700 }
-.legendFile{ color:var(--file); font-weight:700 }
-
-/* Tree line coloring */
-.treeLineOk      { color:var(--ok) }
-.treeLineWarn    { color:var(--warn) }
-.treeLineGold    { color:var(--gold) }
-.treeLineFileOnly{ color:var(--file) }
-
-/* Clickable (pickable) doc cells */
-.pickable{ cursor:pointer; user-select:none }
-.pickable:hover{ outline:2px solid #2a5080; outline-offset:-2px; border-radius:6px }
-.picked{ outline:2px solid #4a9eff66; outline-offset:-2px; border-radius:6px; background:#0f2038 }
-.disabledPick{ opacity:.4; cursor:not-allowed }
-
-/* Custom cell */
-.customCell{ display:flex; gap:6px; align-items:center }
-.customCell input, .customCell select{
-  font-family:var(--mono); font-size:12px;
-  padding:5px 8px; border-radius:7px;
-}
-.customHead{ width:72px }
-.customRelSelect{ width:160px }
-
-/* Column toggle bar */
-.colToggleBar{ display:flex; gap:6px; align-items:center; flex-wrap:wrap; margin-bottom:2px }
-.colToggle{
-  font-size:11px; padding:4px 10px; border-radius:20px;
-  transition: opacity .15s, border-color .15s;
-}
-.colVisible{ border-color:#2a4a6a; color:var(--accent); background:#0d1f33 }
-.colVisible:hover{ border-color:var(--accent) }
-.colHidden{ border-color:#2a2a3a; color:#556; background:#0c0f16; opacity:.6 }
-.colHidden:hover{ opacity:1; border-color:#445 }
-
-/* File input hidden */
-.fileHidden{
-  position:absolute; left:-9999px; width:1px; height:1px; opacity:0;
-}
-.btnLike{ display:inline-block; user-select:none }
-.btnLike:active{ transform: translateY(1px) }
-
-/* Gold tree section highlighted background */
-.treeSection:first-child {
-  background: linear-gradient(135deg, #1a1500 0%, #1f1a00 60%, #141200 100%);
-}
-.treeSection:first-child .treeHead {
-  background: #211900;
-  border-bottom-color: #3a3000;
-}
-.treeSection:first-child .treeHead .title {
-  color: #f5c842;
-}
-.treeSection:first-child .treePre {
-  background: transparent;
-}
-.treeSection:not(:first-child) .treeHead {
-  background: #0f1a28;
-}
-
-/* ── Help-Button im Header ── */
-.helpBtn{
-  width:30px; height:30px;
-  border-radius:50%;
-  padding:0;
-  font-size:15px; font-weight:800;
-  flex-shrink:0;
-  margin-left:auto;
-}
-
-/* ── Help-Modal ── */
-.helpModal{
-  display:none;
-  position:fixed; inset:0; z-index:10000;
-  background:rgba(9,13,18,.88);
-  backdrop-filter:blur(5px);
-  align-items:flex-start; justify-content:center;
-  padding:32px 12px;
-  animation:overlayIn .15s ease-out;
-}
-.helpModal.active{ display:flex; }
-.helpModalBox{
-  position:relative;
-  width:calc(100% - 24px);
-  min-width:0;
-  max-height:calc(100vh - 64px);
-  overflow-x:hidden;
-  overflow-y:auto;
-  background:var(--card);
-  border:1px solid var(--line2);
-  border-radius:16px;
-  padding:28px 32px 36px;
-  scrollbar-gutter:stable;
-}
-#helpCloseBtn{
-  position:absolute; top:14px; right:16px;
-  width:28px; height:28px;
-  padding:0; border-radius:50%; font-size:13px;
-}
-
-/* ── Gerendertes Markdown ── */
-.helpContent{ line-height:1.6; overflow-wrap:break-word; word-break:break-word; }
-.helpContent .helpH{ margin:0 0 8px; }
-.helpContent h1.helpH{ font-size:20px; font-weight:800; color:var(--text); padding-right:40px; }
-.helpContent h2.helpH{ font-size:12px; font-weight:700; color:var(--accent); margin-top:26px; text-transform:uppercase; letter-spacing:.4px; }
-.helpContent h3.helpH{ font-size:12px; font-weight:700; color:var(--muted); margin-top:16px; }
-.helpContent .helpHr{ border:none; border-top:1px solid var(--line); margin:16px 0; }
-.helpContent .helpP{ margin:4px 0 8px; }
-.helpContent .helpUl, .helpContent .helpOl{ padding-left:20px; margin:4px 0 10px; }
-.helpContent li{ margin:3px 0; }
-.helpContent .helpCode{
-  margin:8px 0; padding:12px 14px;
-  background:#060e18; border:1px solid var(--line); border-radius:8px;
-  overflow-x:auto; font-family:var(--mono); font-size:11px; line-height:1.6; white-space:pre;
-}
-.helpContent .helpInlineCode{
-  font-family:var(--mono); font-size:11px;
-  background:#1a2535; padding:1px 5px; border-radius:4px;
-}
-.helpContent .helpTable{
-  width:100%; table-layout:fixed;
-  border-collapse:collapse; margin:8px 0 14px; font-size:12px;
-}
-.helpContent .helpTable th{
-  background:#0d1a2a; color:var(--muted); font-size:11px; letter-spacing:.3px;
-}
-.helpContent .helpTable th,
-.helpContent .helpTable td{
-  border:1px solid var(--line); padding:6px 10px; text-align:left;
-  word-break:break-word; overflow-wrap:break-word;
-}
-.helpContent .helpTable tr:nth-child(even) td{ background:#0a1218; }
-.helpContent strong{ color:var(--text); font-weight:700; }
-
-/* Session row separator */
-.sessionRow{ margin-top:10px; padding-top:10px; border-top:1px solid var(--line); }
-
-/* POS edit cells */
-.posEditCell { padding: 4px 6px !important; }
-.posSelect {
-  font-family: var(--mono);
-  font-size: 11px;
-  padding: 3px 6px;
-  border-radius: 6px;
-  border-color: var(--line2);
-  background: #0c1420;
-  color: var(--muted);
-  width: 90px;
-  cursor: pointer;
-}
-.posSelect:focus {
-  outline: 1px solid var(--accent);
-  color: var(--text);
-}
-.posCustom {
-  color: var(--accent);
-  font-weight: 700;
-}
-
-</style>
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2064%2064%22%3E%0A%20%20%3Crect%20width%3D%2264%22%20height%3D%2264%22%20rx%3D%2214%22%20fill%3D%22%230b1220%22/%3E%0A%20%20%3Cg%20fill%3D%22none%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%0A%20%20%20%20%3Cpath%20d%3D%22M18%2020v16%22%20stroke%3D%22%236ee7b7%22%20stroke-width%3D%224%22/%3E%0A%20%20%20%20%3Cpath%20d%3D%22M18%2036h28%22%20stroke%3D%22%2393c5fd%22%20stroke-width%3D%224%22/%3E%0A%20%20%20%20%3Cpath%20d%3D%22M46%2036v10%22%20stroke%3D%22%23fbbf24%22%20stroke-width%3D%224%22/%3E%0A%20%20%20%20%3Cpath%20d%3D%22M18%2020c10%200%2018%208%2028%208%22%20stroke%3D%22%2393c5fd%22%20stroke-width%3D%224%22/%3E%0A%20%20%3C/g%3E%0A%20%20%3Cg%3E%0A%20%20%20%20%3Ccircle%20cx%3D%2218%22%20cy%3D%2220%22%20r%3D%225%22%20fill%3D%22%236ee7b7%22/%3E%0A%20%20%20%20%3Ccircle%20cx%3D%2246%22%20cy%3D%2228%22%20r%3D%225%22%20fill%3D%22%2393c5fd%22/%3E%0A%20%20%20%20%3Ccircle%20cx%3D%2218%22%20cy%3D%2236%22%20r%3D%225%22%20fill%3D%22%2393c5fd%22/%3E%0A%20%20%20%20%3Ccircle%20cx%3D%2246%22%20cy%3D%2246%22%20r%3D%225%22%20fill%3D%22%23fbbf24%22/%3E%0A%20%20%3C/g%3E%0A%20%20%3Ctext%20x%3D%2232%22%20y%3D%2258%22%20font-family%3D%22system-ui%2CSegoe%20UI%2CRoboto%2CArial%22%20font-size%3D%2212%22%20text-anchor%3D%22middle%22%20fill%3D%22%23e5e7eb%22%3ECoNLL%3C/text%3E%0A%3C/svg%3E">
-</head>
-<body>
-  <header class="bar">
-    <h1>CoNLL-U Vergleich</h1>
-    <p class="muted">
-      <kbd>←</kbd><kbd>→</kbd> <span data-i18n="kbd.sent">Satz</span> &nbsp;
-      <kbd>Ctrl+←</kbd><kbd>Ctrl+→</kbd> <span data-i18n="kbd.firstLast">Erster/Letzter</span> &nbsp;
-      <kbd>n</kbd><kbd>N</kbd> <span data-i18n="kbd.nextDiff">Nächster/Vorheriger Diff</span> &nbsp;|&nbsp;
-      <kbd>↑</kbd><kbd>↓</kbd> <span data-i18n="kbd.row">Zeile</span> &nbsp;
-      <kbd>Enter</kbd> <span data-i18n="kbd.popup">Gold-Popup</span> &nbsp;|&nbsp;
-      <kbd>1</kbd>–<kbd>9</kbd> <span data-i18n="kbd.chooseDoc">Doc wählen</span> &nbsp;
-      <kbd>Ctrl+1</kbd>–<kbd>9</kbd> <span data-i18n="kbd.loadCustom">Custom laden</span> &nbsp;|&nbsp;
-      <kbd>Ctrl+Z</kbd> Undo &nbsp;
-      <kbd>Ctrl+Y</kbd> Redo &nbsp;
-      <kbd>Space</kbd> <span data-i18n="kbd.confirm">Bestätigen</span> &nbsp;
-      <kbd>Del</kbd> <span data-i18n="kbd.delCustom">Custom löschen</span> &nbsp;
-      <kbd>e</kbd> <span data-i18n="kbd.exportConllu">Export CoNLL-U</span> &nbsp;
-      <kbd>E</kbd> <span data-i18n="kbd.exportTrees">Export Bäume</span> &nbsp;|&nbsp;
-      <kbd>?</kbd> <span data-i18n="kbd.help">Hilfe</span> &nbsp;
-      <kbd>Esc</kbd> <span data-i18n="kbd.close">Schließen</span>
-    </p>
-    <div class="langBar">
-      <button class="langBtn" data-lang="de" onclick="setLang('de')" title="Deutsch">🇩🇪</button>
-      <button class="langBtn" data-lang="en" onclick="setLang('en')" title="English">🇬🇧</button>
-    </div>
-    <button id="helpBtn" class="helpBtn" data-i18n-title="help.btnTitle">?</button>
-  </header>
-
-  <main class="wrap">
-    <section class="card">
-      <h2 data-i18n="sec.files">1) Dateien</h2>
-      <input id="fileInput" type="file" accept=".conllu,.conll,.txt" multiple class="fileHidden" />
-      <div class="row">
-        <label id="addBtn" class="btnLike" for="fileInput" data-i18n="files.add">Dateien hinzufügen</label>
-        <button id="resetBtn" class="danger" data-i18n="files.reset">Reset</button>
-        <span id="fileMeta" class="muted"></span>
-      </div>
-      <div id="fileList" class="fileList" style="margin-top:10px"></div>
-      <div id="textWarn"></div>
-    </section>
-
-    <section class="card">
-      <h2 data-i18n="sec.select">2) Satz wählen</h2>
-      <div class="row">
-        <button id="prevBtn" disabled>←</button>
-        <select id="sentSelect" disabled></select>
-        <button id="nextBtn" disabled>→</button>
-        <button id="confirmBtn" class="confirmBtn" disabled>✓ Bestätigen</button>
-        <span id="sentMeta" class="muted"></span>
-        <div id="sentStats" class="sentStatsRow"></div>
-        <span id="progressMeta" class="muted small progressMeta"></span>
-      </div>
-      <div id="sentText" class="sentText"></div>
-      <div id="sentMap" class="sentMap"></div>
-    </section>
-
-    <section class="card">
-      <h2 data-i18n="sec.tree">3) Baumansicht</h2>
-      <div id="treeGrid" class="treeGrid"></div>
-      <div class="muted small" style="margin-top:8px">
-        <span data-i18n="legend.label">Legende:</span>
-        <span class="legendOk"  data-i18n="legend.ok">✅ gleich</span> &nbsp;|&nbsp;
-        <span class="legendWarn" data-i18n="legend.warn">⚠️ Label-Unterschied</span> &nbsp;|&nbsp;
-        <span class="legendGold" data-i18n="legend.gold">🅶 nur in Gold</span> &nbsp;|&nbsp;
-        <span class="legendFile" data-i18n="legend.file">🅵 nur in dieser Datei</span> &nbsp;|&nbsp;
-        <span data-i18n="legend.root">🌱 Teilbaum-Wurzel</span> &nbsp;|&nbsp;
-        <span data-i18n="legend.click">Klick auf Zeile → springt zur Tabellenzeile</span>
-      </div>
-    </section>
-
-    <section class="card">
-      <h2 data-i18n="sec.compare">4) Vergleich</h2>
-      <div class="row" style="margin-bottom:8px">
-        <div id="customInitBtns"></div>
-        <button id="customClearBtn" class="danger" disabled data-i18n="custom.clear">Custom Satz löschen</button>
-        <button id="undoBtn" disabled data-i18n="undo.btn">↩ Undo</button>
-        <button id="redoBtn" disabled data-i18n="redo.btn">↪ Redo</button>
-      </div>
-      <div id="colToggleBar" class="colToggleBar"></div>
-      <div class="tableWrap" style="margin-top:8px">
-        <table id="cmpTable"></table>
-      </div>
-      <p class="muted small" style="margin-top:10px" data-i18n="export.mwtNote">
-        Hinweis: Multi-Word-Tokens (IDs mit „-" oder „.") werden ignoriert.
-      </p>
-    </section>
-
-    <section class="card">
-      <h2 data-i18n="sec.export">5) Export</h2>
-      <div class="row">
-        <button id="exportConlluBtn" disabled data-i18n="export.conllu">Gold CoNLL-U herunterladen</button>
-        <button id="exportTreeBtn"   disabled data-i18n="export.trees">Baumansicht (alle Sätze) herunterladen</button>
-      </div>
-      <p class="muted small" style="margin-top:8px" data-i18n="export.conlluDesc">
-        Gold CoNLL-U enthält alle Sätze mit den aktuellen Gold-Annotationen (HEAD, DEPREL, UPOS, XPOS).
-        LEMMA / FEATS / DEPS / MISC werden aus der Quelldatei übernommen.
-      </p>
-      <div class="row sessionRow">
-        <button id="exportSessionBtn" data-i18n="session.save">💾 Session speichern</button>
-        <label class="btnLike" for="importSessionInput" data-i18n="session.load">📂 Session laden</label>
-        <input id="importSessionInput" type="file" accept=".json" class="fileHidden">
-        <span id="sessionMeta" class="muted small"></span>
-      </div>
-      <p class="muted small" style="margin-top:4px" data-i18n="session.desc">
-        Session speichert alle geladenen Dateien, Annotationen und den kompletten Undo-/Redo-Verlauf als JSON.
-      </p>
-    </section>
-  </main>
-
-  <div id="dropOverlay" class="dropOverlay">
-    <div class="dropOverlayInner">
-      <span data-i18n="files.dropOverlay">Dateien hier ablegen</span>
-    </div>
-  </div>
-
-  <div id="helpModal" class="helpModal">
-    <div class="helpModalBox">
-      <button id="helpCloseBtn" data-i18n-title="kbd.close">✕</button>
-      <div id="helpContent" class="helpContent"></div>
-    </div>
-  </div>
-
-<!-- inlined: lang/de.js -->
-<script>
+<!doctype html><html lang="de"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><title>CoNLL-U Vergleich</title> <style>@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;800&display=swap');:root{--bg:#090d12;--card:#0f1620;--card2:#111a26;--line:#1e2e42;--line2:#243548;--text:#dde8f5;--muted:#7a96b5;--bad:#ff5f5f;--ok:#3de89a;--warn:#f5c842;--gold:#ff9f43;--file:#5b9fff;--accent:#4a9eff;--mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;--sans:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}*{box-sizing:border-box}body{margin:0;font-family:var(--sans);background:var(--bg);color:var(--text);font-size:13px}.bar{padding:14px 20px;border-bottom:1px solid var(--line);background:linear-gradient(135deg,#0a1118 0%,#0f1928 100%);display:flex;gap:16px;align-items:center;flex-wrap:wrap}.bar h1{margin:0;font-size:17px;font-weight:800;letter-spacing:-.3px}.bar p{margin:0;font-size:12px;color:var(--muted)}.langBar{display:flex;gap:4px;margin-left:auto}.langBtn{width:28px;height:28px;padding:0;border-radius:6px;font-size:16px;border-color:transparent;background:transparent;opacity:.55;transition:opacity .15s,border-color .15s}.langBtn:hover:not(:disabled){opacity:1;border-color:var(--line2);background:#0f1a2a}.langBtnActive{opacity:1 !important;border-color:var(--accent) !important;background:#0d1e33 !important}kbd{display:inline-block;padding:1px 5px;border-radius:4px;border:1px solid var(--line2);background:#0f1a2a;font-family:var(--mono);font-size:10px;color:var(--text)}.wrap{max-width:1440px;margin:0 auto;padding:14px;display:grid;gap:10px}.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px}h2{margin:0 0 10px 0;font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}.muted{color:var(--muted)}.small{font-size:11px}.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}button,select,input,.btnLike{border:1px solid var(--line2);background:#0c1420;color:var(--text);border-radius:8px;padding:7px 12px;cursor:pointer;font-size:12px;font-family:var(--sans);transition:border-color .15s,background .15s}button:hover:not(:disabled),.btnLike:hover{border-color:var(--accent);background:#101e2f}button:disabled,select:disabled{opacity:.45;cursor:not-allowed}button.danger{border-color:#4a1f1f;background:#160b0b;color:#ff7e7e}button.danger:hover:not(:disabled){border-color:#ff5f5f;background:#1e0e0e}.sentText{margin-top:8px;padding:10px 14px;border:1px solid var(--line);border-radius:10px;background:#0c1420;font-family:var(--mono);font-size:13px;line-height:1.5}.sentMap{display:flex;flex-wrap:wrap;gap:4px;margin-top:10px;max-height:96px;overflow-y:auto;padding-right:4px}.progressMeta{margin-left:auto;font-size:.75rem;opacity:.7}.sentDot{width:14px;height:14px;border-radius:3px;padding:0;border:2px solid transparent;cursor:pointer;transition:transform .1s,border-color .1s}.sentDot:hover{transform:scale(1.3)}.sentDotOk{background:#1a4a2e;border-color:#2a7a4a}.sentDotDiff{background:#4a1a1a;border-color:#8a3030}.sentDotConfirmed{background:#3a2600;border-color:#c07a10}.sentDotCurrent{border-color:#4a9eff !important;transform:scale(1.25)}.confirmBtn{border-color:#5a3a00;background:#1a1000;color:#cc8800}.confirmBtn:hover:not(:disabled){border-color:#ff9f43;background:#261800;color:#ffb347}.confirmBtnActive{border-color:#ff9f43 !important;background:#261800 !important;color:#ffb347 !important}.sentTextConfirmed{border-color:#c07a10 !important;background:#13100a !important}.sentToken{cursor:pointer;border-radius:3px;padding:1px 3px;transition:background .12s}.sentToken:hover{background:rgba(255,255,255,.10)}.sentTokenActive{background:#0d2040;outline:1px solid var(--accent);outline-offset:1px;border-radius:3px}.sentStatsRow{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.statBadge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;font-family:var(--mono);background:#1a2535;border:1px solid var(--line2)}.statOk{color:var(--ok);border-color:#1a4030;background:#0d2420}.statDiff{color:var(--bad);border-color:#4a1a1a;background:#200d0d}.tableWrap{overflow:auto;border:1px solid var(--line);border-radius:12px}table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12px}th,td{border-bottom:1px solid var(--line);padding:7px 10px;white-space:nowrap;vertical-align:middle}th{text-align:left;color:var(--muted);position:sticky;top:0;background:var(--card);font-size:11px;font-weight:700;letter-spacing:.3px}tr:last-child td{border-bottom:none}.same{color:var(--ok);font-weight:700}.diff{color:var(--bad);font-weight:700}.fDiff{color:var(--bad);font-weight:600}.posLine{font-size:10px;color:var(--muted);margin-top:2px;line-height:1.3}.goldPos{opacity:.8}.posDiff{outline:1px solid #ff79c6;outline-offset:-2px;border-radius:4px}.posCell{color:var(--muted)}td select.posInlineSelect,td input.posInlineInput{border:none !important;background:transparent !important;color:inherit !important;font-family:var(--mono) !important;font-size:12px !important;padding:0 !important;margin:0 !important;border-radius:0 !important;width:100%;min-width:0;cursor:pointer;box-shadow:none}td select.posInlineSelect:focus,td input.posInlineInput:focus{outline:1px solid var(--accent) !important;border-radius:3px !important}td input.posInlineInput{cursor:text !important}.rowDiff td:first-child{border-left:3px solid #ff5f5f44}.goldCell{font-weight:700;color:var(--text)}.goldEditable{cursor:pointer}.goldEditable:hover{background:#0e1e32;outline:1px solid var(--accent);outline-offset:-2px;border-radius:4px}.goldPopup{display:none;position:fixed;z-index:5000;background:var(--card2);border:1px solid var(--line2);border-radius:12px;padding:14px 16px;min-width:230px;box-shadow:0 8px 40px rgba(0,0,0,.65)}.goldPopup.active{display:block}.gpTitle{font-size:11px;color:var(--muted);font-weight:700;margin-bottom:10px}.gpTitle b{color:var(--accent)}.gpRow{display:flex;align-items:center;gap:8px;margin-bottom:6px}.gpRow label{font-size:11px;color:var(--muted);width:46px;flex-shrink:0;text-align:right}.gpRow select,.gpRow input.gpTextInput{flex:1;font-size:11px;padding:3px 6px;border-radius:6px;border:1px solid var(--line2);background:#0c1420;color:var(--text)}.gpActions{margin-top:10px;display:flex;justify-content:flex-end}.gpActions button{font-size:11px;padding:4px 10px}.gpHint{font-size:10px;color:var(--muted);margin-top:6px;text-align:center;opacity:.7}tr.keyFocus > td{background:#0d2040}tr.keyFocus > td:first-child{border-left:2px solid var(--accent)}.srcTag{display:inline-block;padding:1px 5px;border-radius:4px;font-size:10px;font-weight:800;font-family:var(--mono);margin-right:4px;vertical-align:middle}.srcCustom{background:#1a3a5c;color:var(--accent);border:1px solid #234}.srcDoc{background:#1a2a1e;color:#6dce8a;border:1px solid #1d3825}@keyframes highlightPulse{0%{background:#1e3a5a}50%{background:#244a70}100%{background:transparent}}.highlightRow td{animation:highlightPulse 1.6s ease-out}.dropOverlay{display:none;position:fixed;inset:0;z-index:9999;background:rgba(9,13,18,.82);backdrop-filter:blur(6px);align-items:center;justify-content:center;animation:overlayIn .15s ease-out}.dropOverlay.active{display:flex}.dropOverlayInner{display:flex;flex-direction:column;align-items:center;gap:12px;padding:40px 56px;border:2px dashed var(--accent);border-radius:20px;background:#0a1622cc;animation:dropPulse .9s ease-in-out infinite}.dropOverlayIcon{font-size:56px;animation:dropBounce .7s ease-in-out infinite}.dropOverlayText{font-size:22px;font-weight:800;color:var(--accent);letter-spacing:-.3px}.dropOverlaySub{font-size:12px;color:var(--muted)}@keyframes overlayIn{from{opacity:0}to{opacity:1}}@keyframes dropBounce{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-10px) scale(1.08)}}.textWarnBanner{margin-top:8px;padding:8px 12px;border:1px solid #6b2e0a;border-radius:8px;background:#1a0c04;color:#ff9f43;font-size:11px;line-height:1.5}.fileList{display:grid;gap:6px;min-height:72px;border:2px dashed transparent;border-radius:12px;padding:4px;transition:border-color .2s,background .2s,box-shadow .2s}.fileList.dragOver{border-color:var(--accent);background:#0d1e35;animation:dropPulse .9s ease-in-out infinite}@keyframes dropPulse{0%,100%{box-shadow:0 0 0 0 #4a9eff33}50%{box-shadow:0 0 0 10px #4a9eff00}}.fileItem{display:flex;gap:10px;align-items:center;justify-content:space-between;border:1px solid var(--line);border-radius:10px;padding:8px 12px;background:#0c1420}.fileItem .left{display:flex;flex-direction:column;gap:2px}.fileItem .name{font-weight:700;font-size:12px}.fileItem .meta{font-size:11px;color:var(--muted)}.fileItem button{padding:5px 10px}.fileWarnIcon{font-size:13px;vertical-align:middle;margin-left:4px;cursor:default}.treeGrid{display:block}.treeBlock{border:1px solid var(--line);border-radius:12px;background:var(--card2);overflow:hidden}.treeBlockStacked{display:flex;flex-direction:column}.treeSection{border-bottom:1px solid var(--line)}.treeSection:last-child{border-bottom:none}.treeHead{padding:7px 12px;border-bottom:1px solid var(--line);display:flex;gap:8px;align-items:center;justify-content:space-between;background:#0f1e30}.treeHead .title{font-weight:800;font-size:12px}.treeHead .sub{color:var(--muted);font-size:11px}.treeLineRoot{display:flex;align-items:center;gap:8px;white-space:pre}.treeSubtreeBtn{padding:2px 8px;font-size:10px;font-family:var(--sans);border-color:#c07a10;color:#1a0e00;background:var(--gold);border-radius:6px;flex-shrink:0;font-weight:700}.treeSubtreeBtn:hover{border-color:#ffb94e;background:#ffb94e}.treePre{margin:0;padding:10px 12px;font-family:var(--mono);font-size:12px;white-space:pre;overflow:auto;line-height:1.6}.treeLine{display:block}.treeLineClickable{cursor:pointer;border-radius:4px;transition:background .1s}.treeLineClickable:hover{background:#1a2f48}.legendOk{color:var(--ok);font-weight:700}.legendWarn{color:var(--warn);font-weight:700}.legendGold{color:var(--gold);font-weight:700}.legendFile{color:var(--file);font-weight:700}.treeLineOk{color:var(--ok)}.treeLineWarn{color:var(--warn)}.treeLineGold{color:var(--gold)}.treeLineFileOnly{color:var(--file)}.pickable{cursor:pointer;user-select:none}.pickable:hover{outline:2px solid #2a5080;outline-offset:-2px;border-radius:6px}.picked{outline:2px solid #4a9eff66;outline-offset:-2px;border-radius:6px;background:#0f2038}.disabledPick{opacity:.4;cursor:not-allowed}.customCell{display:flex;gap:6px;align-items:center}.customCell input,.customCell select{font-family:var(--mono);font-size:12px;padding:5px 8px;border-radius:7px}.customHead{width:72px}.customRelSelect{width:160px}.colToggleBar{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:2px}.colToggle{font-size:11px;padding:4px 10px;border-radius:20px;transition:opacity .15s,border-color .15s}.colVisible{border-color:#2a4a6a;color:var(--accent);background:#0d1f33}.colVisible:hover{border-color:var(--accent)}.colHidden{border-color:#2a2a3a;color:#556;background:#0c0f16;opacity:.6}.colHidden:hover{opacity:1;border-color:#445}.fileHidden{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}.btnLike{display:inline-block;user-select:none}.btnLike:active{transform:translateY(1px)}.treeSection:first-child{background:linear-gradient(135deg,#1a1500 0%,#1f1a00 60%,#141200 100%)}.treeSection:first-child .treeHead{background:#211900;border-bottom-color:#3a3000}.treeSection:first-child .treeHead .title{color:#f5c842}.treeSection:first-child .treePre{background:transparent}.treeSection:not(:first-child) .treeHead{background:#0f1a28}.helpBtn{width:30px;height:30px;border-radius:50%;padding:0;font-size:15px;font-weight:800;flex-shrink:0;margin-left:auto}.helpModal{display:none;position:fixed;inset:0;z-index:10000;background:rgba(9,13,18,.88);backdrop-filter:blur(5px);align-items:flex-start;justify-content:center;padding:32px 12px;animation:overlayIn .15s ease-out}.helpModal.active{display:flex}.helpModalBox{position:relative;width:calc(100% - 24px);min-width:0;max-height:calc(100vh - 64px);overflow-x:hidden;overflow-y:auto;background:var(--card);border:1px solid var(--line2);border-radius:16px;padding:28px 32px 36px;scrollbar-gutter:stable}#helpCloseBtn{position:absolute;top:14px;right:16px;width:28px;height:28px;padding:0;border-radius:50%;font-size:13px}.helpContent{line-height:1.6;overflow-wrap:break-word;word-break:break-word}.helpContent .helpH{margin:0 0 8px}.helpContent h1.helpH{font-size:20px;font-weight:800;color:var(--text);padding-right:40px}.helpContent h2.helpH{font-size:12px;font-weight:700;color:var(--accent);margin-top:26px;text-transform:uppercase;letter-spacing:.4px}.helpContent h3.helpH{font-size:12px;font-weight:700;color:var(--muted);margin-top:16px}.helpContent .helpHr{border:none;border-top:1px solid var(--line);margin:16px 0}.helpContent .helpP{margin:4px 0 8px}.helpContent .helpUl,.helpContent .helpOl{padding-left:20px;margin:4px 0 10px}.helpContent li{margin:3px 0}.helpContent .helpCode{margin:8px 0;padding:12px 14px;background:#060e18;border:1px solid var(--line);border-radius:8px;overflow-x:auto;font-family:var(--mono);font-size:11px;line-height:1.6;white-space:pre}.helpContent .helpInlineCode{font-family:var(--mono);font-size:11px;background:#1a2535;padding:1px 5px;border-radius:4px}.helpContent .helpTable{width:100%;table-layout:fixed;border-collapse:collapse;margin:8px 0 14px;font-size:12px}.helpContent .helpTable th{background:#0d1a2a;color:var(--muted);font-size:11px;letter-spacing:.3px}.helpContent .helpTable th,.helpContent .helpTable td{border:1px solid var(--line);padding:6px 10px;text-align:left;word-break:break-word;overflow-wrap:break-word}.helpContent .helpTable tr:nth-child(even) td{background:#0a1218}.helpContent strong{color:var(--text);font-weight:700}.sessionRow{margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}.posEditCell{padding:4px 6px !important}.posSelect{font-family:var(--mono);font-size:11px;padding:3px 6px;border-radius:6px;border-color:var(--line2);background:#0c1420;color:var(--muted);width:90px;cursor:pointer}.posSelect:focus{outline:1px solid var(--accent);color:var(--text)}.posCustom{color:var(--accent);font-weight:700}</style> <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2064%2064%22%3E%0A%20%20%3Crect%20width%3D%2264%22%20height%3D%2264%22%20rx%3D%2214%22%20fill%3D%22%230b1220%22/%3E%0A%20%20%3Cg%20fill%3D%22none%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%0A%20%20%20%20%3Cpath%20d%3D%22M18%2020v16%22%20stroke%3D%22%236ee7b7%22%20stroke-width%3D%224%22/%3E%0A%20%20%20%20%3Cpath%20d%3D%22M18%2036h28%22%20stroke%3D%22%2393c5fd%22%20stroke-width%3D%224%22/%3E%0A%20%20%20%20%3Cpath%20d%3D%22M46%2036v10%22%20stroke%3D%22%23fbbf24%22%20stroke-width%3D%224%22/%3E%0A%20%20%20%20%3Cpath%20d%3D%22M18%2020c10%200%2018%208%2028%208%22%20stroke%3D%22%2393c5fd%22%20stroke-width%3D%224%22/%3E%0A%20%20%3C/g%3E%0A%20%20%3Cg%3E%0A%20%20%20%20%3Ccircle%20cx%3D%2218%22%20cy%3D%2220%22%20r%3D%225%22%20fill%3D%22%236ee7b7%22/%3E%0A%20%20%20%20%3Ccircle%20cx%3D%2246%22%20cy%3D%2228%22%20r%3D%225%22%20fill%3D%22%2393c5fd%22/%3E%0A%20%20%20%20%3Ccircle%20cx%3D%2218%22%20cy%3D%2236%22%20r%3D%225%22%20fill%3D%22%2393c5fd%22/%3E%0A%20%20%20%20%3Ccircle%20cx%3D%2246%22%20cy%3D%2246%22%20r%3D%225%22%20fill%3D%22%23fbbf24%22/%3E%0A%20%20%3C/g%3E%0A%20%20%3Ctext%20x%3D%2232%22%20y%3D%2258%22%20font-family%3D%22system-ui%2CSegoe%20UI%2CRoboto%2CArial%22%20font-size%3D%2212%22%20text-anchor%3D%22middle%22%20fill%3D%22%23e5e7eb%22%3ECoNLL%3C/text%3E%0A%3C/svg%3E"></head><body><header class="bar"><h1>CoNLL-U Vergleich</h1><p class="muted"><kbd>←</kbd><kbd>→</kbd><span data-i18n="kbd.sent">Satz</span> &nbsp; <kbd>Ctrl+←</kbd><kbd>Ctrl+→</kbd><span data-i18n="kbd.firstLast">Erster/Letzter</span> &nbsp; <kbd>n</kbd><kbd>N</kbd><span data-i18n="kbd.nextDiff">Nächster/Vorheriger Diff</span> &nbsp;|&nbsp; <kbd>↑</kbd><kbd>↓</kbd><span data-i18n="kbd.row">Zeile</span> &nbsp; <kbd>Enter</kbd><span data-i18n="kbd.popup">Gold-Popup</span> &nbsp;|&nbsp; <kbd>1</kbd>–<kbd>9</kbd><span data-i18n="kbd.chooseDoc">Doc wählen</span> &nbsp; <kbd>Ctrl+1</kbd>–<kbd>9</kbd><span data-i18n="kbd.loadCustom">Custom laden</span> &nbsp;|&nbsp; <kbd>Ctrl+Z</kbd> Undo &nbsp; <kbd>Ctrl+Y</kbd> Redo &nbsp; <kbd>Space</kbd><span data-i18n="kbd.confirm">Bestätigen</span> &nbsp; <kbd>Del</kbd><span data-i18n="kbd.delCustom">Custom löschen</span> &nbsp; <kbd>e</kbd><span data-i18n="kbd.exportConllu">Export CoNLL-U</span> &nbsp; <kbd>E</kbd><span data-i18n="kbd.exportTrees">Export Bäume</span> &nbsp;|&nbsp; <kbd>?</kbd><span data-i18n="kbd.help">Hilfe</span> &nbsp; <kbd>Esc</kbd><span data-i18n="kbd.close">Schließen</span></p><div class="langBar"><button class="langBtn" data-lang="de" onclick="setLang('de')" title="Deutsch">🇩🇪</button><button class="langBtn" data-lang="en" onclick="setLang('en')" title="English">🇬🇧</button></div><button id="helpBtn" class="helpBtn" data-i18n-title="help.btnTitle">?</button></header><main class="wrap"><section class="card"><h2 data-i18n="sec.files">1) Dateien</h2><input id="fileInput" type="file" accept=".conllu,.conll,.txt" multiple class="fileHidden" /><div class="row"><label id="addBtn" class="btnLike" for="fileInput" data-i18n="files.add">Dateien hinzufügen</label><button id="resetBtn" class="danger" data-i18n="files.reset">Reset</button><span id="fileMeta" class="muted"></span></div><div id="fileList" class="fileList" style="margin-top:10px"></div><div id="textWarn"></div></section><section class="card"><h2 data-i18n="sec.select">2) Satz wählen</h2><div class="row"><button id="prevBtn" disabled>←</button><select id="sentSelect" disabled></select><button id="nextBtn" disabled>→</button><button id="confirmBtn" class="confirmBtn" disabled>✓ Bestätigen</button><span id="sentMeta" class="muted"></span><div id="sentStats" class="sentStatsRow"></div><span id="progressMeta" class="muted small progressMeta"></span></div><div id="sentText" class="sentText"></div><div id="sentMap" class="sentMap"></div></section><section class="card"><h2 data-i18n="sec.tree">3) Baumansicht</h2><div id="treeGrid" class="treeGrid"></div><div class="muted small" style="margin-top:8px"><span data-i18n="legend.label">Legende:</span><span class="legendOk" data-i18n="legend.ok">✅ gleich</span> &nbsp;|&nbsp; <span class="legendWarn" data-i18n="legend.warn">⚠️ Label-Unterschied</span> &nbsp;|&nbsp; <span class="legendGold" data-i18n="legend.gold">🅶 nur in Gold</span> &nbsp;|&nbsp; <span class="legendFile" data-i18n="legend.file">🅵 nur in dieser Datei</span> &nbsp;|&nbsp; <span data-i18n="legend.root">🌱 Teilbaum-Wurzel</span> &nbsp;|&nbsp; <span data-i18n="legend.click">Klick auf Zeile → springt zur Tabellenzeile</span></div></section><section class="card"><h2 data-i18n="sec.compare">4) Vergleich</h2><div class="row" style="margin-bottom:8px"><div id="customInitBtns"></div><button id="customClearBtn" class="danger" disabled data-i18n="custom.clear">Custom Satz löschen</button><button id="undoBtn" disabled data-i18n="undo.btn">↩ Undo</button><button id="redoBtn" disabled data-i18n="redo.btn">↪ Redo</button></div><div id="colToggleBar" class="colToggleBar"></div><div class="tableWrap" style="margin-top:8px"><table id="cmpTable"></table></div><p class="muted small" style="margin-top:10px" data-i18n="export.mwtNote"> Hinweis: Multi-Word-Tokens (IDs mit „-" oder „.") werden ignoriert. </p></section><section class="card"><h2 data-i18n="sec.export">5) Export</h2><div class="row"><button id="exportConlluBtn" disabled data-i18n="export.conllu">Gold CoNLL-U herunterladen</button><button id="exportTreeBtn" disabled data-i18n="export.trees">Baumansicht (alle Sätze) herunterladen</button></div><p class="muted small" style="margin-top:8px" data-i18n="export.conlluDesc"> Gold CoNLL-U enthält alle Sätze mit den aktuellen Gold-Annotationen (HEAD, DEPREL, UPOS, XPOS). LEMMA / FEATS / DEPS / MISC werden aus der Quelldatei übernommen. </p><div class="row sessionRow"><button id="exportSessionBtn" data-i18n="session.save">💾 Session speichern</button><label class="btnLike" for="importSessionInput" data-i18n="session.load">📂 Session laden</label><input id="importSessionInput" type="file" accept=".json" class="fileHidden"><span id="sessionMeta" class="muted small"></span></div><p class="muted small" style="margin-top:4px" data-i18n="session.desc"> Session speichert alle geladenen Dateien, Annotationen und den kompletten Undo-/Redo-Verlauf als JSON. </p></section></main><div id="dropOverlay" class="dropOverlay"><div class="dropOverlayInner"><span data-i18n="files.dropOverlay">Dateien hier ablegen</span></div></div><div id="helpModal" class="helpModal"><div class="helpModalBox"><button id="helpCloseBtn" data-i18n-title="kbd.close">✕</button><div id="helpContent" class="helpContent"></div></div></div> <script>
 window.LANG_DE = {
   // Abschnitte
   'sec.files':   '1) Dateien',
@@ -777,9 +136,7 @@ window.LANG_DE = {
   'help.runScript':   'Bitte python make_readme_js.py ausführen und die Seite neu laden.',
 };
 
-</script>
-<!-- inlined: lang/en.js -->
-<script>
+</script> <script>
 window.LANG_EN = {
   // Sections
   'sec.files':   '1) Files',
@@ -917,9 +274,7 @@ window.LANG_EN = {
   'help.runScript':   'Please run python make_readme_js.py and reload the page.',
 };
 
-</script>
-<!-- inlined: js/i18n.js -->
-<script>
+</script> <script>
 // ---------- i18n ----------
 const LANGS = {};
 if(window.LANG_DE) LANGS['de'] = window.LANG_DE;
@@ -990,9 +345,7 @@ document.addEventListener('DOMContentLoaded', () => {
   );
 });
 
-</script>
-<!-- inlined: js/state.js -->
-<script>
+</script> <script>
 // Set by labels.js before main.js runs
 let LABELS = {};
 let DEPREL_OPTIONS_HTML = "";
@@ -1122,9 +475,7 @@ function escapeHtml(s){
   return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 }
 
-</script>
-  <!-- inlined: labels.js -->
-<script>
+</script> <script>
 // Anpassbare Labels für DEPREL, UPOS und XPOS.
 // Sektions-Schlüssel erscheinen als Gruppe im Dropdown.
 // __upos__ und __xpos__ befüllen die jeweiligen POS-Dropdowns.
@@ -1151,9 +502,7 @@ LABELS = {
   ]
 };
 
-</script>
-  <!-- inlined: examples.js -->
-<script>
+</script> <script>
 // Beispieldateien für die Demo-Funktion.
 // Drei CoNLL-U Dateien, drei Sätze — decken alle Vergleichsfälle ab:
 //
@@ -1263,9 +612,7 @@ const EXAMPLES = [
   },
 ];
 
-</script>
-  <!-- inlined: js/parser.js -->
-<script>
+</script> <script>
 // ---------- CoNLL-U Parser ----------
 function readFileAsText(file){
   return new Promise((resolve, reject) => {
@@ -1394,9 +741,7 @@ function recomputeMaxSents(){
   state.maxSents = Math.max(0, ...state.docs.map(d => d.sentences.length), 0);
 }
 
-</script>
-  <!-- inlined: js/undo.js -->
-<script>
+</script> <script>
 // ---------- Undo / Redo ----------
 const _undoStack = [];
 const _redoStack = [];
@@ -1477,9 +822,7 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("redoBtn")?.addEventListener("click", redo);
 });
 
-</script>
-  <!-- inlined: js/table.js -->
-<script>
+</script> <script>
 // ---------- Data structures ----------
 function buildDocMapsAndIds(){
   const sentIndex = state.currentSent;
@@ -1886,9 +1229,7 @@ cmpTable.addEventListener("keydown", (e) => {
   }
 });
 
-</script>
-  <!-- inlined: js/tree.js -->
-<script>
+</script> <script>
 // ---------- Tree helpers ----------
 function getSentenceTextFallback(sentIndex){
   for(const d of state.docs){
@@ -2187,9 +1528,7 @@ function renderPreview(){
   treeGrid.appendChild(wrap);
 }
 
-</script>
-  <!-- inlined: js/main.js -->
-<script>
+</script> <script>
 // ---------- DOM ----------
 const fileInput = document.getElementById("fileInput");
 const resetBtn  = document.getElementById("resetBtn");
@@ -2559,9 +1898,7 @@ renderFiles();
 renderSentSelect();
 renderSentence();
 
-</script>
-  <!-- inlined: js/export.js -->
-<script>
+</script> <script>
 // ---------- Export buttons ----------
 const exportConlluBtn    = document.getElementById("exportConlluBtn");
 const exportTreeBtn      = document.getElementById("exportTreeBtn");
@@ -2769,9 +2106,7 @@ function exportTreesTxt(){
   downloadText(parts.join("\n"), "alle_baeume.txt");
 }
 
-</script>
-  <!-- inlined: js/keyboard.js -->
-<script>
+</script> <script>
 // ---------- Keyboard navigation ----------
 let keyFocusTokId = null;
 
@@ -2961,9 +2296,7 @@ document.addEventListener("keydown", (e) => {
   }
 });
 
-</script>
-  <!-- inlined: generated/readme_content.js -->
-<script>
+</script> <script>
 // Auto-generated — do not edit manually.
 // Regenerate with:  python make_readme_js.py
 
@@ -3571,9 +2904,7 @@ This script reads \`README.md\` and \`README.en.md\` and writes \`generated/read
 - Data lives only in **browser memory** — use session export to save your progress permanently
 `;
 
-</script>
-  <!-- inlined: js/help.js -->
-<script>
+</script> <script>
 // ---------- Help modal ----------
 const helpBtn     = document.getElementById("helpBtn");
 const helpModal   = document.getElementById("helpModal");
@@ -3740,6 +3071,4 @@ function inlineMd(s){
     .replace(/`([^`]+)`/g, '<code class="helpInlineCode">$1</code>');
 }
 
-</script>
-</body>
-</html>
+</script> </body></html>
