@@ -1,0 +1,3745 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CoNLL-U Vergleich</title>
+  <!-- inlined: css/style.css -->
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;800&display=swap');
+
+:root{
+  --bg:#090d12;
+  --card:#0f1620;
+  --card2:#111a26;
+  --line:#1e2e42;
+  --line2:#243548;
+  --text:#dde8f5;
+  --muted:#7a96b5;
+  --bad:#ff5f5f;
+  --ok:#3de89a;
+  --warn:#f5c842;
+  --gold:#ff9f43;
+  --file:#5b9fff;
+  --accent:#4a9eff;
+  --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+}
+*{ box-sizing:border-box }
+body{ margin:0; font-family:var(--sans); background:var(--bg); color:var(--text); font-size:13px }
+
+/* Header */
+.bar{
+  padding:14px 20px;
+  border-bottom:1px solid var(--line);
+  background: linear-gradient(135deg, #0a1118 0%, #0f1928 100%);
+  display:flex; gap:16px; align-items:center; flex-wrap:wrap;
+}
+.bar h1{ margin:0; font-size:17px; font-weight:800; letter-spacing:-.3px }
+.bar p { margin:0; font-size:12px; color:var(--muted) }
+
+/* Language switcher */
+.langBar{ display:flex; gap:4px; margin-left:auto; }
+.langBtn{
+  width:28px; height:28px; padding:0;
+  border-radius:6px; font-size:16px;
+  border-color:transparent; background:transparent;
+  opacity:.55; transition:opacity .15s, border-color .15s;
+}
+.langBtn:hover:not(:disabled){ opacity:1; border-color:var(--line2); background:#0f1a2a; }
+.langBtnActive{ opacity:1 !important; border-color:var(--accent) !important; background:#0d1e33 !important; }
+kbd{ display:inline-block; padding:1px 5px; border-radius:4px; border:1px solid var(--line2); background:#0f1a2a; font-family:var(--mono); font-size:10px; color:var(--text) }
+
+/* Layout */
+.wrap{ max-width:1440px; margin:0 auto; padding:14px; display:grid; gap:10px }
+.card{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:14px;
+}
+h2{ margin:0 0 10px 0; font-size:13px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.5px }
+
+.muted{ color:var(--muted) }
+.small{ font-size:11px }
+.row{ display:flex; gap:8px; align-items:center; flex-wrap:wrap }
+
+/* Controls */
+button, select, input, .btnLike{
+  border:1px solid var(--line2);
+  background:#0c1420;
+  color:var(--text);
+  border-radius:8px;
+  padding:7px 12px;
+  cursor:pointer;
+  font-size:12px;
+  font-family:var(--sans);
+  transition: border-color .15s, background .15s;
+}
+button:hover:not(:disabled), .btnLike:hover{ border-color:var(--accent); background:#101e2f }
+button:disabled, select:disabled{ opacity:.45; cursor:not-allowed }
+button.danger{ border-color:#4a1f1f; background:#160b0b; color:#ff7e7e }
+button.danger:hover:not(:disabled){ border-color:#ff5f5f; background:#1e0e0e }
+
+.sentText{
+  margin-top:8px; padding:10px 14px;
+  border:1px solid var(--line);
+  border-radius:10px;
+  background:#0c1420;
+  font-family:var(--mono);
+  font-size:13px;
+  line-height:1.5;
+}
+
+/* Sentence map */
+.sentMap{ display:flex; flex-wrap:wrap; gap:4px; margin-top:10px; max-height:96px; overflow-y:auto; padding-right:4px; }
+
+/* Progress indicator */
+.progressMeta{ margin-left:auto; font-size:.75rem; opacity:.7; }
+.sentDot{
+  width:14px; height:14px; border-radius:3px; padding:0; border:2px solid transparent;
+  cursor:pointer; transition:transform .1s, border-color .1s;
+}
+.sentDot:hover{ transform:scale(1.3); }
+.sentDotOk       { background:#1a4a2e; border-color:#2a7a4a; }
+.sentDotDiff     { background:#4a1a1a; border-color:#8a3030; }
+.sentDotConfirmed{ background:#3a2600; border-color:#c07a10; }
+.sentDotCurrent  { border-color:#4a9eff !important; transform:scale(1.25); }
+
+/* Confirm button */
+.confirmBtn{ border-color:#5a3a00; background:#1a1000; color:#cc8800; }
+.confirmBtn:hover:not(:disabled){ border-color:#ff9f43; background:#261800; color:#ffb347; }
+.confirmBtnActive{ border-color:#ff9f43 !important; background:#261800 !important; color:#ffb347 !important; }
+
+/* Sentence text box — gold border when confirmed */
+.sentTextConfirmed{ border-color:#c07a10 !important; background:#13100a !important; }
+
+/* Clickable tokens in sentence text */
+.sentToken{
+  cursor:pointer;
+  border-radius:3px;
+  padding:1px 3px;
+  transition:background .12s;
+}
+.sentToken:hover{ background:rgba(255,255,255,.10); }
+.sentTokenActive{
+  background:#0d2040;
+  outline:1px solid var(--accent);
+  outline-offset:1px;
+  border-radius:3px;
+}
+
+/* Sentence stats */
+.sentStatsRow{ display:flex; gap:6px; align-items:center; flex-wrap:wrap }
+.statBadge{
+  display:inline-block; padding:3px 10px; border-radius:20px;
+  font-size:11px; font-weight:700; font-family:var(--mono);
+  background:#1a2535; border:1px solid var(--line2);
+}
+.statOk{ color:var(--ok); border-color:#1a4030; background:#0d2420 }
+.statDiff{ color:var(--bad); border-color:#4a1a1a; background:#200d0d }
+
+/* Tables */
+.tableWrap{ overflow:auto; border:1px solid var(--line); border-radius:12px }
+table{ width:100%; border-collapse:collapse; font-family:var(--mono); font-size:12px }
+th, td{
+  border-bottom:1px solid var(--line);
+  padding:7px 10px;
+  white-space:nowrap;
+  vertical-align:middle;
+}
+th{ text-align:left; color:var(--muted); position:sticky; top:0; background:var(--card); font-size:11px; font-weight:700; letter-spacing:.3px }
+tr:last-child td{ border-bottom:none }
+
+.same{ color:var(--ok); font-weight:700 }
+.diff{ color:var(--bad); font-weight:700 }
+/* field-level diff coloring inside file cells */
+.fDiff{ color:var(--bad); font-weight:600 }
+/* UPOS·XPOS sub-line inside cells */
+.posLine{ font-size:10px; color:var(--muted); margin-top:2px; line-height:1.3 }
+/* UPOS/XPOS gold column — slightly dimmer */
+.goldPos{ opacity:.8 }
+/* UPOS or XPOS column cell when files disagree */
+.posDiff{ outline:1px solid #ff79c6; outline-offset:-2px; border-radius:4px }
+.posCell{ color:var(--muted) }
+
+/* Inline UPOS/XPOS select / input inside table cells */
+td select.posInlineSelect, td input.posInlineInput{
+  border:none !important;
+  background:transparent !important;
+  color:inherit !important;
+  font-family:var(--mono) !important;
+  font-size:12px !important;
+  padding:0 !important;
+  margin:0 !important;
+  border-radius:0 !important;
+  width:100%;
+  min-width:0;
+  cursor:pointer;
+  box-shadow:none;
+}
+td select.posInlineSelect:focus, td input.posInlineInput:focus{
+  outline:1px solid var(--accent) !important;
+  border-radius:3px !important;
+}
+td input.posInlineInput{ cursor:text !important; }
+.rowDiff td:first-child{ border-left:3px solid #ff5f5f44 }
+.goldCell{ font-weight:700; color:var(--text) }
+/* Gold cell — editable (click to open popup) */
+.goldEditable{ cursor:pointer; }
+.goldEditable:hover{ background:#0e1e32; outline:1px solid var(--accent); outline-offset:-2px; border-radius:4px; }
+
+/* ── Gold-edit popup ── */
+.goldPopup{
+  display:none;
+  position:fixed; z-index:5000;
+  background:var(--card2);
+  border:1px solid var(--line2);
+  border-radius:12px;
+  padding:14px 16px;
+  min-width:230px;
+  box-shadow:0 8px 40px rgba(0,0,0,.65);
+}
+.goldPopup.active{ display:block; }
+.gpTitle{ font-size:11px; color:var(--muted); font-weight:700; margin-bottom:10px; }
+.gpTitle b{ color:var(--accent); }
+.gpRow{ display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+.gpRow label{ font-size:11px; color:var(--muted); width:46px; flex-shrink:0; text-align:right; }
+.gpRow select, .gpRow input.gpTextInput{
+  flex:1; font-size:11px; padding:3px 6px;
+  border-radius:6px; border:1px solid var(--line2);
+  background:#0c1420; color:var(--text);
+}
+.gpActions{ margin-top:10px; display:flex; justify-content:flex-end; }
+.gpActions button{ font-size:11px; padding:4px 10px; }
+.gpHint{ font-size:10px; color:var(--muted); margin-top:6px; text-align:center; opacity:.7; }
+tr.keyFocus > td{ background:#0d2040 }
+tr.keyFocus > td:first-child{ border-left:2px solid var(--accent) }
+
+/* Source tag in GOLD column */
+.srcTag{
+  display:inline-block; padding:1px 5px; border-radius:4px;
+  font-size:10px; font-weight:800; font-family:var(--mono);
+  margin-right:4px; vertical-align:middle;
+}
+.srcCustom{ background:#1a3a5c; color:var(--accent); border:1px solid #234; }
+.srcDoc{ background:#1a2a1e; color:#6dce8a; border:1px solid #1d3825; }
+
+/* Highlight on scroll-to */
+@keyframes highlightPulse {
+  0%   { background: #1e3a5a }
+  50%  { background: #244a70 }
+  100% { background: transparent }
+}
+.highlightRow td{ animation: highlightPulse 1.6s ease-out }
+
+/* Full-page drop overlay */
+.dropOverlay{
+  display:none;
+  position:fixed; inset:0; z-index:9999;
+  background: rgba(9,13,18,.82);
+  backdrop-filter: blur(6px);
+  align-items:center; justify-content:center;
+  animation: overlayIn .15s ease-out;
+}
+.dropOverlay.active{ display:flex; }
+.dropOverlayInner{
+  display:flex; flex-direction:column; align-items:center; gap:12px;
+  padding:40px 56px;
+  border:2px dashed var(--accent);
+  border-radius:20px;
+  background:#0a1622cc;
+  animation: dropPulse .9s ease-in-out infinite;
+}
+.dropOverlayIcon{
+  font-size:56px;
+  animation: dropBounce .7s ease-in-out infinite;
+}
+.dropOverlayText{
+  font-size:22px; font-weight:800;
+  color:var(--accent); letter-spacing:-.3px;
+}
+.dropOverlaySub{ font-size:12px; color:var(--muted); }
+@keyframes overlayIn{
+  from{ opacity:0; } to{ opacity:1; }
+}
+@keyframes dropBounce{
+  0%,100%{ transform: translateY(0) scale(1); }
+  50%    { transform: translateY(-10px) scale(1.08); }
+}
+
+/* Persistent text-mismatch indicator */
+.textWarnBanner{
+  margin-top:8px; padding:8px 12px;
+  border:1px solid #6b2e0a; border-radius:8px;
+  background:#1a0c04; color:#ff9f43;
+  font-size:11px; line-height:1.5;
+}
+
+/* File list + Drop zone */
+.fileList{
+  display:grid; gap:6px;
+  min-height:72px;
+  border:2px dashed transparent;
+  border-radius:12px;
+  padding:4px;
+  transition: border-color .2s, background .2s, box-shadow .2s;
+}
+.fileList.dragOver{
+  border-color: var(--accent);
+  background: #0d1e35;
+  animation: dropPulse .9s ease-in-out infinite;
+}
+@keyframes dropPulse{
+  0%,100%{ box-shadow: 0 0 0 0 #4a9eff33 }
+  50%    { box-shadow: 0 0 0 10px #4a9eff00 }
+}
+.fileItem{
+  display:flex; gap:10px; align-items:center; justify-content:space-between;
+  border:1px solid var(--line); border-radius:10px; padding:8px 12px; background:#0c1420;
+}
+.fileItem .left{ display:flex; flex-direction:column; gap:2px }
+.fileItem .name{ font-weight:700; font-size:12px }
+.fileItem .meta{ font-size:11px; color:var(--muted) }
+.fileItem button{ padding:5px 10px }
+.fileWarnIcon{ font-size:13px; vertical-align:middle; margin-left:4px; cursor:default }
+
+/* Tree blocks */
+.treeGrid{
+  display:block;
+}
+.treeBlock{
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:var(--card2);
+  overflow:hidden;
+}
+.treeBlockStacked{
+  display:flex;
+  flex-direction:column;
+}
+.treeSection{
+  border-bottom:1px solid var(--line);
+}
+.treeSection:last-child{
+  border-bottom:none;
+}
+.treeHead{
+  padding:7px 12px; border-bottom:1px solid var(--line);
+  display:flex; gap:8px; align-items:center; justify-content:space-between;
+  background:#0f1e30;
+}
+.treeHead .title{ font-weight:800; font-size:12px }
+.treeHead .sub{ color:var(--muted); font-size:11px }
+.treeLineRoot{ display:flex; align-items:center; gap:8px; white-space:pre }
+.treeSubtreeBtn{
+  padding:2px 8px; font-size:10px; font-family:var(--sans);
+  border-color:#c07a10; color:#1a0e00; background:var(--gold);
+  border-radius:6px; flex-shrink:0; font-weight:700;
+}
+.treeSubtreeBtn:hover{ border-color:#ffb94e; background:#ffb94e }
+.treePre{
+  margin:0; padding:10px 12px;
+  font-family:var(--mono); font-size:12px;
+  white-space:pre; overflow:auto;
+  line-height:1.6;
+}
+.treeLine{ display:block }
+.treeLineClickable{
+  cursor:pointer;
+  border-radius:4px;
+  transition: background .1s;
+}
+.treeLineClickable:hover{ background:#1a2f48 }
+
+/* Legend icons in tree */
+.legendOk  { color:var(--ok);   font-weight:700 }
+.legendWarn{ color:var(--warn); font-weight:700 }
+.legendGold{ color:var(--gold); font-weight:700 }
+.legendFile{ color:var(--file); font-weight:700 }
+
+/* Tree line coloring */
+.treeLineOk      { color:var(--ok) }
+.treeLineWarn    { color:var(--warn) }
+.treeLineGold    { color:var(--gold) }
+.treeLineFileOnly{ color:var(--file) }
+
+/* Clickable (pickable) doc cells */
+.pickable{ cursor:pointer; user-select:none }
+.pickable:hover{ outline:2px solid #2a5080; outline-offset:-2px; border-radius:6px }
+.picked{ outline:2px solid #4a9eff66; outline-offset:-2px; border-radius:6px; background:#0f2038 }
+.disabledPick{ opacity:.4; cursor:not-allowed }
+
+/* Custom cell */
+.customCell{ display:flex; gap:6px; align-items:center }
+.customCell input, .customCell select{
+  font-family:var(--mono); font-size:12px;
+  padding:5px 8px; border-radius:7px;
+}
+.customHead{ width:72px }
+.customRelSelect{ width:160px }
+
+/* Column toggle bar */
+.colToggleBar{ display:flex; gap:6px; align-items:center; flex-wrap:wrap; margin-bottom:2px }
+.colToggle{
+  font-size:11px; padding:4px 10px; border-radius:20px;
+  transition: opacity .15s, border-color .15s;
+}
+.colVisible{ border-color:#2a4a6a; color:var(--accent); background:#0d1f33 }
+.colVisible:hover{ border-color:var(--accent) }
+.colHidden{ border-color:#2a2a3a; color:#556; background:#0c0f16; opacity:.6 }
+.colHidden:hover{ opacity:1; border-color:#445 }
+
+/* File input hidden */
+.fileHidden{
+  position:absolute; left:-9999px; width:1px; height:1px; opacity:0;
+}
+.btnLike{ display:inline-block; user-select:none }
+.btnLike:active{ transform: translateY(1px) }
+
+/* Gold tree section highlighted background */
+.treeSection:first-child {
+  background: linear-gradient(135deg, #1a1500 0%, #1f1a00 60%, #141200 100%);
+}
+.treeSection:first-child .treeHead {
+  background: #211900;
+  border-bottom-color: #3a3000;
+}
+.treeSection:first-child .treeHead .title {
+  color: #f5c842;
+}
+.treeSection:first-child .treePre {
+  background: transparent;
+}
+.treeSection:not(:first-child) .treeHead {
+  background: #0f1a28;
+}
+
+/* ── Help-Button im Header ── */
+.helpBtn{
+  width:30px; height:30px;
+  border-radius:50%;
+  padding:0;
+  font-size:15px; font-weight:800;
+  flex-shrink:0;
+  margin-left:auto;
+}
+
+/* ── Help-Modal ── */
+.helpModal{
+  display:none;
+  position:fixed; inset:0; z-index:10000;
+  background:rgba(9,13,18,.88);
+  backdrop-filter:blur(5px);
+  align-items:flex-start; justify-content:center;
+  padding:32px 12px;
+  animation:overlayIn .15s ease-out;
+}
+.helpModal.active{ display:flex; }
+.helpModalBox{
+  position:relative;
+  width:calc(100% - 24px);
+  min-width:0;
+  max-height:calc(100vh - 64px);
+  overflow-x:hidden;
+  overflow-y:auto;
+  background:var(--card);
+  border:1px solid var(--line2);
+  border-radius:16px;
+  padding:28px 32px 36px;
+  scrollbar-gutter:stable;
+}
+#helpCloseBtn{
+  position:absolute; top:14px; right:16px;
+  width:28px; height:28px;
+  padding:0; border-radius:50%; font-size:13px;
+}
+
+/* ── Gerendertes Markdown ── */
+.helpContent{ line-height:1.6; overflow-wrap:break-word; word-break:break-word; }
+.helpContent .helpH{ margin:0 0 8px; }
+.helpContent h1.helpH{ font-size:20px; font-weight:800; color:var(--text); padding-right:40px; }
+.helpContent h2.helpH{ font-size:12px; font-weight:700; color:var(--accent); margin-top:26px; text-transform:uppercase; letter-spacing:.4px; }
+.helpContent h3.helpH{ font-size:12px; font-weight:700; color:var(--muted); margin-top:16px; }
+.helpContent .helpHr{ border:none; border-top:1px solid var(--line); margin:16px 0; }
+.helpContent .helpP{ margin:4px 0 8px; }
+.helpContent .helpUl, .helpContent .helpOl{ padding-left:20px; margin:4px 0 10px; }
+.helpContent li{ margin:3px 0; }
+.helpContent .helpCode{
+  margin:8px 0; padding:12px 14px;
+  background:#060e18; border:1px solid var(--line); border-radius:8px;
+  overflow-x:auto; font-family:var(--mono); font-size:11px; line-height:1.6; white-space:pre;
+}
+.helpContent .helpInlineCode{
+  font-family:var(--mono); font-size:11px;
+  background:#1a2535; padding:1px 5px; border-radius:4px;
+}
+.helpContent .helpTable{
+  width:100%; table-layout:fixed;
+  border-collapse:collapse; margin:8px 0 14px; font-size:12px;
+}
+.helpContent .helpTable th{
+  background:#0d1a2a; color:var(--muted); font-size:11px; letter-spacing:.3px;
+}
+.helpContent .helpTable th,
+.helpContent .helpTable td{
+  border:1px solid var(--line); padding:6px 10px; text-align:left;
+  word-break:break-word; overflow-wrap:break-word;
+}
+.helpContent .helpTable tr:nth-child(even) td{ background:#0a1218; }
+.helpContent strong{ color:var(--text); font-weight:700; }
+
+/* Session row separator */
+.sessionRow{ margin-top:10px; padding-top:10px; border-top:1px solid var(--line); }
+
+/* POS edit cells */
+.posEditCell { padding: 4px 6px !important; }
+.posSelect {
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 3px 6px;
+  border-radius: 6px;
+  border-color: var(--line2);
+  background: #0c1420;
+  color: var(--muted);
+  width: 90px;
+  cursor: pointer;
+}
+.posSelect:focus {
+  outline: 1px solid var(--accent);
+  color: var(--text);
+}
+.posCustom {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+</style>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2064%2064%22%3E%0A%20%20%3Crect%20width%3D%2264%22%20height%3D%2264%22%20rx%3D%2214%22%20fill%3D%22%230b1220%22/%3E%0A%20%20%3Cg%20fill%3D%22none%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%0A%20%20%20%20%3Cpath%20d%3D%22M18%2020v16%22%20stroke%3D%22%236ee7b7%22%20stroke-width%3D%224%22/%3E%0A%20%20%20%20%3Cpath%20d%3D%22M18%2036h28%22%20stroke%3D%22%2393c5fd%22%20stroke-width%3D%224%22/%3E%0A%20%20%20%20%3Cpath%20d%3D%22M46%2036v10%22%20stroke%3D%22%23fbbf24%22%20stroke-width%3D%224%22/%3E%0A%20%20%20%20%3Cpath%20d%3D%22M18%2020c10%200%2018%208%2028%208%22%20stroke%3D%22%2393c5fd%22%20stroke-width%3D%224%22/%3E%0A%20%20%3C/g%3E%0A%20%20%3Cg%3E%0A%20%20%20%20%3Ccircle%20cx%3D%2218%22%20cy%3D%2220%22%20r%3D%225%22%20fill%3D%22%236ee7b7%22/%3E%0A%20%20%20%20%3Ccircle%20cx%3D%2246%22%20cy%3D%2228%22%20r%3D%225%22%20fill%3D%22%2393c5fd%22/%3E%0A%20%20%20%20%3Ccircle%20cx%3D%2218%22%20cy%3D%2236%22%20r%3D%225%22%20fill%3D%22%2393c5fd%22/%3E%0A%20%20%20%20%3Ccircle%20cx%3D%2246%22%20cy%3D%2246%22%20r%3D%225%22%20fill%3D%22%23fbbf24%22/%3E%0A%20%20%3C/g%3E%0A%20%20%3Ctext%20x%3D%2232%22%20y%3D%2258%22%20font-family%3D%22system-ui%2CSegoe%20UI%2CRoboto%2CArial%22%20font-size%3D%2212%22%20text-anchor%3D%22middle%22%20fill%3D%22%23e5e7eb%22%3ECoNLL%3C/text%3E%0A%3C/svg%3E">
+</head>
+<body>
+  <header class="bar">
+    <h1>CoNLL-U Vergleich</h1>
+    <p class="muted">
+      <kbd>←</kbd><kbd>→</kbd> <span data-i18n="kbd.sent">Satz</span> &nbsp;
+      <kbd>Ctrl+←</kbd><kbd>Ctrl+→</kbd> <span data-i18n="kbd.firstLast">Erster/Letzter</span> &nbsp;
+      <kbd>n</kbd><kbd>N</kbd> <span data-i18n="kbd.nextDiff">Nächster/Vorheriger Diff</span> &nbsp;|&nbsp;
+      <kbd>↑</kbd><kbd>↓</kbd> <span data-i18n="kbd.row">Zeile</span> &nbsp;
+      <kbd>Enter</kbd> <span data-i18n="kbd.popup">Gold-Popup</span> &nbsp;|&nbsp;
+      <kbd>1</kbd>–<kbd>9</kbd> <span data-i18n="kbd.chooseDoc">Doc wählen</span> &nbsp;
+      <kbd>Ctrl+1</kbd>–<kbd>9</kbd> <span data-i18n="kbd.loadCustom">Custom laden</span> &nbsp;|&nbsp;
+      <kbd>Ctrl+Z</kbd> Undo &nbsp;
+      <kbd>Ctrl+Y</kbd> Redo &nbsp;
+      <kbd>Space</kbd> <span data-i18n="kbd.confirm">Bestätigen</span> &nbsp;
+      <kbd>Del</kbd> <span data-i18n="kbd.delCustom">Custom löschen</span> &nbsp;
+      <kbd>e</kbd> <span data-i18n="kbd.exportConllu">Export CoNLL-U</span> &nbsp;
+      <kbd>E</kbd> <span data-i18n="kbd.exportTrees">Export Bäume</span> &nbsp;|&nbsp;
+      <kbd>?</kbd> <span data-i18n="kbd.help">Hilfe</span> &nbsp;
+      <kbd>Esc</kbd> <span data-i18n="kbd.close">Schließen</span>
+    </p>
+    <div class="langBar">
+      <button class="langBtn" data-lang="de" onclick="setLang('de')" title="Deutsch">🇩🇪</button>
+      <button class="langBtn" data-lang="en" onclick="setLang('en')" title="English">🇬🇧</button>
+    </div>
+    <button id="helpBtn" class="helpBtn" data-i18n-title="help.btnTitle">?</button>
+  </header>
+
+  <main class="wrap">
+    <section class="card">
+      <h2 data-i18n="sec.files">1) Dateien</h2>
+      <input id="fileInput" type="file" accept=".conllu,.conll,.txt" multiple class="fileHidden" />
+      <div class="row">
+        <label id="addBtn" class="btnLike" for="fileInput" data-i18n="files.add">Dateien hinzufügen</label>
+        <button id="resetBtn" class="danger" data-i18n="files.reset">Reset</button>
+        <span id="fileMeta" class="muted"></span>
+      </div>
+      <div id="fileList" class="fileList" style="margin-top:10px"></div>
+      <div id="textWarn"></div>
+    </section>
+
+    <section class="card">
+      <h2 data-i18n="sec.select">2) Satz wählen</h2>
+      <div class="row">
+        <button id="prevBtn" disabled>←</button>
+        <select id="sentSelect" disabled></select>
+        <button id="nextBtn" disabled>→</button>
+        <button id="confirmBtn" class="confirmBtn" disabled>✓ Bestätigen</button>
+        <span id="sentMeta" class="muted"></span>
+        <div id="sentStats" class="sentStatsRow"></div>
+        <span id="progressMeta" class="muted small progressMeta"></span>
+      </div>
+      <div id="sentText" class="sentText"></div>
+      <div id="sentMap" class="sentMap"></div>
+    </section>
+
+    <section class="card">
+      <h2 data-i18n="sec.tree">3) Baumansicht</h2>
+      <div id="treeGrid" class="treeGrid"></div>
+      <div class="muted small" style="margin-top:8px">
+        <span data-i18n="legend.label">Legende:</span>
+        <span class="legendOk"  data-i18n="legend.ok">✅ gleich</span> &nbsp;|&nbsp;
+        <span class="legendWarn" data-i18n="legend.warn">⚠️ Label-Unterschied</span> &nbsp;|&nbsp;
+        <span class="legendGold" data-i18n="legend.gold">🅶 nur in Gold</span> &nbsp;|&nbsp;
+        <span class="legendFile" data-i18n="legend.file">🅵 nur in dieser Datei</span> &nbsp;|&nbsp;
+        <span data-i18n="legend.root">🌱 Teilbaum-Wurzel</span> &nbsp;|&nbsp;
+        <span data-i18n="legend.click">Klick auf Zeile → springt zur Tabellenzeile</span>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2 data-i18n="sec.compare">4) Vergleich</h2>
+      <div class="row" style="margin-bottom:8px">
+        <div id="customInitBtns"></div>
+        <button id="customClearBtn" class="danger" disabled data-i18n="custom.clear">Custom Satz löschen</button>
+        <button id="undoBtn" disabled data-i18n="undo.btn">↩ Undo</button>
+        <button id="redoBtn" disabled data-i18n="redo.btn">↪ Redo</button>
+      </div>
+      <div id="colToggleBar" class="colToggleBar"></div>
+      <div class="tableWrap" style="margin-top:8px">
+        <table id="cmpTable"></table>
+      </div>
+      <p class="muted small" style="margin-top:10px" data-i18n="export.mwtNote">
+        Hinweis: Multi-Word-Tokens (IDs mit „-" oder „.") werden ignoriert.
+      </p>
+    </section>
+
+    <section class="card">
+      <h2 data-i18n="sec.export">5) Export</h2>
+      <div class="row">
+        <button id="exportConlluBtn" disabled data-i18n="export.conllu">Gold CoNLL-U herunterladen</button>
+        <button id="exportTreeBtn"   disabled data-i18n="export.trees">Baumansicht (alle Sätze) herunterladen</button>
+      </div>
+      <p class="muted small" style="margin-top:8px" data-i18n="export.conlluDesc">
+        Gold CoNLL-U enthält alle Sätze mit den aktuellen Gold-Annotationen (HEAD, DEPREL, UPOS, XPOS).
+        LEMMA / FEATS / DEPS / MISC werden aus der Quelldatei übernommen.
+      </p>
+      <div class="row sessionRow">
+        <button id="exportSessionBtn" data-i18n="session.save">💾 Session speichern</button>
+        <label class="btnLike" for="importSessionInput" data-i18n="session.load">📂 Session laden</label>
+        <input id="importSessionInput" type="file" accept=".json" class="fileHidden">
+        <span id="sessionMeta" class="muted small"></span>
+      </div>
+      <p class="muted small" style="margin-top:4px" data-i18n="session.desc">
+        Session speichert alle geladenen Dateien, Annotationen und den kompletten Undo-/Redo-Verlauf als JSON.
+      </p>
+    </section>
+  </main>
+
+  <div id="dropOverlay" class="dropOverlay">
+    <div class="dropOverlayInner">
+      <span data-i18n="files.dropOverlay">Dateien hier ablegen</span>
+    </div>
+  </div>
+
+  <div id="helpModal" class="helpModal">
+    <div class="helpModalBox">
+      <button id="helpCloseBtn" data-i18n-title="kbd.close">✕</button>
+      <div id="helpContent" class="helpContent"></div>
+    </div>
+  </div>
+
+<!-- inlined: lang/de.js -->
+<script>
+window.LANG_DE = {
+  // Abschnitte
+  'sec.files':   '1) Dateien',
+  'sec.select':  '2) Satz wählen',
+  'sec.tree':    '3) Baumansicht',
+  'sec.compare': '4) Vergleich',
+  'sec.export':  '5) Export',
+
+  // Datei-Bereich
+  'files.add':          'Dateien hinzufügen',
+  'files.reset':        'Reset',
+  'files.none':         'Keine Dateien geladen',
+  'files.loaded':       '{n} Datei(en) geladen',
+  'files.drop':         'Dateien hier ablegen oder Schaltfläche nutzen · .conllu / .conll / .txt',
+  'files.dropOverlay':  'Dateien hier ablegen',
+  'help.btnTitle':      'Hilfe / README anzeigen',
+  'files.demo':         'Demo laden (3 Beispieldateien)',
+  'files.delete':       'Löschen',
+  'files.sentences':    '{n} Sätze',
+  'files.warnBadge':    'Unterschiedlicher Text!',
+  'files.warnBanner':   '⚠️ Unterschiedliche Texte geladen — Vergleich möglicherweise fehlerhaft.',
+  'files.resetConfirm': 'Wirklich alles zurücksetzen?',
+
+  // Satz-Auswahl
+  'sent.optLabel':     'Satz {n}',
+  'sent.progress':     '{done} / {total} bestätigt',
+  'sent.confirm':      '✓ Bestätigen',
+  'sent.confirmed':    '✓ Bestätigt',
+  'sent.missing':      '(Satz fehlt in Datei 1)',
+  'sent.label':        'S{cur} / {max}',
+  'sent.optOk':        '· ✓',
+  'sent.optDiff':      '· {n} Diff',
+  'sent.optDiffs':     '· {n} Diffs',
+  'sent.dotTitle':     'Satz {n}: {toks} Tokens, {diffs} Diffs',
+  'sent.dotTitleConf': 'Satz {n}: {toks} Tokens, {diffs} Diffs (bestätigt)',
+  'sent.clearConfirm': 'Custom für diesen Satz wirklich löschen?',
+
+  // Spalten-Toggle
+  'cols.label': 'Spalten: ',
+
+  // Custom
+  'custom.initBtn': 'Custom aus „{name}"',
+  'custom.clear':   'Custom Satz löschen',
+
+  // Legende
+  'legend.label': 'Legende:',
+  'legend.ok':    '✅ gleich',
+  'legend.warn':  '⚠️ Label-Unterschied',
+  'legend.gold':  '🅶 nur in Gold',
+  'legend.file':  '🅵 nur in dieser Datei',
+  'legend.root':  '🌱 Teilbaum-Wurzel',
+  'legend.click': 'Klick auf Zeile → springt zur Tabellenzeile',
+
+  // Statistiken
+  'stats.token':  '{n} Token',
+  'stats.tokens': '{n} Tokens',
+  'stats.diff':   '{n} Diff',
+  'stats.diffs':  '{n} Diffs',
+
+  // Undo / Redo
+  'undo.btn':   '↩ Undo',
+  'redo.btn':   '↪ Redo',
+  'undo.title': 'Rückgängig (Ctrl+Z)  —  {n} Schritt{s}',
+  'redo.title': 'Wiederholen (Ctrl+Y)  —  {n} Schritt{s}',
+  'undo.step':  '',
+  'undo.steps': 'e',
+
+  // Tabellen-Spalten
+  'col.id':   'ID',
+  'col.form': 'FORM',
+  'col.upos': 'UPOS',
+  'col.xpos': 'XPOS',
+  'col.gold': 'GOLD',
+
+  // Gold-Popup
+  'popup.editTitle': 'Klicken zum Bearbeiten',
+  'popup.head':      'HEAD',
+  'popup.deprel':    'DEPREL',
+  'popup.upos':      'UPOS',
+  'popup.xpos':      'XPOS',
+  'popup.reset':     'Zurücksetzen',
+  'popup.hint':      'Tab/Shift+Tab · Enter schließt · r zurücksetzen',
+  'popup.root':      '(root)',
+
+  // Export
+  'export.conllu':     'Gold CoNLL-U herunterladen',
+  'export.trees':      'Baumansicht (alle Sätze) herunterladen',
+  'export.conlluDesc': 'Gold CoNLL-U enthält alle Sätze mit den aktuellen Gold-Annotationen (HEAD, DEPREL, UPOS, XPOS). LEMMA / FEATS / DEPS / MISC werden aus der Quelldatei übernommen.',
+  'export.mwtNote':    'Hinweis: Multi-Word-Tokens (IDs mit „-" oder „.") werden ignoriert.',
+
+  // Session
+  'session.save':      '💾 Session speichern',
+  'session.load':      '📂 Session laden',
+  'session.desc':      'Session speichert alle geladenen Dateien, Annotationen und den kompletten Undo-/Redo-Verlauf als JSON.',
+  'session.exported':  'Exportiert: {n} Datei(en), {u} Undo-Schritte',
+  'session.loaded':    'Geladen: {n} Datei(en) · {s} Sätze · {u} Undo-Schritte',
+  'session.errJson':   'Ungültige JSON-Datei.',
+  'session.errFormat': 'Unbekanntes Session-Format (version ≠ 1).',
+  'session.errNoDocs': 'Session enthält keine Dateien.',
+
+  // Tastaturkürzel-Legende (Header)
+  'kbd.nextDiff':     'Nächster Diff',
+  'kbd.prevDiff':     'Vorheriger Diff',
+  'kbd.sent':         'Satz',
+  'kbd.firstLast':    'Erster/Letzter',
+  'kbd.row':          'Zeile',
+  'kbd.popup':        'Gold-Popup',
+  'kbd.chooseDoc':    'Doc wählen',
+  'kbd.loadCustom':   'Custom laden',
+  'kbd.confirm':      'Bestätigen',
+  'kbd.delCustom':    'Custom löschen',
+  'kbd.exportConllu': 'Export CoNLL-U',
+  'kbd.exportTrees':  'Export Bäume',
+  'kbd.help':         'Hilfe',
+  'kbd.close':        'Schließen',
+
+  // Dropdown-Leerauswahl
+  'label.empty': '(leer)',
+
+  // Baumansicht
+  'tree.toGold':      '→ Gold',
+  'tree.toGoldTitle': 'Teilbaum ab Token {id} als Gold übernehmen',
+  'tree.jumpTitle':   'Zur Zeile springen: Token {id}',
+  'tree.fileDefault': 'Datei {n}',
+  'tree.vsGold':      'vs Gold',
+  'tree.noTree':      '(keine Bäume für diesen Satz)',
+
+  // Export – Baumtext
+  'export.treeGold':  '=== GOLD ===',
+  'export.treeVsGold':'--- {name} vs Gold ---',
+  'export.treeNoTree':'(keine Bäume für diesen Satz)',
+
+  // Hilfe
+  'help.unavailable': 'Hilfe nicht verfügbar.',
+  'help.runScript':   'Bitte python make_readme_js.py ausführen und die Seite neu laden.',
+};
+
+</script>
+<!-- inlined: lang/en.js -->
+<script>
+window.LANG_EN = {
+  // Sections
+  'sec.files':   '1) Files',
+  'sec.select':  '2) Select Sentence',
+  'sec.tree':    '3) Tree View',
+  'sec.compare': '4) Comparison',
+  'sec.export':  '5) Export',
+
+  // File section
+  'files.add':          'Add files',
+  'files.reset':        'Reset',
+  'files.none':         'No files loaded',
+  'files.loaded':       '{n} file(s) loaded',
+  'files.drop':         'Drop files here or use the button · .conllu / .conll / .txt',
+  'files.dropOverlay':  'Drop files here',
+  'help.btnTitle':      'Help / show README',
+  'files.demo':         'Load demo (3 example files)',
+  'files.delete':       'Remove',
+  'files.sentences':    '{n} sentences',
+  'files.warnBadge':    'Different text!',
+  'files.warnBanner':   '⚠️ Different texts loaded — comparison may be inaccurate.',
+  'files.resetConfirm': 'Really reset everything?',
+
+  // Sentence select
+  'sent.optLabel':     'Sentence {n}',
+  'sent.progress':     '{done} / {total} confirmed',
+  'sent.confirm':      '✓ Confirm',
+  'sent.confirmed':    '✓ Confirmed',
+  'sent.missing':      '(Sentence missing in file 1)',
+  'sent.label':        'S{cur} / {max}',
+  'sent.optOk':        '· ✓',
+  'sent.optDiff':      '· {n} diff',
+  'sent.optDiffs':     '· {n} diffs',
+  'sent.dotTitle':     'Sentence {n}: {toks} tokens, {diffs} diffs',
+  'sent.dotTitleConf': 'Sentence {n}: {toks} tokens, {diffs} diffs (confirmed)',
+  'sent.clearConfirm': 'Really delete custom annotations for this sentence?',
+
+  // Columns toggle
+  'cols.label': 'Columns: ',
+
+  // Custom
+  'custom.initBtn': 'Custom from "{name}"',
+  'custom.clear':   'Clear custom sentence',
+
+  // Legend
+  'legend.label': 'Legend:',
+  'legend.ok':    '✅ identical',
+  'legend.warn':  '⚠️ label difference',
+  'legend.gold':  '🅶 gold only',
+  'legend.file':  '🅵 this file only',
+  'legend.root':  '🌱 subtree root',
+  'legend.click': 'Click row → jump to table row',
+
+  // Stats
+  'stats.token':  '{n} token',
+  'stats.tokens': '{n} tokens',
+  'stats.diff':   '{n} diff',
+  'stats.diffs':  '{n} diffs',
+
+  // Undo / Redo
+  'undo.btn':   '↩ Undo',
+  'redo.btn':   '↪ Redo',
+  'undo.title': 'Undo (Ctrl+Z)  —  {n} step{s}',
+  'redo.title': 'Redo (Ctrl+Y)  —  {n} step{s}',
+  'undo.step':  '',
+  'undo.steps': 's',
+
+  // Table columns
+  'col.id':   'ID',
+  'col.form': 'FORM',
+  'col.upos': 'UPOS',
+  'col.xpos': 'XPOS',
+  'col.gold': 'GOLD',
+
+  // Gold popup
+  'popup.editTitle': 'Click to edit',
+  'popup.head':      'HEAD',
+  'popup.deprel':    'DEPREL',
+  'popup.upos':      'UPOS',
+  'popup.xpos':      'XPOS',
+  'popup.reset':     'Reset',
+  'popup.hint':      'Tab/Shift+Tab · Enter closes · r reset',
+  'popup.root':      '(root)',
+
+  // Export
+  'export.conllu':     'Download Gold CoNLL-U',
+  'export.trees':      'Download tree view (all sentences)',
+  'export.conlluDesc': 'Gold CoNLL-U contains all sentences with current Gold annotations (HEAD, DEPREL, UPOS, XPOS). LEMMA / FEATS / DEPS / MISC are taken from the source file.',
+  'export.mwtNote':    'Note: Multi-word tokens (IDs with "-" or ".") are ignored.',
+
+  // Session
+  'session.save':      '💾 Save session',
+  'session.load':      '📂 Load session',
+  'session.desc':      'Session saves all loaded files, annotations, and the complete undo/redo history as JSON.',
+  'session.exported':  'Exported: {n} file(s), {u} undo steps',
+  'session.loaded':    'Loaded: {n} file(s) · {s} sentences · {u} undo steps',
+  'session.errJson':   'Invalid JSON file.',
+  'session.errFormat': 'Unknown session format (version ≠ 1).',
+  'session.errNoDocs': 'Session contains no files.',
+
+  // Keyboard shortcut legend (header)
+  'kbd.nextDiff':     'Next diff',
+  'kbd.prevDiff':     'Previous diff',
+  'kbd.sent':         'Sentence',
+  'kbd.firstLast':    'First/Last',
+  'kbd.row':          'Row',
+  'kbd.popup':        'Gold popup',
+  'kbd.chooseDoc':    'Choose doc',
+  'kbd.loadCustom':   'Load custom',
+  'kbd.confirm':      'Confirm',
+  'kbd.delCustom':    'Delete custom',
+  'kbd.exportConllu': 'Export CoNLL-U',
+  'kbd.exportTrees':  'Export trees',
+  'kbd.help':         'Help',
+  'kbd.close':        'Close',
+
+  // Dropdown empty option
+  'label.empty': '(empty)',
+
+  // Tree view
+  'tree.toGold':      '→ Gold',
+  'tree.toGoldTitle': 'Adopt subtree from token {id} as Gold',
+  'tree.jumpTitle':   'Jump to row: token {id}',
+  'tree.fileDefault': 'File {n}',
+  'tree.vsGold':      'vs Gold',
+  'tree.noTree':      '(no trees for this sentence)',
+
+  // Export – tree text
+  'export.treeGold':   '=== GOLD ===',
+  'export.treeVsGold': '--- {name} vs Gold ---',
+  'export.treeNoTree': '(no trees for this sentence)',
+
+  // Help
+  'help.unavailable': 'Help not available.',
+  'help.runScript':   'Please run python make_readme_js.py and reload the page.',
+};
+
+</script>
+<!-- inlined: js/i18n.js -->
+<script>
+// ---------- i18n ----------
+const LANGS = {};
+if(window.LANG_DE) LANGS['de'] = window.LANG_DE;
+if(window.LANG_EN) LANGS['en'] = window.LANG_EN;
+
+let _currentLang = localStorage.getItem('lang') || 'de';
+
+// Translate key with optional {param} substitution
+function t(key, params = {}){
+  const dict = LANGS[_currentLang] || LANGS['de'] || {};
+  const str  = dict[key] ?? LANGS['de']?.[key] ?? key;
+  return str.replace(/\{(\w+)\}/g, (_, k) =>
+    params[k] !== undefined ? String(params[k]) : `{${k}}`
+  );
+}
+
+// Plural suffix helper  →  tpSuffix(n, 'undo') → '' or 'e' / 's'
+function tpSuffix(n, prefix){
+  return n !== 1 ? t(prefix + '.steps') : t(prefix + '.step');
+}
+
+function getLang(){ return _currentLang; }
+
+function setLang(code){
+  if(!LANGS[code]) return;
+  _currentLang = code;
+  localStorage.setItem('lang', code);
+  document.documentElement.lang = code;
+  applyI18n();
+  document.querySelectorAll('.langBtn').forEach(b =>
+    b.classList.toggle('langBtnActive', b.dataset.lang === code)
+  );
+  // Reset popup so it is recreated with new language strings
+  if(typeof _resetPopup === 'function') _resetPopup();
+  // Rebuild label caches (e.g. "(empty)" label)
+  if(typeof buildDeprelOptionsCache === 'function') buildDeprelOptionsCache();
+  // Re-render dynamic UI
+  if(typeof renderFiles      === 'function') renderFiles();
+  if(typeof renderSentSelect === 'function') renderSentSelect();
+  if(typeof renderSentence   === 'function') renderSentence();
+  if(typeof _syncUndoBtns    === 'function') _syncUndoBtns();
+  // If help modal is open, reload its content in new language
+  if(typeof openHelp === 'function'){
+    const modal = document.getElementById('helpModal');
+    if(modal?.classList.contains('active')) openHelp();
+  }
+}
+
+// Register additional language at runtime
+function registerLang(code, dict){
+  LANGS[code] = dict;
+}
+
+function applyI18n(){
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    el.textContent = t(el.dataset.i18n);
+  });
+  document.querySelectorAll('[data-i18n-title]').forEach(el => {
+    el.title = t(el.dataset['i18nTitle']);
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.documentElement.lang = _currentLang;
+  applyI18n();
+  document.querySelectorAll('.langBtn').forEach(b =>
+    b.classList.toggle('langBtnActive', b.dataset.lang === _currentLang)
+  );
+});
+
+</script>
+<!-- inlined: js/state.js -->
+<script>
+// Set by labels.js before main.js runs
+let LABELS = {};
+let DEPREL_OPTIONS_HTML = "";
+let DEPREL_VALUE_SET = new Set();
+let UPOS_OPTIONS_HTML = "";
+let XPOS_OPTIONS_HTML = "";
+
+// ---------- App State ----------
+const state = {
+  docs: [],
+  currentSent: 0,
+  maxSents: 0,
+  custom: {},          // custom[sent][tokId] = {head, deprel, upos, xpos}
+  goldPick: {},        // goldPick[sent][tokId] = docIdx
+  hiddenCols: new Set(),
+  confirmed: new Set(), // confirmed sentence indices
+};
+
+// ---------- Label helpers ----------
+function normalizeLabel(label){
+  return String(label).replace(/\*$/,"").trim();
+}
+
+function buildOptionsHtmlFromList(items){
+  let html = `<option value="">${escapeHtml(t('label.empty'))}</option>`;
+  for(const raw of items){
+    const val = normalizeLabel(raw);
+    if(!val) continue;
+    html += `<option value="${escapeHtml(val)}">${escapeHtml(val)}</option>`;
+  }
+  return html;
+}
+
+function buildDeprelOptionsCache(){
+  DEPREL_VALUE_SET = new Set();
+  let html = `<option value="">${escapeHtml(t('label.empty'))}</option>`;
+  for(const [section, items] of Object.entries(LABELS)){
+    if(section.startsWith("__")) continue;
+    html += `<optgroup label="${escapeHtml(section)}">`;
+    for(const raw of items){
+      const val = normalizeLabel(raw);
+      if(!val) continue;
+      DEPREL_VALUE_SET.add(val);
+      html += `<option value="${escapeHtml(val)}">${escapeHtml(val)}</option>`;
+    }
+    html += `</optgroup>`;
+  }
+  DEPREL_OPTIONS_HTML = html;
+
+  const uposList = LABELS["__upos__"] || [];
+  UPOS_OPTIONS_HTML = buildOptionsHtmlFromList(uposList);
+
+  const xposList = LABELS["__xpos__"] || [];
+  XPOS_OPTIONS_HTML = buildOptionsHtmlFromList(xposList);
+}
+
+// ---------- State helpers ----------
+function ensureCustomSent(sentIndex){ if(!state.custom[sentIndex]) state.custom[sentIndex] = {}; return state.custom[sentIndex]; }
+function ensureGoldSent(sentIndex){ if(!state.goldPick[sentIndex]) state.goldPick[sentIndex] = {}; return state.goldPick[sentIndex]; }
+
+function nullIfEmpty(v){ return (v === null || v === undefined || v === "") ? null : v; }
+
+function getCustomEntry(sentIndex, tokId){
+  const e = state.custom[sentIndex]?.[tokId];
+  if(!e) return null;
+  const head   = nullIfEmpty(e.head);
+  const deprel = nullIfEmpty(e.deprel);
+  const upos   = nullIfEmpty(e.upos);
+  const xpos   = nullIfEmpty(e.xpos);
+  if(head === null && deprel === null && upos === null && xpos === null) return null;
+  return { head, deprel, upos, xpos };
+}
+
+function setCustomField(sentIndex, tokId, field, value){
+  const sent = ensureCustomSent(sentIndex);
+  if(!sent[tokId]) sent[tokId] = { head:null, deprel:null, upos:null, xpos:null };
+  if(field === "head")   sent[tokId].head   = value;
+  if(field === "deprel") sent[tokId].deprel = value;
+  if(field === "upos")   sent[tokId].upos   = value;
+  if(field === "xpos")   sent[tokId].xpos   = value;
+  const e = getCustomEntry(sentIndex, tokId);
+  if(!e){
+    delete sent[tokId];
+    if(Object.keys(sent).length === 0) delete state.custom[sentIndex];
+  }
+}
+
+function getCustomUpos(sentIndex, tokId){ return getCustomEntry(sentIndex, tokId)?.upos ?? null; }
+function getCustomXpos(sentIndex, tokId){ return getCustomEntry(sentIndex, tokId)?.xpos ?? null; }
+
+function getDocChoice(sentIndex, tokId){
+  const m = ensureGoldSent(sentIndex);
+  const v = m[tokId];
+  if(typeof v === "number" && v >= 0 && v < state.docs.length) return v;
+  return 0;
+}
+function setDocChoice(sentIndex, tokId, docIdx){ ensureGoldSent(sentIndex)[tokId] = docIdx; }
+
+function valueStr(head, deprel){
+  return `${head ?? "_"} / ${deprel ?? "_"}`;
+}
+
+// ---------- Statistics ----------
+function computeStats(sentIndex, idList, docMaps, goldMap){
+  const totalTokens = idList.length;
+  if(docMaps.length < 2) return { totalTokens, diffCount: 0 };
+  let diffCount = 0;
+  for(const id of idList){
+    const goldTok = goldMap.get(id);
+    if(!goldTok) continue;
+    const goldHd   = valueStr(goldTok.head, goldTok.deprel);
+    const goldUpos = goldTok.upos ?? "_";
+    const goldXpos = goldTok.xpos ?? "_";
+    for(let i = 0; i < docMaps.length; i++){
+      const t = docMaps[i].get(id);
+      if(!t) continue;
+      if(valueStr(t.head, t.deprel) !== goldHd ||
+         (t.upos ?? "_") !== goldUpos ||
+         (t.xpos ?? "_") !== goldXpos){ diffCount++; break; }
+    }
+  }
+  return { totalTokens, diffCount };
+}
+
+// ---------- Helpers ----------
+function escapeHtml(s){
+  return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+}
+
+</script>
+  <!-- inlined: labels.js -->
+<script>
+// Anpassbare Labels für DEPREL, UPOS und XPOS.
+// Sektions-Schlüssel erscheinen als Gruppe im Dropdown.
+// __upos__ und __xpos__ befüllen die jeweiligen POS-Dropdowns.
+LABELS = {
+  "Core arguments":      ["nsubj", "obj", "iobj", "csubj", "ccomp", "xcomp"],
+  "Non-core dependents": ["obl", "vocative", "expl", "dislocated"],
+  "Modifier words":      ["advcl", "advmod", "discourse"],
+  "Function Words":      ["aux", "cop", "mark"],
+  "Nominal dependents":  ["nmod", "appos", "nummod", "acl", "amod", "det", "clf", "case"],
+  "Coordination":        ["conj", "cc"],
+  "Other":               ["fixed", "flat", "list", "parataxis", "compound", "orphan", "goeswith", "reparandum", "punct", "root", "dep"],
+
+  "__upos__": ["ADJ", "ADP", "ADV", "AUX", "CCONJ", "DET", "INTJ", "NOUN", "NUM", "PART", "PRON", "PROPN", "PUNCT", "SCONJ", "SYM", "VERB", "X"],
+
+  "__xpos__": [
+    "ADJA", "ADJD", "ADV", "APPO", "APPR", "APPRART", "APZR",
+    "ART", "CARD", "FM", "ITJ", "KOKOM", "KON", "KOUI", "KOUS",
+    "NE", "NN", "NNE", "PDAT", "PDS", "PIAT", "PIS", "PPER",
+    "PPOSAT", "PPOSS", "PRELAT", "PRELS", "PRF", "PROAV",
+    "PTKA", "PTKANT", "PTKNEG", "PTKVZ", "PTKZU",
+    "PWAT", "PWAV", "PWS", "TRUNC", "VAFIN", "VAIMP", "VAINF",
+    "VAPP", "VMFIN", "VMINF", "VMPP", "VVFIN", "VVIMP", "VVINF",
+    "VVIZU", "VVPP", "XY", "$,", "$.", "$("
+  ]
+};
+
+</script>
+  <!-- inlined: examples.js -->
+<script>
+// Beispieldateien für die Demo-Funktion.
+// Drei CoNLL-U Dateien, drei Sätze — decken alle Vergleichsfälle ab:
+//
+//  ✅  HEAD + DEPREL + UPOS + XPOS identisch in allen Dateien
+//  ⚠️  gleicher HEAD, unterschiedliches DEPREL
+//  🅶/🅵 unterschiedlicher HEAD → Kante wechselt Elternknoten
+//  UPOS-Unterschied  → goldene Spalte hervorgehoben, → Gold-Button im Baum
+//  XPOS-Unterschied  → wie UPOS, aber XPOS-Spalte
+//  UPOS+XPOS-Unterschied gleichzeitig
+//  DEPREL+UPOS-Unterschied gleichzeitig
+//  Satz ohne jede Abweichung (Datei 2, S3) → Diff-Block im Export übersprungen
+
+const EXAMPLES = [
+  // ── Datei 1: Referenzannotation ──────────────────────────────────────────
+  {
+    name: "datei1_referenz.conllu",
+    content: [
+      "# text = Der Hund beißt den Mann .",
+      "1\tDer\tder\tDET\tART\t_\t3\tdet\t_\t_",
+      "2\tHund\tHund\tNOUN\tNN\t_\t3\tnsubj\t_\t_",
+      "3\tbeißt\tbeißen\tVERB\tVVFIN\t_\t0\troot\t_\t_",
+      "4\tden\tder\tDET\tART\t_\t5\tdet\t_\t_",
+      "5\tMann\tMann\tNOUN\tNN\t_\t3\tobj\t_\t_",
+      "6\t.\t.\tPUNCT\t$.\t_\t3\tpunct\t_\t_",
+      "",
+      "# text = Sie lächelt immer .",
+      "1\tSie\tsie\tPRON\tPPER\t_\t2\tnsubj\t_\t_",
+      "2\tlächelt\tlächeln\tVERB\tVVFIN\t_\t0\troot\t_\t_",
+      "3\timmer\timmer\tADV\tADV\t_\t2\tadvmod\t_\t_",
+      "4\t.\t.\tPUNCT\t$.\t_\t2\tpunct\t_\t_",
+      "",
+      "# text = Das Wetter ist schön .",
+      "1\tDas\tder\tDET\tART\t_\t2\tdet\t_\t_",
+      "2\tWetter\tWetter\tNOUN\tNN\t_\t3\tnsubj\t_\t_",
+      "3\tist\tsein\tAUX\tVAFIN\t_\t0\troot\t_\t_",
+      "4\tschön\tschön\tADJ\tADJD\t_\t3\tamod\t_\t_",
+      "5\t.\t.\tPUNCT\t$.\t_\t3\tpunct\t_\t_",
+      "",
+    ].join("\n"),
+  },
+
+  // ── Datei 2: DEPREL-Abweichungen + UPOS-Abweichungen ────────────────────
+  // S1: Token 1 UPOS DET→PRON               (UPOS-Diff)
+  //     Token 2 deprel nsubj→subj            (DEPREL-Diff ⚠️)
+  //     Token 5 deprel obj→dobj + UPOS NOUN→PROPN  (DEPREL+UPOS-Diff)
+  // S2: Token 3 deprel advmod→mod            (DEPREL-Diff ⚠️)
+  //     Token 4 UPOS PUNCT→PUNC              (UPOS-Diff)
+  // S3: identisch zu Datei 1 → kein Diff-Block im Export
+  {
+    name: "datei2_deprel_upos.conllu",
+    content: [
+      "# text = Der Hund beißt den Mann .",
+      "1\tDer\tder\tPRON\tART\t_\t3\tdet\t_\t_",     // UPOS DET→PRON
+      "2\tHund\tHund\tNOUN\tNN\t_\t3\tsubj\t_\t_",    // deprel nsubj→subj ⚠️
+      "3\tbeißt\tbeißen\tVERB\tVVFIN\t_\t0\troot\t_\t_",
+      "4\tden\tder\tDET\tART\t_\t5\tdet\t_\t_",
+      "5\tMann\tMann\tPROPN\tNN\t_\t3\tdobj\t_\t_",   // deprel obj→dobj + UPOS NOUN→PROPN
+      "6\t.\t.\tPUNCT\t$.\t_\t3\tpunct\t_\t_",
+      "",
+      "# text = Sie lächelt immer .",
+      "1\tSie\tsie\tPRON\tPPER\t_\t2\tnsubj\t_\t_",
+      "2\tlächelt\tlächeln\tVERB\tVVFIN\t_\t0\troot\t_\t_",
+      "3\timmer\timmer\tADV\tADV\t_\t2\tmod\t_\t_",   // deprel advmod→mod ⚠️
+      "4\t.\t.\tPUNC\t$.\t_\t2\tpunct\t_\t_",         // UPOS PUNCT→PUNC
+      "",
+      "# text = Das Wetter ist schön .",
+      "1\tDas\tder\tDET\tART\t_\t2\tdet\t_\t_",
+      "2\tWetter\tWetter\tNOUN\tNN\t_\t3\tnsubj\t_\t_",
+      "3\tist\tsein\tAUX\tVAFIN\t_\t0\troot\t_\t_",
+      "4\tschön\tschön\tADJ\tADJD\t_\t3\tamod\t_\t_",
+      "5\t.\t.\tPUNCT\t$.\t_\t3\tpunct\t_\t_",        // S3 identisch ✅
+      "",
+    ].join("\n"),
+  },
+
+  // ── Datei 3: HEAD-Abweichungen + XPOS-Abweichungen ──────────────────────
+  // S1: Token 1 head 3→2                    (HEAD-Diff → 🅶/🅵 im Baum)
+  //     Token 6 XPOS $.→BEL                 (XPOS-Diff)
+  // S2: Token 2 XPOS VVFIN→VVPS             (XPOS-Diff)
+  //     Token 3 head 2→1                    (HEAD-Diff → 🅶/🅵 im Baum)
+  // S3: Token 4 UPOS ADJ→ADV + XPOS ADJD→ADV  (UPOS+XPOS-Diff gleichzeitig)
+  {
+    name: "datei3_head_xpos.conllu",
+    content: [
+      "# text = Der Hund beißt den Mann .",
+      "1\tDer\tder\tDET\tART\t_\t2\tdet\t_\t_",       // head 3→2  🅶/🅵
+      "2\tHund\tHund\tNOUN\tNN\t_\t3\tnsubj\t_\t_",
+      "3\tbeißt\tbeißen\tVERB\tVVFIN\t_\t0\troot\t_\t_",
+      "4\tden\tder\tDET\tART\t_\t5\tdet\t_\t_",
+      "5\tMann\tMann\tNOUN\tNN\t_\t3\tobj\t_\t_",
+      "6\t.\t.\tPUNCT\tBEL\t_\t3\tpunct\t_\t_",        // XPOS $.→BEL
+      "",
+      "# text = Sie lächelt immer .",
+      "1\tSie\tsie\tPRON\tPPER\t_\t2\tnsubj\t_\t_",
+      "2\tlächelt\tlächeln\tVERB\tVVPS\t_\t0\troot\t_\t_",  // XPOS VVFIN→VVPS
+      "3\timmer\timmer\tADV\tADV\t_\t1\tadvmod\t_\t_", // head 2→1  🅶/🅵
+      "4\t.\t.\tPUNCT\t$.\t_\t2\tpunct\t_\t_",
+      "",
+      "# text = Das Wetter ist schön .",
+      "1\tDas\tder\tDET\tART\t_\t2\tdet\t_\t_",
+      "2\tWetter\tWetter\tNOUN\tNN\t_\t3\tnsubj\t_\t_",
+      "3\tist\tsein\tAUX\tVAFIN\t_\t0\troot\t_\t_",
+      "4\tschön\tschön\tADV\tADV\t_\t3\tamod\t_\t_",   // UPOS ADJ→ADV + XPOS ADJD→ADV
+      "5\t.\t.\tPUNCT\t$.\t_\t3\tpunct\t_\t_",
+      "",
+    ].join("\n"),
+  },
+];
+
+</script>
+  <!-- inlined: js/parser.js -->
+<script>
+// ---------- CoNLL-U Parser ----------
+function readFileAsText(file){
+  return new Promise((resolve, reject) => {
+    const fr = new FileReader();
+    fr.onload = () => resolve(String(fr.result || ""));
+    fr.onerror = () => reject(fr.error);
+    fr.readAsText(file, "utf-8");
+  });
+}
+
+function parseConllu(text){
+  const lines = text.replace(/\r\n/g, "\n").split("\n");
+  const sentences = [];
+  let tokens = [];
+  let textLine = null;
+
+  const push = () => {
+    if(tokens.length === 0 && !textLine) return;
+    const fallbackText = tokens.map(t => t.form).join(" ");
+    sentences.push({ text: textLine || fallbackText, tokens });
+    tokens = [];
+    textLine = null;
+  };
+
+  for(const line0 of lines){
+    const line = line0.trimEnd();
+    if(line.trim() === ""){ push(); continue; }
+    if(line.startsWith("#")){
+      const m = line.match(/^#\s*text\s*=\s*(.*)$/i);
+      if(m) textLine = m[1];
+      continue;
+    }
+    const cols = line.split("\t");
+    if(cols.length < 8) continue;
+    const idRaw = cols[0];
+    if(idRaw.includes("-") || idRaw.includes(".")) continue;
+    if(!/^\d+$/.test(idRaw)) continue;
+    const id = parseInt(idRaw, 10);
+    const form   = cols[1] || "_";
+    const upos   = cols[3] || "_";
+    const xpos   = cols[4] || "_";
+    const head   = /^\d+$/.test(cols[6]) ? parseInt(cols[6], 10) : null;
+    const deprel = cols[7] || "_";
+    tokens.push({
+      id, form,
+      lemma:  cols[2] || "_",
+      upos,   xpos,
+      feats:  cols[5] || "_",
+      head,   deprel,
+      deps:   cols[8] || "_",
+      misc:   cols[9] || "_",
+    });
+  }
+  push();
+  return { sentences };
+}
+
+function fileKey(f){
+  return `${f.name}::${f.size}::${f.lastModified}`;
+}
+
+// ---------- File management ----------
+async function processFiles(files){
+  for(const f of files){
+    const key = fileKey(f);
+    if(state.docs.some(d => d.key === key)) continue;
+    const text = await readFileAsText(f);
+    const doc = parseConllu(text);
+    state.docs.push({ key, name: f.name, content: text, sentences: doc.sentences });
+  }
+  recomputeMaxSents();
+  state.currentSent = 0;
+  renderFiles();
+  renderSentSelect();
+  renderSentence();
+}
+
+async function onFilesChosen(){
+  const files = Array.from(fileInput.files || []);
+  if(files.length === 0) return;
+  await processFiles(files);
+  fileInput.value = "";
+}
+
+function removeDoc(index){
+  state.docs.splice(index, 1);
+  state.hiddenCols.delete(index);
+  const newHidden = new Set();
+  for(const v of state.hiddenCols){
+    if(v > index) newHidden.add(v - 1);
+    else if(v < index) newHidden.add(v);
+  }
+  state.hiddenCols = newHidden;
+
+  for(const sKey of Object.keys(state.goldPick)){
+    const m = state.goldPick[sKey];
+    for(const tKey of Object.keys(m)){
+      const v = m[tKey];
+      if(typeof v !== "number") continue;
+      if(v === index) m[tKey] = 0;
+      else if(v > index) m[tKey] = v - 1;
+    }
+  }
+  recomputeMaxSents();
+  state.currentSent = Math.min(state.currentSent, Math.max(0, state.maxSents - 1));
+  renderFiles();
+  renderSentSelect();
+  renderSentence();
+}
+
+function resetAll(){
+  if(!confirm(t('files.resetConfirm'))) return;
+  state.docs = [];
+  state.custom = {};
+  state.goldPick = {};
+  state.hiddenCols = new Set();
+  state.currentSent = 0;
+  state.maxSents = 0;
+  fileInput.value = "";
+  renderFiles();
+  renderSentSelect();
+  renderSentence();
+}
+
+function recomputeMaxSents(){
+  state.maxSents = Math.max(0, ...state.docs.map(d => d.sentences.length), 0);
+}
+
+</script>
+  <!-- inlined: js/undo.js -->
+<script>
+// ---------- Undo / Redo ----------
+const _undoStack = [];
+const _redoStack = [];
+const UNDO_MAX   = 80;
+
+function _snapshot(){
+  return {
+    custom:   JSON.parse(JSON.stringify(state.custom)),
+    goldPick: JSON.parse(JSON.stringify(state.goldPick)),
+    confirmed: new Set(state.confirmed),
+  };
+}
+
+function _restore(snap){
+  state.custom    = snap.custom;
+  state.goldPick  = snap.goldPick;
+  state.confirmed = snap.confirmed;
+}
+
+function pushUndo(){
+  _undoStack.push(_snapshot());
+  if(_undoStack.length > UNDO_MAX) _undoStack.shift();
+  _redoStack.length = 0;
+  _syncUndoBtns();
+}
+
+function undo(){
+  if(!_undoStack.length) return;
+  _redoStack.push(_snapshot());
+  _restore(_undoStack.pop());
+  renderSentence();
+  _syncUndoBtns();
+}
+
+function redo(){
+  if(!_redoStack.length) return;
+  _undoStack.push(_snapshot());
+  _restore(_redoStack.pop());
+  renderSentence();
+  _syncUndoBtns();
+}
+
+function _syncUndoBtns(){
+  const u = document.getElementById("undoBtn");
+  const r = document.getElementById("redoBtn");
+  if(u) u.disabled = _undoStack.length === 0;
+  if(r) r.disabled = _redoStack.length === 0;
+  if(u) u.title = t('undo.title', { n: _undoStack.length, s: tpSuffix(_undoStack.length, 'undo') });
+  if(r) r.title = t('redo.title', { n: _redoStack.length, s: tpSuffix(_redoStack.length, 'undo') });
+}
+
+// ---------- Session serialisation helpers ----------
+function getUndoState(){
+  const ser = snap => ({
+    custom:    JSON.parse(JSON.stringify(snap.custom)),
+    goldPick:  JSON.parse(JSON.stringify(snap.goldPick)),
+    confirmed: Array.from(snap.confirmed),
+  });
+  return { undo: _undoStack.map(ser), redo: _redoStack.map(ser) };
+}
+
+function loadUndoState({ undo = [], redo = [] }){
+  const des = s => ({
+    custom:    JSON.parse(JSON.stringify(s.custom   || {})),
+    goldPick:  JSON.parse(JSON.stringify(s.goldPick || {})),
+    confirmed: new Set(s.confirmed || []),
+  });
+  _undoStack.length = 0;
+  _redoStack.length = 0;
+  for(const s of undo) _undoStack.push(des(s));
+  for(const s of redo) _redoStack.push(des(s));
+  _syncUndoBtns();
+}
+
+// Buttons werden nach DOM-Bereitschaft angebunden
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("undoBtn")?.addEventListener("click", undo);
+  document.getElementById("redoBtn")?.addEventListener("click", redo);
+});
+
+</script>
+  <!-- inlined: js/table.js -->
+<script>
+// ---------- Data structures ----------
+function buildDocMapsAndIds(){
+  const sentIndex = state.currentSent;
+  const docMaps = state.docs.map(d => {
+    const s = d.sentences[sentIndex];
+    const m = new Map();
+    if(s) for(const t of s.tokens) m.set(t.id, t);
+    return m;
+  });
+  const ids = new Set();
+  for(const m of docMaps) for(const id of m.keys()) ids.add(id);
+  const customSent = state.custom[sentIndex] || {};
+  for(const idStr of Object.keys(customSent)) ids.add(parseInt(idStr, 10));
+  const idList = Array.from(ids).sort((a,b)=>a-b);
+  return { docMaps, idList };
+}
+
+function firstToken(docMaps, tokId){
+  for(const m of docMaps){ const t = m.get(tokId); if(t) return t; }
+  return null;
+}
+
+function buildGoldTokenMap(sentIndex, idList, docMaps){
+  const gold = new Map();
+  for(const id of idList){
+    const base = firstToken(docMaps, id);
+    if(!base) continue;
+    const ce   = getCustomEntry(sentIndex, id);
+    const pick = getDocChoice(sentIndex, id);
+    const t    = docMaps[pick]?.get(id) || base;
+    // custom fields override the picked doc; nullish-coalesce falls through to picked doc
+    const head   = ce?.head   ?? t.head   ?? null;
+    const deprel = ce?.deprel ?? t.deprel ?? null;
+    const upos   = ce?.upos   ?? t.upos   ?? null;
+    const xpos   = ce?.xpos   ?? t.xpos   ?? null;
+    gold.set(id, { id, form: base.form, upos, xpos, head, deprel });
+  }
+  return gold;
+}
+
+// ---------- Comparison table ----------
+function renderCompareTable(){
+  const sentIndex = state.currentSent;
+  const { docMaps, idList } = buildDocMapsAndIds();
+  const goldMap = buildGoldTokenMap(sentIndex, idList, docMaps);
+  _lastIdList  = idList;
+  _lastDocMaps = docMaps;
+
+  const stats = computeStats(sentIndex, idList, docMaps, goldMap);
+  sentStats.innerHTML = `
+    <span class="statBadge">${t(stats.totalTokens !== 1 ? 'stats.tokens' : 'stats.token', { n: stats.totalTokens })}</span>
+    <span class="statBadge ${stats.diffCount > 0 ? 'statDiff' : 'statOk'}">
+      ${t(stats.diffCount !== 1 ? 'stats.diffs' : 'stats.diff', { n: stats.diffCount })}
+    </span>
+  `;
+
+  let html = "<thead><tr>";
+  html += `<th>${t('col.id')}</th><th>${t('col.form')}</th><th>${t('col.upos')}</th><th>${t('col.xpos')}</th>`;
+  html += `<th>${t('col.gold')}</th>`;
+  for(let i=0; i<state.docs.length; i++){
+    if(state.hiddenCols.has(i)) continue;
+    html += `<th>${escapeHtml(state.docs[i].name)}</th>`;
+  }
+  // Custom column removed — editing via Gold-cell popup
+  html += "</tr></thead><tbody>";
+
+  for(const id of idList){
+    let form="—";
+    for(const m of docMaps){ const t=m.get(id); if(t){ form=t.form; break; } }
+
+    const goldTok  = goldMap.get(id);
+    const goldVal  = goldTok ? valueStr(goldTok.head, goldTok.deprel) : "—";
+    const goldUpos = goldTok?.upos ?? "_";
+    const goldXpos = goldTok?.xpos ?? "_";
+
+    const ce           = getCustomEntry(sentIndex, id);
+    const customExists = !!ce;
+    const customUpos   = getCustomUpos(sentIndex, id);
+    const customXpos   = getCustomXpos(sentIndex, id);
+
+    // per-file values (hd = "head / deprel", upos, xpos)
+    const allVals = state.docs.map((_, i) => {
+      const t = docMaps[i].get(id);
+      if(!t) return null;
+      return { hd: valueStr(t.head, t.deprel), upos: t.upos ?? "_", xpos: t.xpos ?? "_" };
+    });
+
+    // row is "diff" if any file differs from gold in ANY of the four fields
+    const hasDiff = goldTok != null && allVals.some(v => v !== null && (
+      v.hd   !== goldVal  ||
+      v.upos !== goldUpos ||
+      v.xpos !== goldXpos
+    ));
+
+    // does any file disagree with gold UPOS / XPOS?
+    const uposDiff = allVals.some(v => v !== null && v.upos !== goldUpos);
+    const xposDiff = allVals.some(v => v !== null && v.xpos !== goldXpos);
+
+    html += `<tr data-id="${id}" class="${hasDiff ? 'rowDiff' : ''}">`;
+    html += `<td>${id}</td>`;
+    html += `<td>${escapeHtml(form)}</td>`;
+
+    // UPOS / XPOS — inline editable dropdown (or text input if no options)
+    const uposEl = UPOS_OPTIONS_HTML
+      ? `<select data-col="upos" class="posInlineSelect">${UPOS_OPTIONS_HTML}</select>`
+      : `<input data-col="upos" type="text" class="posInlineInput" value="${escapeHtml(goldUpos)}">`;
+    html += `<td class="posCell${customUpos ? ' posCustom' : ''}${uposDiff ? ' posDiff' : ''}">${uposEl}</td>`;
+
+    const xposEl = XPOS_OPTIONS_HTML
+      ? `<select data-col="xpos" class="posInlineSelect">${XPOS_OPTIONS_HTML}</select>`
+      : `<input data-col="xpos" type="text" class="posInlineInput" value="${escapeHtml(goldXpos)}">`;
+    html += `<td class="posCell${customXpos ? ' posCustom' : ''}${xposDiff ? ' posDiff' : ''}">${xposEl}</td>`;
+
+    // GOLD column — HEAD/DEPREL + UPOS·XPOS
+    const goldSrc = customExists ? '<span class="srcTag srcCustom">C</span>' :
+      `<span class="srcTag srcDoc">D${getDocChoice(sentIndex,id)+1}</span>`;
+    html += `<td data-col="gold" class="goldCell goldEditable" title="${escapeHtml(t('popup.editTitle'))}">${goldSrc} ${escapeHtml(goldVal)}` +
+      `<div class="posLine">${escapeHtml(goldUpos)}·${escapeHtml(goldXpos)}</div></td>`;
+
+    // Per-file columns — HEAD/DEPREL + UPOS·XPOS with per-field diff coloring
+    for(let i=0; i<state.docs.length; i++){
+      if(state.hiddenCols.has(i)) continue;
+      const v          = allVals[i];
+      const clsDisabled = customExists ? "disabledPick" : "";
+      const clsPicked   = (!customExists && i === getDocChoice(sentIndex, id)) ? "picked" : "";
+      if(v === null){
+        html += `<td data-col="doc${i}" data-doc-idx="${i}" class="pickable ${clsDisabled} ${clsPicked}">—</td>`;
+      } else {
+        const hdOk  = goldTok && v.hd   === goldVal;
+        const uOk   = goldTok && v.upos === goldUpos;
+        const xOk   = goldTok && v.xpos === goldXpos;
+        const clsCmp = goldTok ? (hdOk && uOk && xOk ? "same" : "diff") : "";
+        html += `<td data-col="doc${i}" data-doc-idx="${i}" class="pickable ${clsCmp} ${clsDisabled} ${clsPicked}">` +
+          `<div class="${hdOk ? '' : 'fDiff'}">${escapeHtml(v.hd)}</div>` +
+          `<div class="posLine">` +
+            `<span class="${uOk ? '' : 'fDiff'}">${escapeHtml(v.upos)}</span>` +
+            `·<span class="${xOk ? '' : 'fDiff'}">${escapeHtml(v.xpos)}</span>` +
+          `</div></td>`;
+      }
+    }
+
+    html += `</tr>`;
+  }
+
+  html += "</tbody>";
+  cmpTable.innerHTML = html;
+
+  // Set UPOS/XPOS select values (can't use 'selected' in HTML string efficiently)
+  for(const tr of cmpTable.querySelectorAll("tr[data-id]")){
+    const id = parseInt(tr.dataset.id, 10);
+    const gt = goldMap.get(id);
+    _setPosEl(tr, "upos", gt?.upos ?? "_");
+    _setPosEl(tr, "xpos", gt?.xpos ?? "_");
+  }
+
+  // Reposition popup after re-render (if currently open)
+  if(_popupTokId !== null && _popup?.classList.contains("active")){
+    const goldCell = cmpTable.querySelector(`tr[data-id="${_popupTokId}"] td[data-col='gold']`);
+    if(goldCell){ _populatePopup(_popupTokId); _positionPopup(goldCell); }
+  }
+}
+
+// ── Gold-cell popup ──────────────────────────────────────────────────────
+let _popup      = null;
+let _popupTokId = null;
+
+// Called by i18n.js setLang() to force popup recreation with new language
+function _resetPopup(){ _popup?.remove(); _popup = null; }
+let _lastIdList  = [];
+let _lastDocMaps = [];
+
+function _ensurePopup(){
+  if(_popup) return _popup;
+  _popup = document.createElement("div");
+  _popup.className = "goldPopup";
+
+  const uposField = UPOS_OPTIONS_HTML
+    ? `<select id="gpUpos">${UPOS_OPTIONS_HTML}</select>`
+    : `<input id="gpUpos" type="text" class="gpTextInput" placeholder="UPOS">`;
+  const xposField = XPOS_OPTIONS_HTML
+    ? `<select id="gpXpos">${XPOS_OPTIONS_HTML}</select>`
+    : `<input id="gpXpos" type="text" class="gpTextInput" placeholder="XPOS">`;
+
+  _popup.innerHTML = `
+    <div class="gpTitle">Token <b id="gpNum"></b>: <span id="gpForm"></span></div>
+    <div class="gpRow"><label>${t('popup.head')}</label><select id="gpHead"></select></div>
+    <div class="gpRow"><label>${t('popup.deprel')}</label><select id="gpDeprel">${DEPREL_OPTIONS_HTML}</select></div>
+    <div class="gpRow"><label>${t('popup.upos')}</label>${uposField}</div>
+    <div class="gpRow"><label>${t('popup.xpos')}</label>${xposField}</div>
+    <div class="gpActions"><button id="gpClear" class="danger" title="Shortcut: r">${t('popup.reset')}</button></div>
+    <div class="gpHint">${t('popup.hint')}</div>
+  `;
+  document.body.appendChild(_popup);
+
+  ["gpHead","gpDeprel","gpUpos","gpXpos"].forEach(eid => {
+    const el = document.getElementById(eid);
+    if(!el) return;
+    el.addEventListener(el.tagName === "SELECT" ? "change" : "input", _onPopupChange);
+  });
+
+  document.getElementById("gpClear").addEventListener("click", () => {
+    if(_popupTokId === null) return;
+    const si = state.currentSent;
+    const s  = state.custom[si];
+    if(s){ delete s[_popupTokId]; if(!Object.keys(s).length) delete state.custom[si]; }
+    _popupTokId = null;
+    renderSentence();
+  });
+
+  // Close on outside click
+  document.addEventListener("mousedown", (e) => {
+    if(!_popup?.classList.contains("active")) return;
+    if(_popup.contains(e.target)) return;
+    if(e.target.closest?.("td[data-col='gold']")) return;
+    _closePopup();
+  });
+
+  // Keyboard handling inside popup (capture phase, before keyboard.js)
+  document.addEventListener("keydown", (e) => {
+    if(!_popup?.classList.contains("active")) return;
+
+    if(e.key === "Escape"){
+      e.stopPropagation();
+      _closePopup();
+      return;
+    }
+
+    if(e.key === "Enter"){
+      e.preventDefault();
+      e.stopPropagation();
+      _closePopup();
+      return;
+    }
+
+    // r → Zurücksetzen (nur wenn kein Input-Feld fokussiert)
+    if(e.key === "r" || e.key === "R"){
+      const active = document.activeElement;
+      if(active?.tagName !== "INPUT"){
+        e.preventDefault();
+        e.stopPropagation();
+        document.getElementById("gpClear")?.click();
+        return;
+      }
+    }
+
+    // Tab-Trap: innerhalb des Popups bleiben
+    if(e.key === "Tab"){
+      const focusable = Array.from(_popup.querySelectorAll("select, input, button"));
+      if(!focusable.length) return;
+      const idx = focusable.indexOf(document.activeElement);
+      e.preventDefault();
+      if(e.shiftKey){
+        focusable[idx <= 0 ? focusable.length - 1 : idx - 1].focus();
+      } else {
+        focusable[(idx + 1) % focusable.length].focus();
+      }
+    }
+  }, true);
+
+  return _popup;
+}
+
+function _onPopupChange(e){
+  if(_popupTokId === null) return;
+  const field = { gpHead:"head", gpDeprel:"deprel", gpUpos:"upos", gpXpos:"xpos" }[e.target.id];
+  if(!field) return;
+  const raw = e.target.value.trim();
+  const val = field === "head"
+    ? (raw === "" ? null : (parseInt(raw, 10) >= 0 ? parseInt(raw, 10) : null))
+    : (raw === "" ? null : raw);
+  setCustomField(state.currentSent, _popupTokId, field, val);
+  renderSentence(); // renderCompareTable will reposition popup
+}
+
+function _closePopup(){
+  _popup?.classList.remove("active");
+  _popupTokId = null;
+}
+
+function _setSelectOrInput(eid, value){
+  const el = document.getElementById(eid);
+  if(!el) return;
+  if(el.tagName === "SELECT"){
+    // Remove previously injected extra option
+    el.querySelector("option[data-extra]")?.remove();
+    el.value = value ?? "";
+    // If value not found in list, inject it temporarily
+    if(value && el.value !== String(value)){
+      const opt = document.createElement("option");
+      opt.value = String(value); opt.textContent = String(value); opt.dataset.extra = "1";
+      el.insertBefore(opt, el.firstChild);
+      el.value = String(value);
+    }
+  } else {
+    el.value = value ?? "";
+  }
+}
+
+function _populatePopup(tokId){
+  _ensurePopup();
+  const si      = state.currentSent;
+  const goldTok = buildGoldTokenMap(si, _lastIdList, _lastDocMaps).get(tokId);
+
+  document.getElementById("gpNum").textContent = tokId;
+  let form = "?";
+  for(const m of _lastDocMaps){ const t = m.get(tokId); if(t){ form = t.form; break; } }
+  document.getElementById("gpForm").textContent = form;
+
+  // Build HEAD dropdown from current sentence tokens
+  const headSel = document.getElementById("gpHead");
+  headSel.innerHTML = `<option value="0">0 — ${t('popup.root')}</option>`;
+  for(const id of _lastIdList){
+    let f = "?";
+    for(const m of _lastDocMaps){ const t = m.get(id); if(t){ f = t.form; break; } }
+    const opt = document.createElement("option");
+    opt.value = String(id); opt.textContent = `${id}: ${f}`;
+    headSel.appendChild(opt);
+  }
+  headSel.value = goldTok?.head != null ? String(goldTok.head) : "0";
+
+  _setSelectOrInput("gpDeprel", goldTok?.deprel ?? "");
+  _setSelectOrInput("gpUpos",   goldTok?.upos   ?? "_");
+  _setSelectOrInput("gpXpos",   goldTok?.xpos   ?? "_");
+}
+
+function _openPopup(tokId, cellEl){
+  pushUndo();
+  _popupTokId = tokId;
+  _populatePopup(tokId);
+  _positionPopup(cellEl);
+  // Auto-focus HEAD-Feld
+  setTimeout(() => document.getElementById("gpHead")?.focus(), 0);
+}
+
+function _positionPopup(cellEl){
+  if(!_popup) return;
+  _popup.classList.add("active");
+  const rect = cellEl.getBoundingClientRect();
+  const pw = _popup.offsetWidth  || 240;
+  const ph = _popup.offsetHeight || 220;
+  let top  = rect.bottom + 4;
+  let left = rect.left;
+  if(top  + ph > window.innerHeight - 8) top  = rect.top - ph - 4;
+  if(left + pw > window.innerWidth  - 8) left = window.innerWidth - pw - 8;
+  if(left < 8) left = 8;
+  if(top  < 8) top  = 8;
+  _popup.style.top  = `${top}px`;
+  _popup.style.left = `${left}px`;
+}
+
+// Click on Gold cell → open / close popup
+cmpTable.addEventListener("click", (e) => {
+  const td = e.target.closest?.("td[data-col='gold']");
+  if(!td) return;
+  const tr = td.closest("tr[data-id]");
+  if(!tr) return;
+  const tokId = parseInt(tr.dataset.id, 10);
+  if(_popupTokId === tokId && _popup?.classList.contains("active")){
+    _closePopup(); return;
+  }
+  _openPopup(tokId, td);
+});
+
+// ── Inline UPOS / XPOS editing ──────────────────────────────────────────────
+
+function _setPosEl(tr, field, value){
+  const el = tr.querySelector(`[data-col="${field}"]`);
+  if(!el) return;
+  if(el.tagName === "SELECT"){
+    el.value = value;
+    if(el.value !== String(value)){
+      const opt = document.createElement("option");
+      opt.value = String(value); opt.textContent = String(value); opt.dataset.extra = "1";
+      el.insertBefore(opt, el.firstChild);
+      el.value = String(value);
+    }
+  } else {
+    el.value = value;
+  }
+}
+
+cmpTable.addEventListener("change", (e) => {
+  const el = e.target;
+  const field = el.dataset?.col;
+  if(field !== "upos" && field !== "xpos") return;
+  const tr = el.closest("tr[data-id]");
+  if(!tr) return;
+  const tokId = parseInt(tr.dataset.id, 10);
+  const raw = el.value.trim();
+  const val = (raw === "" || raw === "_") ? null : raw;
+  pushUndo();
+  setCustomField(state.currentSent, tokId, field, val);
+  el.blur();
+  renderSentence();
+});
+
+// Escape on inline pos elements → blur (return keyboard focus to document)
+cmpTable.addEventListener("keydown", (e) => {
+  if(e.key !== "Escape") return;
+  const el = e.target;
+  if(el.classList.contains("posInlineSelect") || el.classList.contains("posInlineInput")){
+    e.stopPropagation();
+    el.blur();
+  }
+});
+
+</script>
+  <!-- inlined: js/tree.js -->
+<script>
+// ---------- Tree helpers ----------
+function getSentenceTextFallback(sentIndex){
+  for(const d of state.docs){
+    const s = d.sentences[sentIndex];
+    if(s && s.text) return s.text;
+  }
+  return "";
+}
+
+function edgesFromMap(tokMap){
+  const edges = new Map();
+  for(const [id, t] of tokMap.entries()){
+    const head = (typeof t.head === "number") ? t.head : null;
+    if(head === null) continue;
+    edges.set(`${id}|${head}`, t.deprel ?? "_");
+  }
+  return edges;
+}
+
+function renderTreePlain(sentIndex, tokMap, sentenceText){
+  const edges = edgesFromMap(tokMap);
+  return _buildTree(sentIndex, tokMap, tokMap, edges, edges, sentenceText, false);
+}
+
+function renderTreeDiff(sentIndex, goldMap, otherMap, sentenceText){
+  const edgesG = edgesFromMap(goldMap);
+  const edgesO = edgesFromMap(otherMap);
+  return _buildTree(sentIndex, goldMap, otherMap, edgesG, edgesO, sentenceText, true);
+}
+
+function _buildTree(sentIndex, goldMap, otherMap, edgesG, edgesO, sentenceText, isDiff){
+  const union = isDiff ? new Set([...edgesG.keys(), ...edgesO.keys()]) : new Set(edgesG.keys());
+
+  const children = new Map();
+  const nodes = new Set();
+  const incoming = new Set();
+
+  for(const k of union){
+    const [depS, headS] = k.split("|");
+    const dep  = parseInt(depS, 10);
+    const head = parseInt(headS, 10);
+    if(!children.has(head)) children.set(head, []);
+    children.get(head).push(dep);
+    nodes.add(dep);
+    if(head !== 0){ nodes.add(head); incoming.add(dep); }
+  }
+  for(const [, arr] of children.entries()) arr.sort((a,b)=>a-b);
+
+  const rootsArr = Array.from(nodes).filter(n => !incoming.has(n)).sort((a,b)=>a-b);
+  const roots = rootsArr.length ? rootsArr : (nodes.size ? [Math.min(...nodes)] : []);
+
+  const lines = [];
+  lines.push(`📝 S${sentIndex+1}: ${sentenceText}`);
+
+  function rec(head, prefix, path){
+    const deps = children.get(head) || [];
+    for(let i=0; i<deps.length; i++){
+      const dep  = deps[i];
+      const last = (i === deps.length - 1);
+      const conn = last ? "└─" : "├─";
+      const nextPrefix = prefix + (last ? "  " : "│ ");
+
+      let emo = "", lab = "";
+      if(isDiff){
+        const key = `${dep}|${head}`;
+        [emo, lab] = edgeEmojiAndLabel(edgesG, edgesO, key);
+      } else {
+        lab = edgesG.get(`${dep}|${head}`) ?? "_";
+      }
+
+      const form = goldMap.get(dep)?.form ?? otherMap.get(dep)?.form ?? "?";
+      const tDisp = isDiff ? tokDisplayPair(goldMap, otherMap, dep) : `${dep}:${form}`;
+
+      if(isDiff){
+        lines.push(`${prefix}${conn} ${emo} ${lab} → ${tDisp}`);
+      } else {
+        lines.push(`${prefix}${conn} ${lab} → ${tDisp}`);
+      }
+
+      if(path.has(dep)){
+        lines.push(`${nextPrefix}🔁 (cycle)`);
+        continue;
+      }
+      const nextPath = new Set(path); nextPath.add(dep);
+      rec(dep, nextPrefix, nextPath);
+    }
+  }
+
+  for(let r=0; r<roots.length; r++){
+    const root = roots[r];
+    const form = goldMap.get(root)?.form ?? otherMap.get(root)?.form ?? "?";
+    lines.push(`🌱 ${root}:${form}`);
+    const path = new Set([root]);
+    rec(root, "", path);
+    if(r !== roots.length - 1) lines.push("");
+  }
+
+  return lines.join("\n");
+}
+
+function tokDisplayPair(goldMap, otherMap, tokId){
+  const g = goldMap.get(tokId);
+  const o = otherMap.get(tokId);
+  if(g && o){
+    const fg = g.form ?? "—";
+    const fo = o.form ?? "—";
+    let display = fg === fo ? `${tokId}:${fg}` : `${tokId}:🅶${fg}|🅵${fo}`;
+    // append UPOS/XPOS diff annotation when they differ
+    const uDiff = (g.upos ?? "_") !== (o.upos ?? "_");
+    const xDiff = (g.xpos ?? "_") !== (o.xpos ?? "_");
+    if(uDiff || xDiff){
+      const parts = [];
+      if(uDiff) parts.push(`UPOS:🅶${g.upos ?? "_"}|🅵${o.upos ?? "_"}`);
+      if(xDiff) parts.push(`XPOS:🅶${g.xpos ?? "_"}|🅵${o.xpos ?? "_"}`);
+      display += ` [${parts.join(", ")}]`;
+    }
+    return display;
+  }
+  if(g) return `${tokId}:${g.form ?? "—"}🅶`;
+  if(o) return `${tokId}:${o.form ?? "—"}🅵`;
+  return `${tokId}:❓`;
+}
+
+function edgeEmojiAndLabel(edgesG, edgesO, key){
+  const inG = edgesG.has(key);
+  const inO = edgesO.has(key);
+  if(inG && inO){
+    const lg = edgesG.get(key);
+    const lo = edgesO.get(key);
+    if(lg === lo) return ["✅", lg];
+    return ["⚠️", `🅶${lg}|🅵${lo}`];
+  }
+  if(inG) return ["🅶", edgesG.get(key)];
+  return ["🅵", edgesO.get(key)];
+}
+
+// ---------- Tree UI ----------
+function scrollToToken(tokId){
+  const tr = cmpTable.querySelector(`tr[data-id="${tokId}"]`);
+  if(tr){
+    tr.scrollIntoView({ behavior:"smooth", block:"center" });
+    tr.classList.add("highlightRow");
+    setTimeout(() => tr.classList.remove("highlightRow"), 1600);
+  }
+}
+
+function getSubtreeIds(rootId, tokMap){
+  const children = new Map();
+  for(const [id, t] of tokMap.entries()){
+    const h = (typeof t.head === "number") ? t.head : null;
+    if(h === null) continue;
+    if(!children.has(h)) children.set(h, []);
+    children.get(h).push(id);
+  }
+  const ids = new Set();
+  const stack = [rootId];
+  while(stack.length){
+    const id = stack.pop();
+    ids.add(id);
+    for(const c of (children.get(id) || [])) stack.push(c);
+  }
+  return ids;
+}
+
+function hasSubtreeDiff(rootId, goldMap, otherMap){
+  const subIds = new Set([
+    ...getSubtreeIds(rootId, goldMap),
+    ...getSubtreeIds(rootId, otherMap),
+  ]);
+  for(const id of subIds){
+    const g = goldMap.get(id);
+    const o = otherMap.get(id);
+    if(!g || !o) return true;
+    if((g.head   ?? null) !== (o.head   ?? null)) return true;
+    if((g.deprel ?? null) !== (o.deprel ?? null)) return true;
+    if((g.upos   ?? null) !== (o.upos   ?? null)) return true;
+    if((g.xpos   ?? null) !== (o.xpos   ?? null)) return true;
+  }
+  return false;
+}
+
+function buildTreeSection(title, sub, text, onAdoptSubtree, subtreeDiffCheck){
+  const section = document.createElement("div");
+  section.className = "treeSection";
+
+  const head = document.createElement("div");
+  head.className = "treeHead";
+  head.innerHTML = `
+    <div style="display:flex;gap:8px;align-items:center">
+      <div class="title">${escapeHtml(title)}</div>
+      ${sub ? `<div class="sub">${escapeHtml(sub)}</div>` : ""}
+    </div>
+  `;
+  section.appendChild(head);
+
+  const pre = document.createElement("pre");
+  pre.className = "treePre";
+
+  const lines = text.split("\n");
+  for(const line of lines){
+    const rootMatch = onAdoptSubtree && line.match(/^🌱\s*(\d+):/);
+    const tokMatch  = line.match(/→\s*(\d+):/);
+
+    if(rootMatch){
+      const rootId = parseInt(rootMatch[1], 10);
+      const wrapper = document.createElement("span");
+      wrapper.className = "treeLine treeLineRoot";
+
+      const txt = document.createElement("span");
+      txt.textContent = line;
+      wrapper.appendChild(txt);
+
+      if(!subtreeDiffCheck || subtreeDiffCheck(rootId)){
+        const btn = document.createElement("button");
+        btn.textContent = t('tree.toGold');
+        btn.className = "treeSubtreeBtn";
+        btn.title = t('tree.toGoldTitle', { id: rootId });
+        btn.addEventListener("click", (e) => { e.stopPropagation(); onAdoptSubtree(rootId); });
+        wrapper.appendChild(btn);
+      }
+
+      pre.appendChild(wrapper);
+    } else if(tokMatch){
+      const tokId = parseInt(tokMatch[1], 10);
+      const span = document.createElement("span");
+      const hasOk   = line.includes("✅");
+      const hasWarn = line.includes("⚠");
+      const hasG    = line.includes("🅶");
+      const hasF    = line.includes("🅵");
+      let colorClass = "";
+      // ✅ edge but UPOS/XPOS differs → show as warning
+      if     (hasOk && !hasG && !hasF)  colorClass = "treeLineOk";
+      else if(hasOk && (hasG || hasF))  colorClass = "treeLineWarn";
+      else if(hasWarn)                   colorClass = "treeLineWarn";
+      else if(hasG && !hasF)             colorClass = "treeLineGold";
+      else if(hasF && !hasG)             colorClass = "treeLineFileOnly";
+      span.className = `treeLine treeLineClickable${colorClass ? " "+colorClass : ""}`;
+      span.textContent = line + "\n";
+      span.title = t('tree.jumpTitle', { id: tokId });
+      span.addEventListener("click", () => scrollToToken(tokId));
+      pre.appendChild(span);
+    } else {
+      const span = document.createElement("span");
+      span.className = "treeLine";
+      span.textContent = line + "\n";
+      pre.appendChild(span);
+    }
+  }
+
+  section.appendChild(pre);
+  return section;
+}
+
+function renderPreview(){
+  const sentIndex = state.currentSent;
+  const { docMaps, idList } = buildDocMapsAndIds();
+  const goldMap = buildGoldTokenMap(sentIndex, idList, docMaps);
+
+  treeGrid.innerHTML = "";
+  if(state.docs.length === 0) return;
+
+  const sentenceText = getSentenceTextFallback(sentIndex);
+
+  const wrap = document.createElement("div");
+  wrap.className = "treeBlock treeBlockStacked";
+
+  const goldSection = buildTreeSection("⭐ GOLD", null, renderTreePlain(sentIndex, goldMap, sentenceText));
+  wrap.appendChild(goldSection);
+
+  for(let i=0; i<state.docs.length; i++){
+    const name   = state.docs[i]?.name ?? t('tree.fileDefault', { n: i+1 });
+    const otherMap = docMaps[i];
+    const diff   = renderTreeDiff(sentIndex, goldMap, otherMap, sentenceText);
+    const docIdx = i;
+    const section = buildTreeSection(name, t('tree.vsGold'), diff, (rootId) => {
+      const subIds = new Set([
+        ...getSubtreeIds(rootId, goldMap),
+        ...getSubtreeIds(rootId, otherMap),
+      ]);
+      for(const id of subIds){
+        const e = state.custom[sentIndex]?.[id];
+        if(e){
+          e.head   = null;
+          e.deprel = null;
+          if(!getCustomEntry(sentIndex, id)) delete state.custom[sentIndex][id];
+        }
+        setDocChoice(sentIndex, id, docIdx);
+      }
+      if(state.custom[sentIndex] && !Object.keys(state.custom[sentIndex]).length)
+        delete state.custom[sentIndex];
+      renderSentence();
+    }, (rootId) => hasSubtreeDiff(rootId, goldMap, otherMap));
+    wrap.appendChild(section);
+  }
+
+  treeGrid.appendChild(wrap);
+}
+
+</script>
+  <!-- inlined: js/main.js -->
+<script>
+// ---------- DOM ----------
+const fileInput = document.getElementById("fileInput");
+const resetBtn  = document.getElementById("resetBtn");
+const fileList  = document.getElementById("fileList");
+const fileMeta  = document.getElementById("fileMeta");
+
+const sentSelect  = document.getElementById("sentSelect");
+const prevBtn     = document.getElementById("prevBtn");
+const nextBtn     = document.getElementById("nextBtn");
+const sentMeta    = document.getElementById("sentMeta");
+const sentText    = document.getElementById("sentText");
+const sentStats   = document.getElementById("sentStats");
+
+const treeGrid    = document.getElementById("treeGrid");
+const cmpTable    = document.getElementById("cmpTable");
+const colToggleBar = document.getElementById("colToggleBar");
+
+const customInitBtns  = document.getElementById("customInitBtns");
+const customClearBtn  = document.getElementById("customClearBtn");
+const confirmBtn      = document.getElementById("confirmBtn");
+const progressMeta    = document.getElementById("progressMeta");
+const dropOverlay     = document.getElementById("dropOverlay");
+const textWarn        = document.getElementById("textWarn");
+const sentMap         = document.getElementById("sentMap");
+
+// ---------- Events ----------
+fileInput.addEventListener("change", onFilesChosen);
+resetBtn.addEventListener("click", resetAll);
+
+sentSelect.addEventListener("change", () => {
+  state.currentSent = parseInt(sentSelect.value, 10) || 0;
+  renderSentence();
+});
+prevBtn.addEventListener("click", () => {
+  state.currentSent = Math.max(0, state.currentSent - 1);
+  renderSentence();
+});
+nextBtn.addEventListener("click", () => {
+  state.currentSent = Math.min(state.maxSents - 1, state.currentSent + 1);
+  renderSentence();
+});
+
+customClearBtn.addEventListener("click", clearCustomForSentence);
+confirmBtn.addEventListener("click", toggleConfirm);
+
+// Klick auf Token im Satztext → Tabellenzeile fokussieren + scrollen
+sentText.addEventListener("click", (e) => {
+  const span = e.target.closest(".sentToken");
+  if(!span) return;
+  const tokId = parseInt(span.dataset.id, 10);
+  setKeyFocus(tokId);
+  cmpTable.closest(".card")?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+});
+
+// Klick auf Datei-Zelle → Gold wählen
+cmpTable.addEventListener("click", (e) => {
+  const td = e.target.closest?.("td[data-col^='doc']");
+  if(!td) return;
+  const tr = td.closest("tr[data-id]");
+  if(!tr) return;
+  const tokId = parseInt(tr.dataset.id, 10);
+  const docIdx = parseInt(td.dataset.docIdx, 10);
+  if(getCustomEntry(state.currentSent, tokId)) return;
+  pushUndo();
+  setDocChoice(state.currentSent, tokId, docIdx);
+  renderSentence();
+});
+
+// ---------- Text compatibility check ----------
+function getWarnedDocIndices(){
+  const warned = new Set();
+  if(state.docs.length < 2) return warned;
+  const ref = state.docs[0];
+  for(let d = 1; d < state.docs.length; d++){
+    const other = state.docs[d];
+    if(ref.sentences.length !== other.sentences.length){ warned.add(d); continue; }
+    for(let s = 0; s < ref.sentences.length; s++){
+      const formsA = ref.sentences[s].tokens.map(tk => tk.form).join(" ");
+      const formsB = other.sentences[s].tokens.map(tk => tk.form).join(" ");
+      if(formsA !== formsB){ warned.add(d); break; }
+    }
+  }
+  return warned;
+}
+
+// ---------- UI: Files ----------
+function renderFiles(){
+  fileList.innerHTML = "";
+  fileMeta.textContent = state.docs.length
+    ? t('files.loaded', { n: state.docs.length })
+    : t('files.none');
+  if(state.docs.length === 0){
+    fileList.innerHTML = `<div class="muted small">${escapeHtml(t('files.drop'))}</div>`;
+    const demoBtn = document.createElement("button");
+    demoBtn.textContent = t('files.demo');
+    demoBtn.style.marginTop = "8px";
+    demoBtn.addEventListener("click", loadExamples);
+    fileList.appendChild(demoBtn);
+    return;
+  }
+  const warnedIndices = getWarnedDocIndices();
+  state.docs.forEach((d, idx) => {
+    const div = document.createElement("div");
+    div.className = "fileItem";
+    const warnBadge = warnedIndices.has(idx)
+      ? ` <span class="fileWarnIcon" title="${escapeHtml(t('files.warnBadge'))}">⚠️</span>` : "";
+    div.innerHTML = `
+      <div class="left">
+        <div class="name">${escapeHtml(d.name)}${warnBadge}</div>
+        <div class="meta">${escapeHtml(t('files.sentences', { n: d.sentences.length }))}</div>
+      </div>
+      <button class="danger">${escapeHtml(t('files.delete'))}</button>
+    `;
+    div.querySelector("button").addEventListener("click", () => removeDoc(idx));
+    fileList.appendChild(div);
+  });
+
+  textWarn.innerHTML = warnedIndices.size > 0
+    ? `<div class="textWarnBanner">${escapeHtml(t('files.warnBanner'))}</div>`
+    : "";
+}
+
+// ---------- Drag & Drop (ganze Seite) ----------
+let dragCounter = 0;
+
+document.addEventListener("dragenter", (e) => {
+  e.preventDefault();
+  dragCounter++;
+  dropOverlay.classList.add("active");
+});
+document.addEventListener("dragover", (e) => {
+  e.preventDefault();
+});
+document.addEventListener("dragleave", () => {
+  dragCounter--;
+  if(dragCounter <= 0){ dragCounter = 0; dropOverlay.classList.remove("active"); }
+});
+document.addEventListener("drop", (e) => {
+  e.preventDefault();
+  dragCounter = 0;
+  dropOverlay.classList.remove("active");
+  const allFiles = Array.from(e.dataTransfer.files);
+
+  // Session-JSON hat Vorrang — erste .json-Datei wird importiert
+  const jsonFile = allFiles.find(f => /\.json$/i.test(f.name));
+  if(jsonFile){
+    const fr = new FileReader();
+    fr.onload = () => importSession(fr.result);
+    fr.readAsText(jsonFile, "utf-8");
+    return;
+  }
+
+  const conlluFiles = allFiles.filter(f => /\.(conllu|conll|txt)$/i.test(f.name));
+  if(conlluFiles.length > 0) processFiles(conlluFiles);
+});
+
+// ---------- UI: Sentence selector ----------
+function renderSentSelect(){
+  const ok = state.docs.length >= 2 && state.maxSents > 0;
+  sentSelect.disabled = !ok;
+  prevBtn.disabled = !ok;
+  nextBtn.disabled = !ok;
+  customInitBtns.innerHTML = "";
+  if(ok){
+    state.docs.forEach((d, idx) => {
+      const btn = document.createElement("button");
+      btn.textContent = t('custom.initBtn', { name: d.name });
+      btn.addEventListener("click", () => initCustomFromDoc(idx));
+      customInitBtns.appendChild(btn);
+    });
+  }
+  customClearBtn.disabled = !ok;
+  confirmBtn.disabled = !ok;
+  sentSelect.innerHTML = "";
+  if(!ok){ sentStats.textContent = ""; if(progressMeta) progressMeta.textContent = ""; return; }
+  renderSentSelectOptions();
+  updateExportButtons();
+}
+
+// Berechnet Stats für einen Satz (wiederverwendbar)
+function _sentStats(i){
+  const docMaps = state.docs.map(d => {
+    const s = d.sentences[i];
+    const m = new Map();
+    if(s) for(const tk of s.tokens) m.set(tk.id, tk);
+    return m;
+  });
+  const ids = new Set();
+  for(const m of docMaps) for(const id of m.keys()) ids.add(id);
+  const customSent = state.custom[i] || {};
+  for(const idStr of Object.keys(customSent)) ids.add(parseInt(idStr, 10));
+  const idList = Array.from(ids).sort((a,b) => a - b);
+  const goldMap = buildGoldTokenMap(i, idList, docMaps);
+  return computeStats(i, idList, docMaps, goldMap);
+}
+
+function toggleConfirm(){
+  if(state.docs.length < 2) return;
+  pushUndo();
+  const i = state.currentSent;
+  if(state.confirmed.has(i)) state.confirmed.delete(i);
+  else state.confirmed.add(i);
+  updateConfirmBtn();
+  renderSentSelectOptions();
+}
+
+function updateConfirmBtn(){
+  if(!confirmBtn) return;
+  const isConfirmed = state.confirmed.has(state.currentSent);
+  confirmBtn.textContent  = isConfirmed ? t('sent.confirmed') : t('sent.confirm');
+  confirmBtn.classList.toggle("confirmBtnActive", isConfirmed);
+}
+
+function renderSentSelectOptions(){
+  if(state.docs.length < 2 || state.maxSents === 0) return;
+  sentSelect.innerHTML = "";
+  for(let i=0;i<state.maxSents;i++){
+    const stats = _sentStats(i);
+    const hasDiff   = stats.diffCount > 0;
+    const confirmed = state.confirmed.has(i);
+    const opt = document.createElement("option");
+    opt.value = String(i);
+    const diffPart = hasDiff
+      ? ` ${t(stats.diffCount !== 1 ? 'sent.optDiffs' : 'sent.optDiff', { n: stats.diffCount })}`
+      : ` ${t('sent.optOk')}`;
+    opt.textContent = `${t('sent.optLabel', { n: i+1 })}${confirmed ? ' ★' : ''}  (${stats.totalTokens} Tok${diffPart})`;
+    if(confirmed){
+      opt.style.background = '#1a1000';
+      opt.style.color = '#ffb347';
+    } else {
+      opt.style.background = hasDiff ? '#1f0b0b' : '#091a10';
+      opt.style.color = hasDiff ? '#ff9090' : '#6fe8a8';
+    }
+    sentSelect.appendChild(opt);
+  }
+  sentSelect.value = String(state.currentSent);
+
+  // Rahmenfarbe des Selects nach aktuellem Satz
+  const curConfirmed = state.confirmed.has(state.currentSent);
+  const curStats = _sentStats(state.currentSent);
+  sentSelect.style.borderColor = curConfirmed ? '#ff9f43' : (curStats.diffCount > 0 ? '#ff5f5f' : '#3de89a');
+
+  updateConfirmBtn();
+  renderSentMap();
+  _updateProgressMeta();
+}
+
+function _updateProgressMeta(){
+  if(!progressMeta) return;
+  if(state.docs.length < 2 || state.maxSents === 0){ progressMeta.textContent = ""; return; }
+  progressMeta.textContent = t('sent.progress', {
+    done:  state.confirmed.size,
+    total: state.maxSents,
+  });
+}
+
+function renderSentMap(){
+  if(!sentMap) return;
+  if(state.docs.length < 2 || state.maxSents === 0){ sentMap.innerHTML = ""; return; }
+  sentMap.innerHTML = "";
+  for(let i=0;i<state.maxSents;i++){
+    const stats = _sentStats(i);
+    const hasDiff   = stats.diffCount > 0;
+    const confirmed = state.confirmed.has(i);
+    const isCurrent = i === state.currentSent;
+    const dot = document.createElement("button");
+    let cls = "sentDot ";
+    if(confirmed)    cls += "sentDotConfirmed";
+    else if(hasDiff) cls += "sentDotDiff";
+    else             cls += "sentDotOk";
+    if(isCurrent)    cls += " sentDotCurrent";
+    dot.className = cls;
+    dot.title = t(confirmed ? 'sent.dotTitleConf' : 'sent.dotTitle', {
+      n: i + 1, toks: stats.totalTokens, diffs: stats.diffCount
+    });
+    dot.addEventListener("click", () => {
+      state.currentSent = i;
+      renderSentence();
+    });
+    sentMap.appendChild(dot);
+  }
+}
+
+// ---------- UI: Column toggle ----------
+function renderColToggleBar(){
+  colToggleBar.innerHTML = "";
+  if(state.docs.length < 2){ return; }
+  const label = document.createElement("span");
+  label.className = "muted small";
+  label.textContent = t('cols.label');
+  colToggleBar.appendChild(label);
+
+  state.docs.forEach((d, idx) => {
+    const btn = document.createElement("button");
+    btn.className = "colToggle" + (state.hiddenCols.has(idx) ? " colHidden" : " colVisible");
+    btn.textContent = d.name;
+    btn.addEventListener("click", () => {
+      if(state.hiddenCols.has(idx)) state.hiddenCols.delete(idx);
+      else state.hiddenCols.add(idx);
+      renderColToggleBar();
+      renderCompareTable();
+    });
+    colToggleBar.appendChild(btn);
+  });
+}
+
+// ---------- Custom ----------
+function initCustomFromDoc(docIdx){
+  const s = state.docs[docIdx]?.sentences?.[state.currentSent];
+  if(!s) return;
+  pushUndo();
+  const sent = ensureCustomSent(state.currentSent);
+  for(const tk of s.tokens){
+    sent[tk.id] = { head: tk.head ?? null, deprel: tk.deprel ?? null, upos: tk.upos ?? null, xpos: tk.xpos ?? null };
+  }
+  renderSentence();
+}
+
+function clearCustomForSentence(){
+  if(!confirm(t('sent.clearConfirm'))) return;
+  pushUndo();
+  delete state.custom[state.currentSent];
+  renderSentence();
+}
+
+// ---------- Main render ----------
+function renderSentence(){
+  const ok = state.docs.length >= 2 && state.maxSents > 0;
+  if(!ok){
+    sentText.textContent = "";
+    sentMeta.textContent = "";
+    sentStats.textContent = "";
+    treeGrid.innerHTML = "";
+    cmpTable.innerHTML = "";
+    colToggleBar.innerHTML = "";
+    return;
+  }
+
+  state.currentSent = Math.max(0, Math.min(state.currentSent, state.maxSents - 1));
+
+  const s0 = state.docs[0].sentences[state.currentSent];
+  if(s0){
+    sentText.innerHTML = s0.tokens
+      .map(tk => `<span class="sentToken" data-id="${tk.id}">${escapeHtml(tk.form)}</span>`)
+      .join(' ');
+  } else {
+    sentText.textContent = t('sent.missing');
+  }
+  sentMeta.textContent = t('sent.label', { cur: state.currentSent + 1, max: state.maxSents });
+  sentText.classList.toggle("sentTextConfirmed", state.confirmed.has(state.currentSent));
+
+  renderColToggleBar();
+  renderCompareTable();
+  renderSentSelectOptions();
+  renderPreview();
+}
+
+// ---------- Demo ----------
+async function loadExamples(){
+  const files = EXAMPLES.map(e => new File([e.content], e.name, { type: "text/plain" }));
+  await processFiles(files);
+}
+
+// ---------- Init ----------
+buildDeprelOptionsCache();
+renderFiles();
+renderSentSelect();
+renderSentence();
+
+</script>
+  <!-- inlined: js/export.js -->
+<script>
+// ---------- Export buttons ----------
+const exportConlluBtn    = document.getElementById("exportConlluBtn");
+const exportTreeBtn      = document.getElementById("exportTreeBtn");
+const exportSessionBtn   = document.getElementById("exportSessionBtn");
+const importSessionInput = document.getElementById("importSessionInput");
+const sessionMeta        = document.getElementById("sessionMeta");
+
+exportConlluBtn.addEventListener("click", exportGoldConllu);
+exportTreeBtn.addEventListener("click",   exportTreesTxt);
+exportSessionBtn.addEventListener("click", exportSession);
+importSessionInput.addEventListener("change", () => {
+  const f = importSessionInput.files?.[0];
+  if(!f) return;
+  const fr = new FileReader();
+  fr.onload = () => {
+    importSession(fr.result);
+    importSessionInput.value = "";
+  };
+  fr.readAsText(f, "utf-8");
+});
+
+function updateExportButtons(){
+  const ok = state.docs.length >= 1;
+  exportConlluBtn.disabled = !ok;
+  exportTreeBtn.disabled   = !(ok && state.maxSents > 0);
+}
+
+// ---------- Download helper ----------
+function downloadText(content, filename){
+  const blob = new Blob([content], { type:"text/plain;charset=utf-8" });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement("a");
+  a.href     = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ---------- Gold CoNLL-U (alle Sätze) ----------
+function exportGoldConllu(){
+  if(state.docs.length < 1) return;
+  const out = [];
+
+  for(let sentIdx = 0; sentIdx < state.maxSents; sentIdx++){
+    const docMaps = state.docs.map(d => {
+      const s = d.sentences[sentIdx];
+      const m = new Map();
+      if(s) for(const t of s.tokens) m.set(t.id, t);
+      return m;
+    });
+
+    const ids = new Set();
+    for(const m of docMaps) for(const id of m.keys()) ids.add(id);
+    const customSent = state.custom[sentIdx] || {};
+    for(const idStr of Object.keys(customSent)) ids.add(parseInt(idStr, 10));
+    const idList = Array.from(ids).sort((a,b) => a - b);
+
+    const goldMap = buildGoldTokenMap(sentIdx, idList, docMaps);
+
+    // # text header
+    let sentText = "";
+    for(const d of state.docs){
+      const s = d.sentences[sentIdx];
+      if(s && s.text){ sentText = s.text; break; }
+    }
+    if(sentText) out.push(`# text = ${sentText}`);
+
+    for(const id of idList){
+      let base = null;
+      for(const m of docMaps){ const t = m.get(id); if(t){ base = t; break; } }
+      if(!base) continue;
+
+      const goldTok     = goldMap.get(id);
+      const customEntry = getCustomEntry(sentIdx, id);
+
+      const head   = goldTok?.head   ?? null;
+      const deprel = goldTok?.deprel ?? "_";
+      const upos   = goldTok?.upos ?? "_";
+      const xpos   = goldTok?.xpos ?? "_";
+
+      out.push([
+        id,
+        base.form   || "_",
+        base.lemma  || "_",
+        upos        || "_",
+        xpos        || "_",
+        base.feats  || "_",
+        head === null ? "_" : String(head),
+        deprel,
+        base.deps   || "_",
+        base.misc   || "_",
+      ].join("\t"));
+    }
+    out.push(""); // Leerzeile zwischen Sätzen
+  }
+
+  downloadText(out.join("\n"), "gold_annotation.conllu");
+}
+
+// ---------- Session Export ----------
+function exportSession(){
+  const session = {
+    version:    1,
+    savedAt:    new Date().toISOString(),
+    currentSent: state.currentSent,
+    docs: state.docs.map(d => ({ name: d.name, content: d.content || "" })),
+    custom:    JSON.parse(JSON.stringify(state.custom)),
+    goldPick:  JSON.parse(JSON.stringify(state.goldPick)),
+    confirmed: Array.from(state.confirmed),
+    labels:    JSON.parse(JSON.stringify(LABELS)),
+    ...getUndoState(),
+  };
+  const ts = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
+  downloadText(JSON.stringify(session, null, 2), `session_${ts}.json`);
+  _showSessionMeta(t('session.exported', { n: session.docs.length, u: session.undo.length }));
+}
+
+// ---------- Session Import ----------
+function importSession(jsonText){
+  let data;
+  try { data = JSON.parse(jsonText); }
+  catch { alert(t('session.errJson')); return; }
+  if(data.version !== 1 || !Array.isArray(data.docs)){
+    alert(t('session.errFormat')); return;
+  }
+  if(!data.docs.length){
+    alert(t('session.errNoDocs')); return;
+  }
+
+  // Labels wiederherstellen (vor buildDeprelOptionsCache)
+  if(data.labels && typeof data.labels === "object"){
+    LABELS = data.labels;
+    buildDeprelOptionsCache();
+  }
+
+  // State zurücksetzen und neu befüllen
+  state.docs        = [];
+  state.custom      = data.custom   || {};
+  state.goldPick    = data.goldPick || {};
+  state.hiddenCols  = new Set();
+  state.confirmed   = new Set(data.confirmed || []);
+  state.currentSent = data.currentSent || 0;
+
+  for(const d of data.docs){
+    if(typeof d.content !== "string") continue;
+    const parsed = parseConllu(d.content);
+    state.docs.push({ key: `session::${d.name}`, name: d.name, content: d.content, sentences: parsed.sentences });
+  }
+
+  recomputeMaxSents();
+  state.currentSent = Math.min(state.currentSent, Math.max(0, state.maxSents - 1));
+  loadUndoState({ undo: data.undo || [], redo: data.redo || [] });
+
+  renderFiles();
+  renderSentSelect();
+  renderSentence();
+  _showSessionMeta(t('session.loaded', { n: state.docs.length, s: state.maxSents, u: data.undo?.length || 0 }));
+}
+
+function _showSessionMeta(msg){
+  if(!sessionMeta) return;
+  sessionMeta.textContent = msg;
+  setTimeout(() => { sessionMeta.textContent = ""; }, 4000);
+}
+
+// ---------- Baumansicht als .txt (alle Sätze) ----------
+function exportTreesTxt(){
+  if(state.docs.length < 1) return;
+  const parts = [];
+
+  for(let sentIdx = 0; sentIdx < state.maxSents; sentIdx++){
+    const docMaps = state.docs.map(d => {
+      const s = d.sentences[sentIdx];
+      const m = new Map();
+      if(s) for(const t of s.tokens) m.set(t.id, t);
+      return m;
+    });
+    const ids = new Set();
+    for(const m of docMaps) for(const id of m.keys()) ids.add(id);
+    const customSent = state.custom[sentIdx] || {};
+    for(const idStr of Object.keys(customSent)) ids.add(parseInt(idStr, 10));
+    const idList   = Array.from(ids).sort((a,b) => a - b);
+    const goldMap  = buildGoldTokenMap(sentIdx, idList, docMaps);
+    const sentText = getSentenceTextFallback(sentIdx);
+
+    // Hilfsfunktion: erste Zeile (📝 Satztext) abtrennen
+    const stripHeader = txt => txt.split("\n").slice(1).join("\n");
+
+    let block = `${"=".repeat(60)}\n`;
+    block += `📝 S${sentIdx + 1}: ${sentText}\n\n`;
+    block += t('export.treeGold') + "\n";
+    const goldBody = stripHeader(renderTreePlain(sentIdx, goldMap, sentText));
+    block += goldBody.trim() ? goldBody + "\n" : t('export.treeNoTree') + "\n";
+
+    for(let i = 0; i < state.docs.length; i++){
+      const diffBody = stripHeader(renderTreeDiff(sentIdx, goldMap, docMaps[i], sentText));
+      if(!diffBody.trim()) continue;
+      const name = state.docs[i]?.name ?? t('tree.fileDefault', { n: i+1 });
+      block += "\n" + t('export.treeVsGold', { name }) + "\n";
+      block += diffBody + "\n";
+    }
+    parts.push(block);
+  }
+
+  downloadText(parts.join("\n"), "alle_baeume.txt");
+}
+
+</script>
+  <!-- inlined: js/keyboard.js -->
+<script>
+// ---------- Keyboard navigation ----------
+let keyFocusTokId = null;
+
+function setKeyFocus(tokId){
+  cmpTable.querySelectorAll("tr.keyFocus").forEach(r => r.classList.remove("keyFocus"));
+  keyFocusTokId = tokId;
+  // Sync sentText token highlight
+  sentText?.querySelectorAll(".sentToken").forEach(s => s.classList.remove("sentTokenActive"));
+  if(tokId === null) return;
+  const tr = cmpTable.querySelector(`tr[data-id="${tokId}"]`);
+  if(tr){
+    tr.classList.add("keyFocus");
+    tr.scrollIntoView({ block:"nearest", behavior:"smooth" });
+  }
+  sentText?.querySelector(`.sentToken[data-id="${tokId}"]`)?.classList.add("sentTokenActive");
+}
+
+function getTableRows(){
+  return Array.from(cmpTable.querySelectorAll("tr[data-id]"));
+}
+
+document.addEventListener("keydown", (e) => {
+  const active = document.activeElement;
+  // posInlineSelect/posInlineInput are inline table editors — don't block shortcuts
+  const isInlinePos = active?.classList.contains("posInlineSelect") ||
+                      active?.classList.contains("posInlineInput");
+  const inInput = !isInlinePos && active &&
+    (active.tagName === "INPUT" || active.tagName === "SELECT" || active.tagName === "TEXTAREA");
+
+  // Ctrl+Z → Undo, Ctrl+Y / Ctrl+Shift+Z → Redo (immer, auch in Inputs)
+  if((e.ctrlKey || e.metaKey) && e.key === "z"){
+    e.preventDefault();
+    undo();
+    return;
+  }
+  if((e.ctrlKey || e.metaKey) && (e.key === "y" || (e.key === "Z" && e.shiftKey))){
+    e.preventDefault();
+    redo();
+    return;
+  }
+
+  // ? → Help modal (immer, auch in Inputs)
+  if(e.key === "?" && !inInput){
+    e.preventDefault();
+    const modal = document.getElementById("helpModal");
+    if(modal?.classList.contains("active")) closeHelp();
+    else openHelp();
+    return;
+  }
+
+  if(inInput) return;
+
+  switch(e.key){
+
+    // ── Satz-Navigation ──────────────────────────────────────────────────────
+    case "ArrowLeft":
+      e.preventDefault();
+      if(e.ctrlKey || e.metaKey){
+        state.currentSent = 0;
+      } else {
+        if(state.currentSent <= 0) return;
+        state.currentSent--;
+      }
+      keyFocusTokId = null;
+      renderSentence();
+      break;
+
+    case "ArrowRight":
+      e.preventDefault();
+      if(e.ctrlKey || e.metaKey){
+        state.currentSent = Math.max(0, state.maxSents - 1);
+      } else {
+        if(state.currentSent >= state.maxSents - 1) return;
+        state.currentSent++;
+      }
+      keyFocusTokId = null;
+      renderSentence();
+      break;
+
+    // ── Zeilen-Navigation ────────────────────────────────────────────────────
+    case "ArrowUp": {
+      const rows = getTableRows();
+      if(!rows.length) return;
+      e.preventDefault();
+      const idx = rows.findIndex(r => parseInt(r.dataset.id, 10) === keyFocusTokId);
+      const next = idx <= 0 ? rows.length - 1 : idx - 1;
+      setKeyFocus(parseInt(rows[next].dataset.id, 10));
+      break;
+    }
+
+    case "ArrowDown": {
+      const rows = getTableRows();
+      if(!rows.length) return;
+      e.preventDefault();
+      const idx = rows.findIndex(r => parseInt(r.dataset.id, 10) === keyFocusTokId);
+      const next = (idx === -1 || idx === rows.length - 1) ? 0 : idx + 1;
+      setKeyFocus(parseInt(rows[next].dataset.id, 10));
+      break;
+    }
+
+    // ── Gold-Popup für fokussierte Zeile öffnen ───────────────────────────────
+    case "Enter": {
+      if(keyFocusTokId === null) break;
+      e.preventDefault();
+      const tr = cmpTable.querySelector(`tr[data-id="${keyFocusTokId}"]`);
+      const goldCell = tr?.querySelector("td[data-col='gold']");
+      if(goldCell) goldCell.click();
+      break;
+    }
+
+    // ── Gold bestätigen ──────────────────────────────────────────────────────
+    case " ":
+      e.preventDefault();
+      toggleConfirm();
+      break;
+
+    // ── Nächster / vorheriger Satz mit Diffs ─────────────────────────────────
+    case "n":
+    case "N": {
+      if(state.maxSents === 0) break;
+      e.preventDefault();
+      const forward = e.key === "n";
+      const step    = forward ? 1 : -1;
+      const start   = state.currentSent;
+      let found = false;
+      for(let i = 1; i < state.maxSents; i++){
+        const idx = ((start + step * i) % state.maxSents + state.maxSents) % state.maxSents;
+        const stats = _sentStats(idx);
+        if(stats.diffCount > 0){
+          state.currentSent = idx;
+          keyFocusTokId = null;
+          renderSentence();
+          found = true;
+          break;
+        }
+      }
+      if(!found) break; // kein Satz mit Diffs gefunden
+      break;
+    }
+
+    // ── Export ───────────────────────────────────────────────────────────────
+    case "e":
+      e.preventDefault();
+      exportGoldConllu();
+      break;
+
+    case "E":
+      e.preventDefault();
+      exportTreesTxt();
+      break;
+
+    // ── Custom löschen ───────────────────────────────────────────────────────
+    case "Delete":
+    case "Backspace":
+      e.preventDefault();
+      clearCustomForSentence();
+      break;
+
+    // ── Escape: Fokus + Popup schließen ──────────────────────────────────────
+    case "Escape":
+      setKeyFocus(null);
+      break;
+
+    default: {
+      const num = parseInt(e.key, 10);
+      if(isNaN(num) || num < 1 || num > 9) break;
+
+      // Ctrl+1–9: Custom aus Datei N laden
+      if(e.ctrlKey || e.metaKey){
+        if(num > state.docs.length) break;
+        e.preventDefault();
+        initCustomFromDoc(num - 1);
+        break;
+      }
+
+      // 1–9: Doc-Spalte als Gold wählen für fokussierte Zeile
+      if(keyFocusTokId === null) break;
+      const docIdx = num - 1;
+      if(docIdx >= state.docs.length) break;
+      if(getCustomEntry(state.currentSent, keyFocusTokId)) break;
+      e.preventDefault();
+      setDocChoice(state.currentSent, keyFocusTokId, docIdx);
+      renderSentence();
+      setKeyFocus(keyFocusTokId);
+      break;
+    }
+  }
+});
+
+</script>
+  <!-- inlined: generated/readme_content.js -->
+<script>
+// Auto-generated — do not edit manually.
+// Regenerate with:  python make_readme_js.py
+
+window.README_CONTENT_DE = `# CoNLL-U Vergleich
+
+Browserbasiertes Tool zum Vergleichen und Annotieren mehrerer CoNLL-U-Dateien.
+Läuft vollständig lokal ohne Server — einfach \`index.html\` im Browser öffnen.
+
+---
+
+## Schnellstart
+
+1. \`index.html\` im Browser öffnen
+2. Mindestens zwei \`.conllu\`-Dateien laden — oder **„Demo laden"** klicken
+3. Satz auswählen → Baumansicht und Vergleichstabelle erscheinen automatisch
+4. Gold-Zellen klicken oder Tastaturkürzel nutzen, um Annotationen zu bearbeiten
+5. Fertigen Satz mit **„✓ Bestätigen"** markieren (oder \`Space\`)
+6. **💾 Session speichern** — Fortschritt jederzeit als JSON sichern und später fortsetzen
+
+---
+
+## 1) Dateien laden
+
+| Aktion | Beschreibung |
+|--------|-------------|
+| **„Dateien hinzufügen"** | Öffnet den Datei-Dialog; mehrere Dateien gleichzeitig wählbar |
+| **Drag & Drop** | \`.conllu\`/\`.conll\`/\`.txt\`-Dateien direkt auf die Seite ziehen |
+| **Drag & Drop (Session)** | \`.json\`-Session-Datei auf die Seite ziehen → wird automatisch importiert |
+| **„Demo laden"** | Drei vorgefertigte Beispieldateien, die alle Vergleichsfälle abdecken |
+| **„Löschen"** | Einzelne Datei aus der Liste entfernen |
+| **„Reset"** | Alle Dateien und Annotationen zurücksetzen |
+
+Unterstützte Formate: \`.conllu\`, \`.conll\`, \`.txt\`
+
+### Textkonsistenzwarnung
+
+Haben zwei Dateien bei gleicher Satznummer unterschiedliche Tokens:
+- **⚠️-Badge** neben dem Dateinamen
+- Oranges **Warnbanner** unterhalb der Dateiliste
+
+---
+
+## 2) Satz wählen
+
+### Dropdown
+
+Jede Option zeigt:
+- Satznummer und Stern \`★\` wenn bestätigt
+- Tokenanzahl
+- Anzahl der Abweichungen (\`· N Diffs\`) oder Haken (\`· ✓\`) bei vollständiger Übereinstimmung
+
+**Farben im Dropdown:**
+
+| Farbe | Bedeutung |
+|-------|-----------|
+| Grün | Keine Abweichungen |
+| Rot | Mindestens eine Abweichung |
+| Gold | Satz wurde bestätigt (\`★\`) |
+
+Der **Rahmen des Dropdowns** spiegelt den Status des aktuellen Satzes wider (grün / rot / gold).
+
+### Satztext
+
+Der Satztext erscheint als klickbare Tokens. Ein Klick auf ein Wort:
+- Springt zur entsprechenden Zeile in der Vergleichstabelle
+- Hebt das Token im Satztext hervor (blauer Rahmen)
+- Funktioniert auch andersrum: Tastaturnavigation (↑/↓) hebt das aktive Wort im Satztext hervor
+
+### Satz-Map
+
+Unterhalb des Satztextes erscheint eine Reihe kleiner **farbiger Punkte** — einer pro Satz:
+
+| Farbe | Bedeutung |
+|-------|-----------|
+| Dunkelgrün | Kein Diff |
+| Dunkelrot | Hat Diffs |
+| Gold | Bestätigt |
+| Blauer Rahmen | Aktuell ausgewählter Satz |
+
+Klick auf einen Punkt springt direkt zu diesem Satz.
+
+### Gold bestätigen
+
+Über **„✓ Bestätigen"** (oder \`Space\`) wird der aktuelle Satz als abgeschlossen markiert.
+Bestätigte Sätze werden gold eingefärbt (Dropdown, Satz-Map, Satztext-Rahmen, Button).
+Erneutes Drücken hebt die Bestätigung wieder auf.
+
+---
+
+## 3) Baumansicht
+
+Zeigt den aktuellen Satz als Abhängigkeitsbäume. Für jede geladene Datei gibt es einen Diff-Baum gegen die Gold-Annotation.
+
+### Legende
+
+| Symbol/Farbe | Bedeutung |
+|---|---|
+| ✅ grün | Kante identisch mit Gold |
+| ⚠️ gelb | Gleicher HEAD, aber abweichendes DEPREL / UPOS / XPOS (\`🅶X\\|🅵Y\`) |
+| 🅶 gold | Kante nur in Gold vorhanden |
+| 🅵 blau | Kante nur in dieser Datei vorhanden |
+| 🌱 | Wurzel eines Teilbaums |
+
+UPOS- und XPOS-Unterschiede werden ebenfalls als \`[UPOS:🅶X\\|🅵Y]\` bzw. \`[XPOS:🅶X\\|🅵Y]\` annotiert.
+
+### Interaktion
+
+- **Klick auf eine Zeile** → springt zur zugehörigen Zeile in der Vergleichstabelle
+- **„→ Gold"-Button** an jeder 🌱-Zeile → übernimmt den gesamten Teilbaum als Gold-Annotation
+
+---
+
+## 4) Vergleichstabelle
+
+### Spalten
+
+| Spalte | Inhalt |
+|--------|--------|
+| **ID** | Token-ID |
+| **FORM** | Wortform |
+| **UPOS** | Gold-UPOS; gelber Rahmen wenn Dateien abweichen; pinker Rahmen bei Unterschied |
+| **XPOS** | Gold-XPOS; pinker Rahmen bei Unterschied |
+| **GOLD** | Aktuelle Gold-Annotation (\`HEAD / DEPREL · UPOS·XPOS\`); Badge \`C\` = Custom, \`D1\`/\`D2\`/… = Datei |
+| **Datei-Spalten** | Annotation jeder Datei; grün = identisch mit Gold, rot = abweichend |
+
+In den Datei-Spalten werden HEAD/DEPREL und UPOS·XPOS jeweils einzeln hervorgehoben — abweichende Felder erscheinen **rot** (\`.fDiff\`).
+
+### Gold-Auswahl
+
+- **Klick auf eine Datei-Zelle** → wählt diese Datei als Gold-Quelle für diesen Token (Badge \`D1\`, \`D2\`, …)
+- Ist ein Custom-Wert gesetzt, haben Custom-Werte immer Vorrang; Datei-Zellen sind dann ausgegraut
+
+### Gold-Popup (Bearbeiten)
+
+**Klick auf eine Gold-Zelle** öffnet ein Popup zum direkten Bearbeiten:
+
+| Feld | Eingabe |
+|------|---------|
+| HEAD | Dropdown aller Tokens des aktuellen Satzes |
+| DEPREL | Dropdown (aus \`labels.js\`) |
+| UPOS | Dropdown oder Freitextfeld |
+| XPOS | Dropdown oder Freitextfeld |
+
+Änderungen werden sofort als Custom-Eintrag gespeichert. **„Zurücksetzen"** löscht den Custom-Eintrag für diesen Token.
+
+**Tastatur im Popup:** \`Tab\`/\`Shift+Tab\` wechselt Felder · \`Enter\` schließt · \`r\` zurücksetzen · \`Esc\` schließen
+
+### Custom-Annotation
+
+- **„Custom aus [Datei]"-Buttons** kopieren alle Werte der gewählten Datei als Custom-Ausgangsbasis
+- **„Custom Satz löschen"** entfernt alle Custom-Einträge für den aktuellen Satz (mit Bestätigung)
+- Sobald ein Custom-Wert gesetzt ist, gilt dieser Token als Gold (\`C\`-Badge)
+
+### Spalten ein-/ausblenden
+
+Über die **Spalten-Toggle-Leiste** lassen sich Datei-Spalten ein- und ausblenden.
+
+---
+
+## 5) Export
+
+### CoNLL-U & Baumansicht
+
+| Button | Inhalt |
+|--------|--------|
+| **Gold CoNLL-U herunterladen** | Alle Sätze mit aktuellen Gold-Annotationen (HEAD, DEPREL, UPOS, XPOS); LEMMA/FEATS/DEPS/MISC aus Quelldatei |
+| **Baumansicht herunterladen** | Alle Sätze als Text-Bäume mit Gold-Baum und Diff-Bäumen pro Datei |
+
+Tastaturkürzel: \`e\` → CoNLL-U · \`E\` → Baumansicht
+
+### Session Export / Import
+
+Der **Session-Mechanismus** sichert den vollständigen Arbeitsstand:
+
+- Alle geladenen CoNLL-U-Dateien (Inhalt)
+- Custom-Annotationen und Gold-Auswahl
+- Bestätigte Sätze
+- Vollständiger Undo-/Redo-Verlauf
+- Labelkonfiguration (\`labels.js\`)
+
+| Aktion | Beschreibung |
+|--------|-------------|
+| **💾 Session speichern** | Exportiert alles als \`.json\`-Datei |
+| **📂 Session laden** | Importiert eine gespeicherte Session-Datei |
+| **Drag & Drop** | \`.json\`-Datei auf die Seite ziehen → wird automatisch als Session erkannt |
+
+Das Session-Format ist versioniert (\`version: 1\`) und als JSON lesbar.
+
+---
+
+## 6) Undo / Redo
+
+Alle Annotationsänderungen (Datei-Auswahl, Custom-Popup, Bestätigen, Teilbaum-Übernahme) sind rückgängig machbar.
+
+| Aktion | Beschreibung |
+|--------|-------------|
+| **↩ Undo** / \`Ctrl+Z\` | Letzte Änderung rückgängig |
+| **↪ Redo** / \`Ctrl+Y\` | Rückgängige Änderung wiederherstellen |
+
+Der Verlauf wird in der Session mitgespeichert (bis zu 80 Schritte).
+
+---
+
+## Tastaturkürzel
+
+| Taste | Funktion |
+|-------|----------|
+| \`←\` / \`→\` | Vorheriger / nächster Satz |
+| \`Ctrl+←\` / \`Ctrl+→\` | Erster / letzter Satz |
+| \`n\` / \`N\` | Nächster / vorheriger Satz mit Diffs |
+| \`↑\` / \`↓\` | Tabellenzeile navigieren |
+| \`Enter\` | Gold-Popup für fokussierte Zeile öffnen |
+| \`Space\` | Satz bestätigen / Bestätigung aufheben |
+| \`1\`–\`9\` | Datei N als Gold-Quelle für fokussierte Zeile wählen |
+| \`Ctrl+1\`–\`9\` | Custom aus Datei N laden |
+| \`Ctrl+Z\` | Undo |
+| \`Ctrl+Y\` | Redo |
+| \`Del\` / \`Backspace\` | Custom des aktuellen Satzes löschen |
+| \`e\` | Gold CoNLL-U exportieren |
+| \`E\` (Shift+e) | Baumansicht exportieren |
+| \`?\` | Hilfe öffnen / schließen |
+| \`Esc\` | Fokus / Popup / Hilfe schließen |
+
+---
+
+## Mehrsprachigkeit
+
+Die Oberfläche unterstützt **Deutsch** und **Englisch** — umschaltbar über die Flaggen-Buttons oben rechts. Die gewählte Sprache wird im Browser gespeichert (\`localStorage\`).
+
+### Weitere Sprachen hinzufügen
+
+1. Neue Datei \`lang/xx.js\` anlegen (nach dem Schema von \`lang/de.js\`):
+
+\`\`\`javascript
+window.LANG_XX = {
+  'sec.files':   '...',
+  // alle Schlüssel aus lang/de.js übersetzen
+};
+\`\`\`
+
+2. In \`index.html\` einbinden (vor \`js/i18n.js\`):
+
+\`\`\`html
+<script src="lang/xx.js"><\/script>
+\`\`\`
+
+3. Flaggen-Button hinzufügen:
+
+\`\`\`html
+<button class="langBtn" data-lang="xx" onclick="setLang('xx')" title="...">🏳️</button>
+\`\`\`
+
+Oder dynamisch zur Laufzeit:
+
+\`\`\`javascript
+registerLang('xx', window.LANG_XX);
+\`\`\`
+
+---
+
+## labels.js
+
+Im gleichen Ordner wie \`index.html\` liegt \`labels.js\`, die Dropdown-Inhalte definiert:
+
+\`\`\`javascript
+const LABELS = {
+  "Core arguments": ["nsubj", "obj", "iobj", ...],
+  "Non-core dependents": ["obl", "advmod", ...],
+  // ...
+  "__upos__": ["ADJ", "ADP", "ADV", "AUX", ...],
+  "__xpos__": ["ADJA", "ADJD", "NN", "NE", ...]
+};
+\`\`\`
+
+| Schlüssel | Beschreibung |
+|-----------|-------------|
+| Beliebige Strings | Gruppierter Abschnitt im DEPREL-Dropdown |
+| \`__upos__\` | Optionen für das UPOS-Feld (leer → Freitextfeld) |
+| \`__xpos__\` | Optionen für das XPOS-Feld (leer → Freitextfeld) |
+
+Labels werden mit der Session gespeichert und beim Laden wiederhergestellt.
+
+---
+
+## Hilfe-Modal
+
+Der **\`?\`-Button** oben rechts (oder Taste \`?\`) öffnet diese Dokumentation direkt im Browser.
+
+Die Hilfe wird aus \`generated/readme_content.js\` geladen — einem vorgefertigten JS-Bundle:
+
+\`\`\`bash
+python make_readme_js.py
+\`\`\`
+
+Das Skript liest \`README.md\` und schreibt \`generated/readme_content.js\`. Nach Änderungen an der README einmal ausführen und die Seite neu laden.
+
+---
+
+## Einschränkungen
+
+- **Multi-Word-Tokens** (IDs mit \`-\` oder \`.\`) werden ignoriert
+- Mindestens **zwei Dateien** nötig für Vergleich und Baumansicht
+- Daten liegen nur im **Browser-Speicher** — Session-Export verwenden, um den Stand dauerhaft zu sichern
+`;
+
+window.README_CONTENT_EN = `# CoNLL-U Comparison
+
+Browser-based tool for comparing and annotating multiple CoNLL-U files.
+Runs entirely locally without a server — simply open \`index.html\` in your browser.
+
+---
+
+## Quick Start
+
+1. Open \`index.html\` in your browser
+2. Load at least two \`.conllu\` files — or click **"Load demo"**
+3. Select a sentence → tree view and comparison table appear automatically
+4. Click Gold cells or use keyboard shortcuts to edit annotations
+5. Mark a finished sentence with **"✓ Confirm"** (or \`Space\`)
+6. **💾 Save session** — save your progress as JSON at any time and resume later
+
+---
+
+## 1) Load Files
+
+| Action | Description |
+|--------|-------------|
+| **"Add files"** | Opens the file dialog; multiple files can be selected at once |
+| **Drag & Drop** | Drop \`.conllu\`/\`.conll\`/\`.txt\` files directly onto the page |
+| **Drag & Drop (Session)** | Drop a \`.json\` session file onto the page → imported automatically |
+| **"Load demo"** | Three pre-built example files covering all comparison cases |
+| **"Remove"** | Remove an individual file from the list |
+| **"Reset"** | Reset all files and annotations |
+
+Supported formats: \`.conllu\`, \`.conll\`, \`.txt\`
+
+### Text Consistency Warning
+
+If two files have different tokens at the same sentence index:
+- **⚠️ badge** next to the filename
+- Orange **warning banner** below the file list
+
+---
+
+## 2) Select Sentence
+
+### Dropdown
+
+Each option shows:
+- Sentence number and star \`★\` if confirmed
+- Token count
+- Number of differences (\`· N diffs\`) or a checkmark (\`· ✓\`) if fully matching
+
+**Colours in the dropdown:**
+
+| Colour | Meaning |
+|--------|---------|
+| Green | No differences |
+| Red | At least one difference |
+| Gold | Sentence confirmed (\`★\`) |
+
+The **dropdown border** reflects the status of the current sentence (green / red / gold).
+
+### Sentence Text
+
+The sentence text is rendered as clickable tokens. Clicking a word:
+- Jumps to the corresponding row in the comparison table
+- Highlights the token in the sentence text (blue outline)
+- Works in reverse too: keyboard navigation (↑/↓) highlights the active word in the sentence text
+
+### Sentence Map
+
+Below the sentence text, a row of small **coloured dots** appears — one per sentence:
+
+| Colour | Meaning |
+|--------|---------|
+| Dark green | No diff |
+| Dark red | Has diffs |
+| Gold | Confirmed |
+| Blue outline | Currently selected sentence |
+
+Click a dot to jump directly to that sentence.
+
+### Confirm Gold
+
+Use **"✓ Confirm"** (or \`Space\`) to mark the current sentence as finished.
+Confirmed sentences are coloured gold (dropdown, sentence map, sentence text border, button).
+Pressing again removes the confirmation.
+
+---
+
+## 3) Tree View
+
+Shows the current sentence as dependency trees. For each loaded file a diff tree against the Gold annotation is displayed.
+
+### Legend
+
+| Symbol/Colour | Meaning |
+|---|---|
+| ✅ green | Edge identical to Gold |
+| ⚠️ yellow | Same HEAD but different DEPREL / UPOS / XPOS (\`🅶X\\|🅵Y\`) |
+| 🅶 gold | Edge only in Gold |
+| 🅵 blue | Edge only in this file |
+| 🌱 | Subtree root |
+
+UPOS and XPOS differences are also annotated as \`[UPOS:🅶X\\|🅵Y]\` and \`[XPOS:🅶X\\|🅵Y]\`.
+
+### Interaction
+
+- **Click a line** → jumps to the corresponding row in the comparison table
+- **"→ Gold" button** at each 🌱 line → adopts the entire subtree as the Gold annotation
+
+---
+
+## 4) Comparison Table
+
+### Columns
+
+| Column | Content |
+|--------|---------|
+| **ID** | Token ID |
+| **FORM** | Word form |
+| **UPOS** | Gold UPOS; yellow border when files differ; pink border on mismatch |
+| **XPOS** | Gold XPOS; pink border on mismatch |
+| **GOLD** | Current Gold annotation (\`HEAD / DEPREL · UPOS·XPOS\`); badge \`C\` = custom, \`D1\`/\`D2\`/… = file |
+| **File columns** | Each file's annotation; green = matches Gold, red = differs |
+
+In file columns, HEAD/DEPREL and UPOS·XPOS are highlighted individually — differing fields appear **red** (\`.fDiff\`).
+
+### Gold Selection
+
+- **Click a file cell** → selects that file as the Gold source for this token (badge \`D1\`, \`D2\`, …)
+- If a custom value is set, custom values always take precedence; file cells are then greyed out
+
+### Gold Popup (Edit)
+
+**Click a Gold cell** to open an edit popup:
+
+| Field | Input |
+|-------|-------|
+| HEAD | Dropdown of all tokens in the current sentence |
+| DEPREL | Dropdown (from \`labels.js\`) |
+| UPOS | Dropdown or free-text field |
+| XPOS | Dropdown or free-text field |
+
+Changes are saved immediately as a custom entry. **"Reset"** removes the custom entry for this token.
+
+**Keyboard in popup:** \`Tab\`/\`Shift+Tab\` switch fields · \`Enter\` closes · \`r\` reset · \`Esc\` close
+
+### Custom Annotation
+
+- **"Custom from [file]" buttons** copy all values of the chosen file as a custom starting point
+- **"Clear custom sentence"** removes all custom entries for the current sentence (with confirmation)
+- Once a custom value is set, that token is treated as Gold (\`C\` badge)
+
+### Show/Hide Columns
+
+Use the **column toggle bar** to show or hide individual file columns.
+
+---
+
+## 5) Export
+
+### CoNLL-U & Tree View
+
+| Button | Content |
+|--------|---------|
+| **Download Gold CoNLL-U** | All sentences with current Gold annotations (HEAD, DEPREL, UPOS, XPOS); LEMMA/FEATS/DEPS/MISC from source file |
+| **Download tree view** | All sentences as plain-text trees with Gold tree and diff trees per file |
+
+Keyboard shortcuts: \`e\` → CoNLL-U · \`E\` → tree view
+
+### Session Export / Import
+
+The **session mechanism** saves the complete working state:
+
+- All loaded CoNLL-U files (content)
+- Custom annotations and Gold selection
+- Confirmed sentences
+- Full undo/redo history
+- Label configuration (\`labels.js\`)
+
+| Action | Description |
+|--------|-------------|
+| **💾 Save session** | Exports everything as a \`.json\` file |
+| **📂 Load session** | Imports a saved session file |
+| **Drag & Drop** | Drop a \`.json\` file onto the page → automatically recognised as a session |
+
+The session format is versioned (\`version: 1\`) and human-readable JSON.
+
+---
+
+## 6) Undo / Redo
+
+All annotation changes (file selection, custom popup, confirm, subtree adoption) can be undone.
+
+| Action | Description |
+|--------|-------------|
+| **↩ Undo** / \`Ctrl+Z\` | Undo last change |
+| **↪ Redo** / \`Ctrl+Y\` | Redo undone change |
+
+The history is saved with the session (up to 80 steps).
+
+---
+
+## Keyboard Shortcuts
+
+| Key | Function |
+|-----|----------|
+| \`←\` / \`→\` | Previous / next sentence |
+| \`Ctrl+←\` / \`Ctrl+→\` | First / last sentence |
+| \`n\` / \`N\` | Next / previous sentence with diffs |
+| \`↑\` / \`↓\` | Navigate table rows |
+| \`Enter\` | Open Gold popup for focused row |
+| \`Space\` | Confirm / unconfirm sentence |
+| \`1\`–\`9\` | Select file N as Gold source for focused row |
+| \`Ctrl+1\`–\`9\` | Load custom from file N |
+| \`Ctrl+Z\` | Undo |
+| \`Ctrl+Y\` | Redo |
+| \`Del\` / \`Backspace\` | Delete custom for current sentence |
+| \`e\` | Export Gold CoNLL-U |
+| \`E\` (Shift+e) | Export tree view |
+| \`?\` | Open / close help |
+| \`Esc\` | Clear focus / close popup / close help |
+
+---
+
+## Multiple Languages
+
+The interface supports **German** and **English** — switchable via the flag buttons in the top right. The chosen language is stored in the browser (\`localStorage\`).
+
+### Adding More Languages
+
+1. Create a new file \`lang/xx.js\` (following the pattern of \`lang/en.js\`):
+
+\`\`\`javascript
+window.LANG_XX = {
+  'sec.files':   '...',
+  // translate all keys from lang/en.js
+};
+\`\`\`
+
+2. Include it in \`index.html\` (before \`js/i18n.js\`):
+
+\`\`\`html
+<script src="lang/xx.js"><\/script>
+\`\`\`
+
+3. Add a flag button:
+
+\`\`\`html
+<button class="langBtn" data-lang="xx" onclick="setLang('xx')" title="...">🏳️</button>
+\`\`\`
+
+Or register dynamically at runtime:
+
+\`\`\`javascript
+registerLang('xx', window.LANG_XX);
+\`\`\`
+
+---
+
+## labels.js
+
+\`labels.js\` in the same folder as \`index.html\` defines the dropdown contents:
+
+\`\`\`javascript
+const LABELS = {
+  "Core arguments": ["nsubj", "obj", "iobj", ...],
+  "Non-core dependents": ["obl", "advmod", ...],
+  // ...
+  "__upos__": ["ADJ", "ADP", "ADV", "AUX", ...],
+  "__xpos__": ["ADJA", "ADJD", "NN", "NE", ...]
+};
+\`\`\`
+
+| Key | Description |
+|-----|-------------|
+| Any string | Grouped section in the DEPREL dropdown |
+| \`__upos__\` | Options for the UPOS field (empty → free-text input) |
+| \`__xpos__\` | Options for the XPOS field (empty → free-text input) |
+
+Labels are saved with the session and restored on load.
+
+---
+
+## Help Modal
+
+The **\`?\` button** in the top right (or press \`?\`) opens this documentation directly in the browser.
+
+The help is loaded from \`generated/readme_content.js\` — a pre-built JS bundle:
+
+\`\`\`bash
+python make_readme_js.py
+\`\`\`
+
+This script reads \`README.md\` and \`README.en.md\` and writes \`generated/readme_content.js\`. Run it once after editing either README, then reload the page.
+
+---
+
+## Limitations
+
+- **Multi-word tokens** (IDs with \`-\` or \`.\`) are ignored
+- At least **two files** are required for comparison and tree view
+- Data lives only in **browser memory** — use session export to save your progress permanently
+`;
+
+</script>
+  <!-- inlined: js/help.js -->
+<script>
+// ---------- Help modal ----------
+const helpBtn     = document.getElementById("helpBtn");
+const helpModal   = document.getElementById("helpModal");
+const helpClose   = document.getElementById("helpCloseBtn");
+const helpContent = document.getElementById("helpContent");
+
+helpBtn.addEventListener("click", openHelp);
+helpClose.addEventListener("click", closeHelp);
+helpModal.addEventListener("click", e => { if(e.target === helpModal) closeHelp(); });
+
+// Escape schliesst das Modal (capture phase: vor keyboard.js)
+document.addEventListener("keydown", e => {
+  if(e.key === "Escape" && helpModal.classList.contains("active")){
+    e.stopPropagation();
+    closeHelp();
+  }
+}, true);
+
+let _helpLoadedLang = null;
+
+function _readmeContent(){
+  const lang = (typeof getLang === 'function') ? getLang() : 'de';
+  const w = /** @type {any} */ (window);
+  if(lang === 'en' && typeof w.README_CONTENT_EN !== 'undefined') return w.README_CONTENT_EN;
+  if(typeof w.README_CONTENT_DE !== 'undefined') return w.README_CONTENT_DE;
+  // legacy fallback for old single-language bundle
+  if(typeof w.README_CONTENT    !== 'undefined') return w.README_CONTENT;
+  return null;
+}
+
+function openHelp(){
+  const lang = (typeof getLang === 'function') ? getLang() : 'de';
+  helpModal.classList.add("active");
+  if(_helpLoadedLang === lang) return;
+  const content = _readmeContent();
+  if(content){
+    helpContent.innerHTML = mdToHtml(content);
+    _helpLoadedLang = lang;
+  } else {
+    helpContent.innerHTML =
+      `<p class="muted">${escapeHtml(t('help.unavailable'))}<br>
+       <code>python make_readme_js.py</code><br>
+       ${escapeHtml(t('help.runScript'))}</p>`;
+  }
+}
+
+function closeHelp(){
+  helpModal.classList.remove("active");
+}
+
+// ---------- Einfacher Markdown → HTML Renderer ----------
+function mdToHtml(md){
+  const lines = md.split("\n");
+  const out   = [];
+  let inCode          = false;
+  let inTable         = false;
+  let tableHdrDone    = false;
+  let inList          = false;
+  let inOList         = false;
+
+  const flushBlocks = () => {
+    if(inList)  { out.push("</ul>");             inList  = false; }
+    if(inOList) { out.push("</ol>");             inOList = false; }
+    if(inTable) {
+      if(tableHdrDone) out.push("</tbody>");
+      out.push("</table>");
+      inTable = false; tableHdrDone = false;
+    }
+  };
+
+  for(const raw of lines){
+    const line = raw.trimEnd();
+
+    // ── Code-Block ──
+    if(line.startsWith("```")){
+      if(!inCode){
+        flushBlocks();
+        const lang = line.slice(3).trim();
+        out.push(`<pre class="helpCode"><code${lang ? ` class="lang-${lang}"` : ""}>`);
+        inCode = true;
+      } else {
+        out.push("</code></pre>");
+        inCode = false;
+      }
+      continue;
+    }
+    if(inCode){ out.push(esc(line)); continue; }
+
+    // ── Tabelle ──
+    if(line.startsWith("|")){
+      if(!inTable){
+        flushBlocks();
+        out.push('<table class="helpTable">');
+        inTable = true; tableHdrDone = false;
+      }
+      // Trennzeile (|---|---|)
+      if(/^\|[\s|:-]+\|$/.test(line)){
+        if(!tableHdrDone){ out.push("<tbody>"); tableHdrDone = true; }
+        continue;
+      }
+      const cells = line.split("|").slice(1,-1).map(c => inlineMd(c.trim()));
+      if(!tableHdrDone){
+        out.push("<thead><tr>" + cells.map(c=>`<th>${c}</th>`).join("") + "</tr></thead>");
+      } else {
+        out.push("<tr>" + cells.map(c=>`<td>${c}</td>`).join("") + "</tr>");
+      }
+      continue;
+    }
+    if(inTable){
+      if(tableHdrDone) out.push("</tbody>");
+      out.push("</table>");
+      inTable = false; tableHdrDone = false;
+    }
+
+    // ── Trennlinie ──
+    if(/^---+$/.test(line)){ flushBlocks(); out.push('<hr class="helpHr">'); continue; }
+
+    // ── Überschriften ──
+    const hm = line.match(/^(#{1,3})\s+(.+)/);
+    if(hm){
+      flushBlocks();
+      const lvl = hm[1].length;
+      out.push(`<h${lvl} class="helpH">${inlineMd(hm[2])}</h${lvl}>`);
+      continue;
+    }
+
+    // ── Ungeordnete Liste ──
+    const ulm = line.match(/^[-*]\s+(.+)/);
+    if(ulm){
+      if(inOList){ out.push("</ol>"); inOList = false; }
+      if(!inList){ out.push('<ul class="helpUl">'); inList = true; }
+      out.push(`<li>${inlineMd(ulm[1])}</li>`);
+      continue;
+    }
+
+    // ── Geordnete Liste ──
+    const olm = line.match(/^\d+\.\s+(.+)/);
+    if(olm){
+      if(inList){ out.push("</ul>"); inList = false; }
+      if(!inOList){ out.push('<ol class="helpOl">'); inOList = true; }
+      out.push(`<li>${inlineMd(olm[1])}</li>`);
+      continue;
+    }
+
+    // ── Leerzeile ──
+    if(line.trim() === ""){ flushBlocks(); continue; }
+
+    // ── Absatz ──
+    out.push(`<p class="helpP">${inlineMd(line)}</p>`);
+  }
+
+  if(inCode) out.push("</code></pre>");
+  flushBlocks();
+  return out.join("\n");
+}
+
+function esc(s){
+  return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+
+function inlineMd(s){
+  return esc(s)
+    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+    .replace(/`([^`]+)`/g, '<code class="helpInlineCode">$1</code>');
+}
+
+</script>
+</body>
+</html>
