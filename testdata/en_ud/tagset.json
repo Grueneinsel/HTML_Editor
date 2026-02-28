@@ -1,0 +1,30 @@
+{
+  "__cols__": [
+    {
+      "key": "upos",
+      "name": "UPOS",
+      "values": ["ADJ","ADP","ADV","AUX","CCONJ","DET","INTJ","NOUN","NUM","PART","PRON","PROPN","PUNCT","SCONJ","SYM","VERB","X"]
+    },
+    {
+      "key": "xpos",
+      "name": "PTB POS",
+      "values": ["CC","CD","DT","EX","FW","IN","JJ","JJR","JJS","LS","MD","NN","NNS","NNP","NNPS","PDT","POS","PRP","PRP$","RB","RBR","RBS","RP","SYM","TO","UH","VB","VBD","VBG","VBN","VBP","VBZ","WDT","WP","WP$","WRB","``","''",",",".",":","-LRB-","-RRB-","#","$"]
+    }
+  ],
+
+  "__dep_cols__": [
+    {
+      "key": "dep",
+      "name": "UD DepRel",
+      "groups": {
+        "Core arguments":   ["nsubj","nsubj:pass","obj","iobj","csubj","ccomp","xcomp"],
+        "Non-core deps":    ["obl","obl:tmod","obl:loc","vocative","expl","dislocated"],
+        "Modifiers":        ["advcl","advmod","discourse"],
+        "Function words":   ["aux","aux:pass","cop","mark"],
+        "Nominal deps":     ["nmod","nmod:poss","appos","nummod","acl","acl:relcl","amod","det","clf","case"],
+        "Coordination":     ["conj","cc"],
+        "MWE & Other":      ["fixed","flat","flat:name","list","parataxis","compound","orphan","goeswith","reparandum","punct","root","dep"]
+      }
+    }
+  ]
+}

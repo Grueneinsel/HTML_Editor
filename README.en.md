@@ -78,7 +78,7 @@ Each loaded file has the following buttons:
 
 | Button | Function |
 |---|---|
-| **⬇** | Download file as CoNLL-U (original content) |
+| **⬇ Download** | Download file as CoNLL-U (original content) |
 | **Project dropdown** | Move file to another project; **＋ New project …** creates one and moves the file immediately |
 | **▲ / ▼** | Change order within the project |
 | **Remove** | Remove file from the project |
@@ -499,10 +499,19 @@ HTML_Editor/
     │   ├── tagset.json        ← Custom tagset (word class, animacy, sentiment, simplified syntax)
     │   ├── annotator_A.conllu
     │   └── annotator_B.conllu
-    └── morph/                 ← Example: Morphology + Topological Fields
-        ├── tagset.json        ← Genus / Kasus as label columns; topological field as dep layer
-        ├── annotator_A.conllu
-        └── annotator_B.conllu
+    ├── morph/                 ← Example: Morphology + Topological Fields
+    │   ├── tagset.json        ← Genus / Kasus as label columns; topological field as dep layer
+    │   ├── annotator_A.conllu
+    │   └── annotator_B.conllu
+    ├── de_ud/                 ← Example: German Universal Dependencies + Multi-Word Token
+    │   ├── tagset.json        ← UPOS + STTS XPOS + UD DepRel (__dep_cols__)
+    │   ├── annotator_A.conllu ← Reference (3 sentences, MWT: "im" = in+dem)
+    │   ├── annotator_B.conllu ← iobj↔obl, xcomp↔advmod, acl:relcl↔advcl
+    │   └── annotator_C.conllu ← nmod-instead-of-obj, Park head, ccomp-instead-of-acl:relcl
+    └── en_ud/                 ← Example: English Universal Dependencies + Empty Node
+        ├── tagset.json        ← UPOS + PTB POS + UD DepRel (__dep_cols__)
+        ├── annotator_A.conllu ← Reference (3 sentences, Empty Node for VP-ellipsis)
+        └── annotator_B.conllu ← advmod-instead-of-amod, obj-instead-of-conj, advcl-instead-of-acl:relcl
 ```
 
 ### Key Files at a Glance
@@ -521,8 +530,43 @@ HTML_Editor/
 
 ---
 
+## Demo Data (`testdata/`)
+
+The six example directories together cover all tool features:
+
+| Directory | Language | Annotators | Notable Features |
+|---|---|---|---|
+| *(root)* `vamos_ma_ruban.conllu` + `ai_ma_konopka.conllu` | German | 2 | Quick start without a tagset; standard UD fields |
+| `ner/` | German | 2 | **Three label columns** (UPOS + XPOS + NER-BIO); `__cols__` with 3 entries |
+| `srl/` | German | 2 | **Two dep layers** (UD DepRel + Semantic Role); `__dep_cols__` with 2 entries |
+| `custom/` | German | 2 | **Fully custom schema**: 3 label columns (word class / animacy / sentiment) + simplified syntax |
+| `morph/` | German | 2 | **Morphology**: Genus/Kasus as label columns; topological field as dep layer |
+| `de_ud/` | German | **3** | **Multi-Word Token** (`im` = `in` + `dem`); UPOS + STTS; 3 annotators with typical disagreements |
+| `en_ud/` | English | 2 | **Empty Node** (VP-ellipsis / gapping); UPOS + PTB POS; English sentences |
+
+### Feature Overview
+
+| Feature | Where demonstrated |
+|---|---|
+| Multiple annotators (≥ 3) | `de_ud/` |
+| Multi-Word Token (MWT, ID `N-M`) | `de_ud/` |
+| Empty Nodes (ID `N.M`) | `en_ud/` |
+| Comment lines (`# sent_id`, `# annotator` …) | all directories |
+| `__cols__` (N arbitrary label columns) | `ner/`, `custom/`, `morph/`, `de_ud/`, `en_ud/` |
+| `__dep_cols__` (N dependency layers) | `srl/`, `morph/`, `de_ud/`, `en_ud/` |
+| Per-project tagset | all directories with `tagset.json` |
+| Auto-project assignment (different sentence counts) | mix files from different directories |
+
+### Loading the Demos
+
+1. **Tagset first**: load `tagset.json` from a directory via "📤 Upload tagset" or drag & drop
+2. **Then the CoNLL-U files**: all `annotator_*.conllu` from the same directory via "Add files"
+3. Alternatively: **all files at once** via drag & drop — the tool detects type and order automatically
+
+---
+
 ## Limitations
 
-- **Multi-word tokens** (IDs with `-` or `.`) are ignored
+- **Multi-word tokens** (IDs `N-M`) and **empty nodes** (IDs `N.M`) are stored on load and fully reconstructed on CoNLL-U export; only regular tokens appear in the comparison table and tree view
 - At least **two files** are required for comparison and tree view
 - Data lives only in **browser memory** — use session export to save your progress permanently

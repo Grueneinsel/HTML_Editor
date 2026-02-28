@@ -1,0 +1,38 @@
+# newdoc
+# text = The old man laughed at the joke .
+# sent_id = en-s1
+# annotator = A
+1	The	the	DET	DT	_	3	det	_	_
+2	old	old	ADJ	JJ	_	3	amod	_	_
+3	man	man	NOUN	NN	_	4	nsubj	_	_
+4	laughed	laugh	VERB	VBD	_	0	root	_	_
+5	at	at	ADP	IN	_	7	case	_	_
+6	the	the	DET	DT	_	7	det	_	_
+7	joke	joke	NOUN	NN	_	4	obl	_	_
+8	.	.	PUNCT	.	_	4	punct	_	_
+
+# text = Anna reads books and Ben magazines .
+# sent_id = en-s2
+# annotator = A
+# Note: Token 5.1 is an empty node representing the elided copy of "reads" (VP-ellipsis / gapping)
+1	Anna	Anna	PROPN	NNP	_	2	nsubj	_	_
+2	reads	read	VERB	VBZ	_	0	root	_	_
+3	books	book	NOUN	NNS	_	2	obj	_	_
+4	and	and	CCONJ	CC	_	6	cc	_	_
+5	Ben	Ben	PROPN	NNP	_	6	nsubj	_	_
+5.1	reads	read	VERB	VBZ	_	_	_	2:conj|5:nsubj|6:obj	_
+6	magazines	magazine	NOUN	NNS	_	2	conj	_	_
+7	.	.	PUNCT	.	_	2	punct	_	_
+
+# text = The book that the student borrowed was excellent .
+# sent_id = en-s3
+# annotator = A
+1	The	the	DET	DT	_	2	det	_	_
+2	book	book	NOUN	NN	_	7	nsubj	_	_
+3	that	that	PRON	WDT	_	6	obj	_	_
+4	the	the	DET	DT	_	5	det	_	_
+5	student	student	NOUN	NN	_	6	nsubj	_	_
+6	borrowed	borrow	VERB	VBD	_	2	acl:relcl	_	_
+7	was	be	AUX	VBD	_	0	root	_	_
+8	excellent	excellent	ADJ	JJ	_	7	xcomp	_	_
+9	.	.	PUNCT	.	_	7	punct	_	_

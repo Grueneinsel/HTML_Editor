@@ -1,0 +1,39 @@
+# newdoc
+# text = Der Mann gibt dem Kind ein Buch .
+# sent_id = de-s1
+# annotator = A
+1	Der	der	DET	ART	_	2	det	_	_
+2	Mann	Mann	NOUN	NN	_	3	nsubj	_	_
+3	gibt	geben	VERB	VVFIN	_	0	root	_	_
+4	dem	der	DET	ART	_	5	det	_	_
+5	Kind	Kind	NOUN	NN	_	3	iobj	_	_
+6	ein	ein	DET	ART	_	7	det	_	_
+7	Buch	Buch	NOUN	NN	_	3	obj	_	_
+8	.	.	PUNCT	$.	_	3	punct	_	_
+
+# text = Er geht im Park spazieren .
+# sent_id = de-s2
+# annotator = A
+# Hinweis: "im" (Token 3-4) ist ein Multi-Word-Token (in + dem)
+1	Er	er	PRON	PPER	_	2	nsubj	_	_
+2	geht	gehen	VERB	VVFIN	_	0	root	_	_
+3-4	im	_	_	_	_	_	_	_	_
+3	in	in	ADP	APPR	_	5	case	_	_
+4	dem	der	DET	ART	_	5	det	_	_
+5	Park	Park	NOUN	NN	_	2	obl	_	_
+6	spazieren	spazieren	VERB	VVINF	_	2	xcomp	_	_
+7	.	.	PUNCT	$.	_	2	punct	_	_
+
+# text = Die Frau , die das Buch las , lachte .
+# sent_id = de-s3
+# annotator = A
+1	Die	der	DET	ART	_	2	det	_	_
+2	Frau	Frau	NOUN	NN	_	9	nsubj	_	_
+3	,	,	PUNCT	$,	_	9	punct	_	_
+4	die	der	PRON	PRELS	_	7	nsubj	_	_
+5	das	der	DET	ART	_	6	det	_	_
+6	Buch	Buch	NOUN	NN	_	7	obj	_	_
+7	las	lesen	VERB	VVFIN	_	2	acl:relcl	_	_
+8	,	,	PUNCT	$,	_	9	punct	_	_
+9	lachte	lachen	VERB	VVFIN	_	0	root	_	_
+10	.	.	PUNCT	$.	_	9	punct	_	_

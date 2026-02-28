@@ -81,7 +81,7 @@ Jede geladene Datei hat folgende Schaltflächen:
 
 | Schaltfläche | Funktion |
 |---|---|
-| **⬇** | Datei als CoNLL-U herunterladen (Original-Inhalt) |
+| **⬇ Download** | Datei als CoNLL-U herunterladen (Original-Inhalt) |
 | **Projekt-Dropdown** | Datei in ein anderes Projekt verschieben; **＋ Neues Projekt …** legt ein neues an und verschiebt sofort |
 | **▲ / ▼** | Reihenfolge innerhalb des Projekts tauschen |
 | **Löschen** | Datei aus dem Projekt entfernen |
@@ -502,10 +502,19 @@ HTML_Editor/
     │   ├── tagset.json        ← Custom-Tagset (Wortart, Belebtheit, Sentiment, Vereinfachte Syntax)
     │   ├── annotator_A.conllu
     │   └── annotator_B.conllu
-    └── morph/                 ← Beispiel: Morphologie + Topologische Felder
-        ├── tagset.json        ← Genus / Kasus als Label-Spalten; Topologisches Feld als Dep-Layer
-        ├── annotator_A.conllu
-        └── annotator_B.conllu
+    ├── morph/                 ← Beispiel: Morphologie + Topologische Felder
+    │   ├── tagset.json        ← Genus / Kasus als Label-Spalten; Topologisches Feld als Dep-Layer
+    │   ├── annotator_A.conllu
+    │   └── annotator_B.conllu
+    ├── de_ud/                 ← Beispiel: Deutsches Universal Dependencies + Multi-Word-Token
+    │   ├── tagset.json        ← UPOS + STTS XPOS + UD DepRel (__dep_cols__)
+    │   ├── annotator_A.conllu ← Referenz (3 Sätze, MWT: „im" = in+dem)
+    │   ├── annotator_B.conllu ← iobj↔obl, xcomp↔advmod, acl:relcl↔advcl
+    │   └── annotator_C.conllu ← nmod-statt-obj, Park-Kopf, ccomp-statt-acl:relcl
+    └── en_ud/                 ← Beispiel: Englisches Universal Dependencies + Empty Node
+        ├── tagset.json        ← UPOS + PTB POS + UD DepRel (__dep_cols__)
+        ├── annotator_A.conllu ← Referenz (3 Sätze, Empty Node für VP-Ellipse)
+        └── annotator_B.conllu ← advmod-statt-amod, obj-statt-conj, advcl-statt-acl:relcl
 \`\`\`
 
 ### Wichtige Dateien im Überblick
@@ -524,9 +533,44 @@ HTML_Editor/
 
 ---
 
+## Demo-Daten (\`testdata/\`)
+
+Die sechs Beispielverzeichnisse decken gemeinsam alle Funktionen des Tools ab:
+
+| Verzeichnis | Sprache | Annotatorinnen | Besondere Features |
+|---|---|---|---|
+| *(Wurzel)* \`vamos_ma_ruban.conllu\` + \`ai_ma_konopka.conllu\` | Deutsch | 2 | Schnellstart ohne Tagset; Standard UD-Felder |
+| \`ner/\` | Deutsch | 2 | **Drei Label-Spalten** (UPOS + XPOS + NER-BIO); \`__cols__\` mit 3 Einträgen |
+| \`srl/\` | Deutsch | 2 | **Zwei Dep-Schichten** (UD DepRel + Semantic Role); \`__dep_cols__\` mit 2 Einträgen |
+| \`custom/\` | Deutsch | 2 | **Vollständig eigenes Schema**: 3 Label-Spalten (Wortart / Belebtheit / Sentiment) + vereinfachte Syntax |
+| \`morph/\` | Deutsch | 2 | **Morphologie**: Genus/Kasus als Label-Spalten; Topologisches Feld als Dep-Schicht |
+| \`de_ud/\` | Deutsch | **3** | **Multi-Word-Token** (\`im\` = \`in\` + \`dem\`); UPOS + STTS; 3 Annotatorinnen mit typischen Uneinigkeiten |
+| \`en_ud/\` | Englisch | 2 | **Empty Node** (VP-Ellipse / Gapping); UPOS + PTB POS; englischsprachige Sätze |
+
+### Features-Übersicht
+
+| Feature | wo demonstriert |
+|---|---|
+| Mehrere Annotatorinnen (≥ 3) | \`de_ud/\` |
+| Multi-Word-Token (MWT, ID \`N-M\`) | \`de_ud/\` |
+| Empty Nodes (ID \`N.M\`) | \`en_ud/\` |
+| Kommentar-Zeilen (\`# sent_id\`, \`# annotator\` …) | alle Verzeichnisse |
+| \`__cols__\` (N beliebige Label-Spalten) | \`ner/\`, \`custom/\`, \`morph/\`, \`de_ud/\`, \`en_ud/\` |
+| \`__dep_cols__\` (N Dep-Schichten) | \`srl/\`, \`morph/\`, \`de_ud/\`, \`en_ud/\` |
+| Projekt-spezifisches Tagset | alle Verzeichnisse mit \`tagset.json\` |
+| Auto-Projekt-Zuweisung (unterschiedl. Satzzahlen) | Dateien aus verschiedenen Verzeichnissen mischen |
+
+### Laden der Demos
+
+1. **Tagset zuerst**: \`tagset.json\` aus einem Verzeichnis per „📤 Tagset hochladen" oder Drag & Drop laden
+2. **Dann die CoNLL-U-Dateien**: alle \`annotator_*.conllu\` aus dem gleichen Verzeichnis per „Dateien hinzufügen"
+3. Alternativ: **alle Dateien gleichzeitig** per Drag & Drop — das Tool erkennt Typ und Reihenfolge automatisch
+
+---
+
 ## Einschränkungen
 
-- **Multi-Word-Tokens** (IDs mit \`-\` oder \`.\`) werden ignoriert
+- **Multi-Word-Token** (IDs \`N-M\`) und **Empty Nodes** (IDs \`N.M\`) werden beim Laden gespeichert und beim CoNLL-U-Export vollständig rekonstruiert; in der Vergleichstabelle und Baumansicht erscheinen nur die regulären Token
 - Mindestens **zwei Dateien** nötig für Vergleich und Baumansicht
 - Daten liegen nur im **Browser-Speicher** — Session-Export verwenden, um den Stand dauerhaft zu sichern
 `;
@@ -611,7 +655,7 @@ Each loaded file has the following buttons:
 
 | Button | Function |
 |---|---|
-| **⬇** | Download file as CoNLL-U (original content) |
+| **⬇ Download** | Download file as CoNLL-U (original content) |
 | **Project dropdown** | Move file to another project; **＋ New project …** creates one and moves the file immediately |
 | **▲ / ▼** | Change order within the project |
 | **Remove** | Remove file from the project |
@@ -1032,10 +1076,19 @@ HTML_Editor/
     │   ├── tagset.json        ← Custom tagset (word class, animacy, sentiment, simplified syntax)
     │   ├── annotator_A.conllu
     │   └── annotator_B.conllu
-    └── morph/                 ← Example: Morphology + Topological Fields
-        ├── tagset.json        ← Genus / Kasus as label columns; topological field as dep layer
-        ├── annotator_A.conllu
-        └── annotator_B.conllu
+    ├── morph/                 ← Example: Morphology + Topological Fields
+    │   ├── tagset.json        ← Genus / Kasus as label columns; topological field as dep layer
+    │   ├── annotator_A.conllu
+    │   └── annotator_B.conllu
+    ├── de_ud/                 ← Example: German Universal Dependencies + Multi-Word Token
+    │   ├── tagset.json        ← UPOS + STTS XPOS + UD DepRel (__dep_cols__)
+    │   ├── annotator_A.conllu ← Reference (3 sentences, MWT: "im" = in+dem)
+    │   ├── annotator_B.conllu ← iobj↔obl, xcomp↔advmod, acl:relcl↔advcl
+    │   └── annotator_C.conllu ← nmod-instead-of-obj, Park head, ccomp-instead-of-acl:relcl
+    └── en_ud/                 ← Example: English Universal Dependencies + Empty Node
+        ├── tagset.json        ← UPOS + PTB POS + UD DepRel (__dep_cols__)
+        ├── annotator_A.conllu ← Reference (3 sentences, Empty Node for VP-ellipsis)
+        └── annotator_B.conllu ← advmod-instead-of-amod, obj-instead-of-conj, advcl-instead-of-acl:relcl
 \`\`\`
 
 ### Key Files at a Glance
@@ -1054,9 +1107,44 @@ HTML_Editor/
 
 ---
 
+## Demo Data (\`testdata/\`)
+
+The six example directories together cover all tool features:
+
+| Directory | Language | Annotators | Notable Features |
+|---|---|---|---|
+| *(root)* \`vamos_ma_ruban.conllu\` + \`ai_ma_konopka.conllu\` | German | 2 | Quick start without a tagset; standard UD fields |
+| \`ner/\` | German | 2 | **Three label columns** (UPOS + XPOS + NER-BIO); \`__cols__\` with 3 entries |
+| \`srl/\` | German | 2 | **Two dep layers** (UD DepRel + Semantic Role); \`__dep_cols__\` with 2 entries |
+| \`custom/\` | German | 2 | **Fully custom schema**: 3 label columns (word class / animacy / sentiment) + simplified syntax |
+| \`morph/\` | German | 2 | **Morphology**: Genus/Kasus as label columns; topological field as dep layer |
+| \`de_ud/\` | German | **3** | **Multi-Word Token** (\`im\` = \`in\` + \`dem\`); UPOS + STTS; 3 annotators with typical disagreements |
+| \`en_ud/\` | English | 2 | **Empty Node** (VP-ellipsis / gapping); UPOS + PTB POS; English sentences |
+
+### Feature Overview
+
+| Feature | Where demonstrated |
+|---|---|
+| Multiple annotators (≥ 3) | \`de_ud/\` |
+| Multi-Word Token (MWT, ID \`N-M\`) | \`de_ud/\` |
+| Empty Nodes (ID \`N.M\`) | \`en_ud/\` |
+| Comment lines (\`# sent_id\`, \`# annotator\` …) | all directories |
+| \`__cols__\` (N arbitrary label columns) | \`ner/\`, \`custom/\`, \`morph/\`, \`de_ud/\`, \`en_ud/\` |
+| \`__dep_cols__\` (N dependency layers) | \`srl/\`, \`morph/\`, \`de_ud/\`, \`en_ud/\` |
+| Per-project tagset | all directories with \`tagset.json\` |
+| Auto-project assignment (different sentence counts) | mix files from different directories |
+
+### Loading the Demos
+
+1. **Tagset first**: load \`tagset.json\` from a directory via "📤 Upload tagset" or drag & drop
+2. **Then the CoNLL-U files**: all \`annotator_*.conllu\` from the same directory via "Add files"
+3. Alternatively: **all files at once** via drag & drop — the tool detects type and order automatically
+
+---
+
 ## Limitations
 
-- **Multi-word tokens** (IDs with \`-\` or \`.\`) are ignored
+- **Multi-word tokens** (IDs \`N-M\`) and **empty nodes** (IDs \`N.M\`) are stored on load and fully reconstructed on CoNLL-U export; only regular tokens appear in the comparison table and tree view
 - At least **two files** are required for comparison and tree view
 - Data lives only in **browser memory** — use session export to save your progress permanently
 `;

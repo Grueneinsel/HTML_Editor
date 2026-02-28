@@ -1,0 +1,30 @@
+{
+  "__cols__": [
+    {
+      "key": "upos",
+      "name": "UPOS",
+      "values": ["ADJ","ADP","ADV","AUX","CCONJ","DET","INTJ","NOUN","NUM","PART","PRON","PROPN","PUNCT","SCONJ","SYM","VERB","X"]
+    },
+    {
+      "key": "xpos",
+      "name": "XPOS (STTS)",
+      "values": ["ADJA","ADJD","ADV","APPO","APPR","APPRART","APZR","ART","CARD","FM","ITJ","KOKOM","KON","KOUI","KOUS","NE","NN","NNE","PDAT","PDS","PIAT","PIS","PPER","PPOSAT","PPOSS","PRELAT","PRELS","PRF","PROAV","PTKA","PTKANT","PTKNEG","PTKVZ","PTKZU","PWAT","PWAV","PWS","TRUNC","VAFIN","VAIMP","VAINF","VAPP","VMFIN","VMINF","VMPP","VVFIN","VVIMP","VVINF","VVIZU","VVPP","XY","$,","$.","$("]
+    }
+  ],
+
+  "__dep_cols__": [
+    {
+      "key": "dep",
+      "name": "UD DepRel",
+      "groups": {
+        "Kernargumente":   ["nsubj","nsubj:pass","obj","iobj","csubj","ccomp","xcomp"],
+        "Nicht-Kernarg.":  ["obl","obl:arg","vocative","expl","dislocated"],
+        "Modifikatoren":   ["advcl","advmod","discourse"],
+        "Funktionswörter": ["aux","aux:pass","cop","mark"],
+        "Nominalabh.":     ["nmod","appos","nummod","acl","acl:relcl","amod","det","clf","case"],
+        "Koordination":    ["conj","cc"],
+        "MWE & Sonstiges": ["fixed","flat","flat:name","list","parataxis","compound","orphan","goeswith","reparandum","punct","root","dep"]
+      }
+    }
+  ]
+}
