@@ -1,4 +1,4 @@
-// ── Arc Diagram — displaCy-style interactive dependency tree ─────────────────
+// Interactive SVG arc diagram (displaCy-style) with drag-to-reattach and deprel popup.
 //
 // Interaction (editable / gold view):
 //   • Drag FROM any token box → drop on another token → assigns new head
@@ -10,11 +10,13 @@
 // Read-only (file views): click on token box scrolls to table row only.
 // ─────────────────────────────────────────────────────────────────────────────
 
-const _ARC_THRESH = 5; // px movement to turn click into drag
+const _ARC_THRESH = 5; // px movement required to promote a mousedown to a real drag
 
-let _arcPreDrag = null; // set on mousedown, before threshold crossed
-let _arcDrag    = null; // set once threshold crossed (active drag)
+let _arcPreDrag = null; // pending drag state set on mousedown, before threshold is crossed
+let _arcDrag    = null; // active drag state after threshold has been crossed
 
+// Global mousemove: promote pre-drag to real drag once the movement threshold is exceeded,
+// then update the drag line and drop-target highlight while dragging.
 window.addEventListener('mousemove', e => {
   // Promote pre-drag to real drag once threshold is crossed
   if (_arcPreDrag && !_arcDrag) {
@@ -35,9 +37,10 @@ window.addEventListener('mousemove', e => {
   _arcHighlightDrop(mx, my);
 });
 
+// Global mouseup: handle drop — either a plain click (no threshold crossed) or a real drag.
 window.addEventListener('mouseup', e => {
   if (_arcPreDrag && !_arcDrag) {
-    // Was a plain click — scroll to token
+    // Was a plain click — scroll to token in the comparison table
     const pd = _arcPreDrag; _arcPreDrag = null;
     if (pd.onScrollTok) pd.onScrollTok(pd.depId);
     return;
@@ -58,7 +61,7 @@ window.addEventListener('mouseup', e => {
   if (ni !== null && drag.toks[ni].id !== drag.depId) {
     const newHeadId = drag.toks[ni].id;
     if (_arcWouldCycle(drag.depId, newHeadId, drag.toks)) {
-      // Reject: flash the target red to signal the cycle
+      // Reject the drop: flash the target token red to signal the cycle
       if (drag.svg.isConnected) {
         const el = drag.svg.querySelector(`[data-arctokid="${newHeadId}"]`);
         if (el) {
@@ -77,6 +80,7 @@ window.addEventListener('mouseup', e => {
   }
 });
 
+// Initialise a real drag: draw the rubber-band line and leader dot in the SVG.
 function _arcBeginDrag(e) {
   const pd = _arcPreDrag; _arcPreDrag = null;
   if (!pd.svg.isConnected) return;
@@ -96,6 +100,8 @@ function _arcBeginDrag(e) {
   _arcDrag = { ...pd, line, dot, _hovId:null, _hovEl:null, _hovBad:false };
 }
 
+// Find the nearest token center within a vertical hit band around the word row.
+// Returns the token index or null if the cursor is too far from any token.
 function _arcNearest(mx, my, centers, wordY, cellH) {
   if (my < wordY - 10 || my > wordY + cellH + 10) return null;
   let best = null, bestD = 64;
@@ -106,6 +112,7 @@ function _arcNearest(mx, my, centers, wordY, cellH) {
   return best;
 }
 
+// Highlight the drop target token during a drag (blue = valid, red = would cycle).
 function _arcHighlightDrop(mx, my) {
   const ni  = _arcNearest(mx, my, _arcDrag.centers, _arcDrag.wordY, _arcDrag.cellH);
   const nid = (ni !== null && _arcDrag.toks[ni].id !== _arcDrag.depId) ? _arcDrag.toks[ni].id : null;
@@ -123,6 +130,7 @@ function _arcHighlightDrop(mx, my) {
   }
 }
 
+// Clear any active drop-target highlight.
 function _arcClearHighlight(drag) {
   if (drag._hovEl) { drag._hovEl.style.fill = 'transparent'; drag._hovEl = null; }
   drag._hovId  = null;
@@ -131,6 +139,7 @@ function _arcClearHighlight(drag) {
 
 // ── Cycle detection ───────────────────────────────────────────────────────────
 // Returns true if making depId point to newHeadId would create a cycle.
+// Uses path tracing from newHeadId upward through the current token heads.
 function _arcWouldCycle(depId, newHeadId, toks) {
   if (depId === newHeadId) return true;
   const idToHead = new Map(toks.map(t => [t.id, t.head]));
@@ -145,6 +154,8 @@ function _arcWouldCycle(depId, newHeadId, toks) {
 }
 
 // ── Deprel popup ──────────────────────────────────────────────────────────────
+// Show a small floating popup at (screenX, screenY) to pick a dependency relation.
+// onSetDeprel(depId, deprel) is called when the user confirms the selection.
 function _arcShowDeprelPopup(screenX, screenY, depId, currentDeprel, onSetDeprel) {
   document.getElementById('arcDeprelPopup')?.remove();
 
@@ -160,10 +171,10 @@ function _arcShowDeprelPopup(screenX, screenY, depId, currentDeprel, onSetDeprel
 
   const lbl = document.createElement('div');
   lbl.style.cssText = 'font-size:11px; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:.05em;';
-  lbl.textContent = 'Beziehungsart';
+  lbl.textContent = 'Relation type';
   popup.appendChild(lbl);
 
-  // Build select — use global DEPREL_OPTIONS_HTML if available
+  // Build select — use global DEPREL_OPTIONS_HTML if available, otherwise fall back to UD list
   const sel = document.createElement('select');
   const optsHtml = (typeof DEPREL_OPTIONS_HTML !== 'undefined' && DEPREL_OPTIONS_HTML)
     ? DEPREL_OPTIONS_HTML
@@ -201,7 +212,7 @@ function _arcShowDeprelPopup(screenX, screenY, depId, currentDeprel, onSetDeprel
     if (ev.key === 'Escape') { popup.remove(); }
   });
 
-  // Adjust so popup stays inside viewport
+  // Adjust position so popup stays inside the viewport
   requestAnimationFrame(() => {
     const r = popup.getBoundingClientRect();
     if (r.right  > window.innerWidth)  popup.style.left = `${screenX - r.width - 10}px`;
@@ -210,7 +221,7 @@ function _arcShowDeprelPopup(screenX, screenY, depId, currentDeprel, onSetDeprel
 
   sel.focus();
 
-  // Close on outside click (after short delay to avoid immediate close)
+  // Close on outside click (delay avoids closing on the same mousedown that opened it)
   setTimeout(() => {
     function outside(ev) {
       if (!popup.contains(ev.target)) { popup.remove(); document.removeEventListener('mousedown', outside); }
@@ -220,6 +231,8 @@ function _arcShowDeprelPopup(screenX, screenY, depId, currentDeprel, onSetDeprel
 }
 
 // ── Main builder ──────────────────────────────────────────────────────────────
+// Build and return a displaCy-style SVG arc diagram wrapped in a div.
+// Pass onSetHead/onDeleteArc/onSetDeprel to make the diagram editable.
 function buildArcDiagram(tokMap, { onSetHead = null, onDeleteArc = null, onSetDeprel = null, scrollToTok = null, edgeColors = null } = {}) {
   const NS      = 'http://www.w3.org/2000/svg';
   const toks    = Array.from(tokMap.values()).sort((a, b) => a.id - b.id);
@@ -227,28 +240,28 @@ function buildArcDiagram(tokMap, { onSetHead = null, onDeleteArc = null, onSetDe
 
   const editable = !!onSetHead;
 
-  // ── Layout constants ─────────────────────────────────────────────────────
+  // ── Layout constants ──────────────────────────────────────────────────────
   const HPAD   = 14;   // horizontal padding inside word box
   const CELL_H = 34;   // word box height
   const GAP    = 18;   // gap between word boxes
-  const ARC_U  = 36;   // px per token-distance unit
-  const ARC_MX = 210;  // max arc height
-  const ROOT_H = 30;   // height of root arrow
+  const ARC_U  = 36;   // px per token-distance unit (controls arc height scaling)
+  const ARC_MX = 210;  // maximum arc height cap
+  const ROOT_H = 30;   // height of the vertical root arrow
   const PTOP   = 14;   // top SVG padding
   const PBOT   = 8;    // bottom SVG padding
   const FONT_M = "'JetBrains Mono', ui-monospace, Consolas, monospace";
 
-  // Measure text widths via canvas
+  // Measure text widths via an offscreen canvas for accurate box sizing
   const mc = document.createElement('canvas').getContext('2d');
   mc.font = `bold 12px ${FONT_M}`;
   const cellW = toks.map(t => Math.max(52, mc.measureText(t.form).width + HPAD * 2));
 
-  // Compute token x-centers
+  // Compute the x-center of each token box
   let xo = GAP;
   const centers = toks.map((_, i) => { const c = xo + cellW[i] / 2; xo += cellW[i] + GAP; return c; });
   const svgW = xo;
 
-  // Build edges
+  // Build edge descriptors from token head fields
   const idxOf = new Map(toks.map((t, i) => [t.id, i]));
   const edges  = [];
   for (let i = 0; i < toks.length; i++) {
@@ -259,10 +272,12 @@ function buildArcDiagram(tokMap, { onSetHead = null, onDeleteArc = null, onSetDe
     } else {
       const hi = idxOf.get(t.head);
       if (hi == null) continue;
+      // Arc height scales with token distance, capped at ARC_MX
       edges.push({ dep:i, head:hi, label:t.deprel??'_', isRoot:false,
         h: Math.min(ARC_U * Math.abs(hi - i), ARC_MX) });
     }
   }
+  // Draw shorter arcs first so longer arcs appear behind them
   edges.sort((a, b) => a.h - b.h);
 
   const maxArcH = Math.max(0, ...edges.filter(e => !e.isRoot).map(e => e.h));
@@ -281,14 +296,14 @@ function buildArcDiagram(tokMap, { onSetHead = null, onDeleteArc = null, onSetDe
 
   mc.font = '10px sans-serif';
 
-  // ── Draw edges ─────────────────────────────────────────────────────────────
+  // ── Draw edges ────────────────────────────────────────────────────────────
   for (const e of edges) {
     const g     = mk('g');
     const depId = toks[e.dep].id;
     const arcColor = edgeColors?.get(depId) ?? 'var(--ok)';
 
     if (e.isRoot) {
-      // Vertical root arrow — always green (root is root)
+      // Vertical root arrow — always green regardless of edgeColors
       const rootColor = 'var(--ok)';
       const dx = centers[e.dep];
       const ty = wordY - ROOT_H;
@@ -298,7 +313,7 @@ function buildArcDiagram(tokMap, { onSetHead = null, onDeleteArc = null, onSetDe
         points:`${dx-5},${wordY-14} ${dx+5},${wordY-14} ${dx},${wordY-3}`,
         fill:rootColor }));
 
-      // Label — grouped for click (editable)
+      // Root label — clickable when editable
       const lw = mc.measureText(e.label).width;
       const labelG = mk('g');
       if (editable && onSetDeprel) labelG.style.cssText = 'cursor:pointer;';
@@ -321,29 +336,27 @@ function buildArcDiagram(tokMap, { onSetHead = null, onDeleteArc = null, onSetDe
       const apex = wordY - e.h;
       const mid  = (x1 + x2) / 2;
 
-      // Measure label width early (needed for hit-rect and × button position)
       const lw = mc.measureText(e.label).width;
 
-      // Invisible bounding-box hit rect covering arc + label + × button area
-      // This ensures hover works reliably even in empty space between elements
+      // Invisible hit rect that covers the full arc+label+button area for reliable hover
       const hLeft  = Math.min(x1, x2) - 8;
-      const hRight = Math.max(x1, x2) + lw / 2 + 26; // extends to × button
+      const hRight = Math.max(x1, x2) + lw / 2 + 26;
       g.appendChild(mk('rect', {
         x: hLeft, y: apex - 22, width: hRight - hLeft, height: wordY - apex + 22,
         fill: 'transparent', 'pointer-events': 'all' }));
 
-      // Visible arc curve
+      // Visible cubic Bezier arc curve
       g.appendChild(mk('path', {
         d:`M ${x1} ${wordY} C ${x1} ${apex} ${x2} ${apex} ${x2} ${wordY}`,
         stroke:arcColor, 'stroke-width':1.8, fill:'none',
         'stroke-linecap':'round', 'pointer-events':'none' }));
 
-      // Arrowhead
+      // Arrowhead at the dependent end
       g.appendChild(mk('polygon', {
         points:`${x2-4},${wordY-10} ${x2+4},${wordY-10} ${x2},${wordY-2}`,
         fill:arcColor, 'pointer-events':'none' }));
 
-      // Arc label — grouped for click (editable)
+      // Arc label — clickable when editable
       const labelG = mk('g');
       if (editable && onSetDeprel) labelG.style.cssText = 'cursor:pointer;';
       labelG.appendChild(mk('rect', {
@@ -362,7 +375,7 @@ function buildArcDiagram(tokMap, { onSetHead = null, onDeleteArc = null, onSetDe
       }
       g.appendChild(labelG);
 
-      // ✕ delete button (editable only) — shown on arc-group hover
+      // ✕ delete button (editable only) — fades in on arc group hover
       if (editable && onDeleteArc) {
         const btnG = mk('g');
         btnG.style.cssText = 'cursor:pointer; opacity:0; transition:opacity .12s;';
@@ -388,7 +401,7 @@ function buildArcDiagram(tokMap, { onSetHead = null, onDeleteArc = null, onSetDe
     svg.appendChild(g);
   }
 
-  // ── Draw token boxes ──────────────────────────────────────────────────────
+  // ── Draw token boxes ───────────────────────────────────────────────────────
   for (let i = 0; i < toks.length; i++) {
     const t   = toks[i];
     const cxi = centers[i];
@@ -397,17 +410,19 @@ function buildArcDiagram(tokMap, { onSetHead = null, onDeleteArc = null, onSetDe
 
     svg.appendChild(mk('rect', { x:bx, y:wordY, width:bw, height:CELL_H,
       rx:6, fill:'var(--card)', stroke:'var(--line2)', 'stroke-width':1 }));
+    // Token ID in small text at top-left corner of the box
     const idT = mk('text', { x:bx+5, y:wordY+11, 'font-size':9,
       fill:'var(--muted)', 'font-weight':600 });
     idT.textContent = t.id;
     svg.appendChild(idT);
+    // Token form centered in the box
     const fmT = mk('text', { x:cxi, y:wordY+CELL_H/2+5,
       'text-anchor':'middle', 'font-size':12, 'font-weight':700,
       fill:'var(--text)', 'font-family':FONT_M });
     fmT.textContent = t.form;
     svg.appendChild(fmT);
 
-    // Transparent overlay: drag source (editable) or click target (read-only)
+    // Transparent overlay acts as the drag source (editable) or click target (read-only)
     const overlay = mk('rect', { x:bx, y:wordY, width:bw, height:CELL_H,
       rx:6, fill:'transparent',
       cursor: editable ? 'grab' : (scrollToTok ? 'pointer' : 'default') });
@@ -417,6 +432,7 @@ function buildArcDiagram(tokMap, { onSetHead = null, onDeleteArc = null, onSetDe
       overlay.addEventListener('mousedown', ev => {
         if (ev.button !== 0) return;
         ev.preventDefault();
+        // Record pre-drag state; actual drag starts only after _ARC_THRESH movement
         _arcPreDrag = {
           startX: ev.clientX, startY: ev.clientY,
           tokIdx: i, depId: t.id,

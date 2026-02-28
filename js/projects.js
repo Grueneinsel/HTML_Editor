@@ -1,7 +1,8 @@
-// ---------- Project management ----------
+// Project management: create, switch, rename, delete, reorder, and auto-assign documents to projects.
 
-// ── Internal helpers ─────────────────────────────────────────────────────────
+// ── Internal helpers ──────────────────────────────────────────────────────────
 
+// Return a blank project skeleton with all fields initialised to empty defaults.
 function _emptyProject(name){
   return {
     name,
@@ -123,6 +124,7 @@ function deleteProject(idx){
   const name = state.projects[idx].name;
   if(!confirm(t('project.deleteConfirm', { name }))) return;
   state.projects.splice(idx, 1);
+  // Keep activeProjectIdx valid after removal
   if(state.activeProjectIdx >= state.projects.length){
     state.activeProjectIdx = state.projects.length - 1;
   } else if(state.activeProjectIdx > idx){
@@ -147,7 +149,9 @@ function moveProject(idx, dir){
   const other = idx + dir;
   if(other < 0 || other >= state.projects.length) return;
   _saveActiveProject();
+  // Swap the two project entries
   [state.projects[idx], state.projects[other]] = [state.projects[other], state.projects[idx]];
+  // Follow the active project to its new position
   if(state.activeProjectIdx === idx)        state.activeProjectIdx = other;
   else if(state.activeProjectIdx === other) state.activeProjectIdx = idx;
   renderProjectTabs();
@@ -162,7 +166,7 @@ function moveDocToProject(docIdx, targetProjectIdx){
   // Remove from live state
   state.docs.splice(docIdx, 1);
 
-  // Remap hiddenCols
+  // Remap hiddenCols: indices above the removed doc shift down by 1
   const newHidden = new Set();
   for(const v of state.hiddenCols){
     if(v > docIdx) newHidden.add(v - 1);
@@ -170,7 +174,7 @@ function moveDocToProject(docIdx, targetProjectIdx){
   }
   state.hiddenCols = newHidden;
 
-  // Remap goldPick indices
+  // Remap goldPick indices: any pick pointing at the removed doc reverts to 0
   for(const sKey of Object.keys(state.goldPick)){
     const m = state.goldPick[sKey];
     for(const tKey of Object.keys(m)){
@@ -187,7 +191,7 @@ function moveDocToProject(docIdx, targetProjectIdx){
   // Snapshot source project (now without the moved doc)
   _saveActiveProject();
 
-  // Add to target project
+  // Add to target project (skip duplicates by key)
   const target = state.projects[targetProjectIdx];
   if(!target.docs.some(d => d.key === doc.key)){
     target.docs.push(doc);
@@ -213,7 +217,7 @@ function renderProjectTabs(){
     const tab = document.createElement("div");
     tab.className = "projectTab" + (idx === state.activeProjectIdx ? " projectTabActive" : "");
 
-    // ◀ move left
+    // Move left button (hidden when there is only one project)
     if(n > 1){
       const leftBtn = document.createElement("button");
       leftBtn.className = "projectTabMoveBtn";
@@ -231,7 +235,7 @@ function renderProjectTabs(){
     nameSpan.title = t('project.renameHint');
     tab.appendChild(nameSpan);
 
-    // ✎ rename button
+    // Rename button
     const renameBtn = document.createElement("button");
     renameBtn.className = "projectTabRenameBtn";
     renameBtn.textContent = "✎";
@@ -243,7 +247,7 @@ function renderProjectTabs(){
     });
     tab.appendChild(renameBtn);
 
-    // ▶ move right
+    // Move right button (hidden when there is only one project)
     if(n > 1){
       const rightBtn = document.createElement("button");
       rightBtn.className = "projectTabMoveBtn";
@@ -254,7 +258,7 @@ function renderProjectTabs(){
       tab.appendChild(rightBtn);
     }
 
-    // × close button (only if more than 1 project)
+    // Close button (only shown when more than one project exists)
     if(n > 1){
       const closeBtn = document.createElement("button");
       closeBtn.className = "projectTabClose";

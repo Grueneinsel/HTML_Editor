@@ -1,6 +1,8 @@
-// ---------- Keyboard navigation ----------
-let keyFocusTokId = null;
+// Keyboard navigation and shortcut handler for sentence/token navigation and editing.
 
+let keyFocusTokId = null; // token ID currently highlighted by keyboard focus (null = none)
+
+// Highlight the given token row in the table and sync the sentence-text token highlight.
 function setKeyFocus(tokId){
   cmpTable.querySelectorAll("tr.keyFocus").forEach(r => r.classList.remove("keyFocus"));
   keyFocusTokId = tokId;
@@ -15,19 +17,20 @@ function setKeyFocus(tokId){
   sentText?.querySelector(`.sentToken[data-id="${tokId}"]`)?.classList.add("sentTokenActive");
 }
 
+// Return all token rows in document order.
 function getTableRows(){
   return Array.from(cmpTable.querySelectorAll("tr[data-id]"));
 }
 
 document.addEventListener("keydown", (e) => {
   const active = document.activeElement;
-  // posInlineSelect/posInlineInput are inline table editors — don't block shortcuts
+  // Inline table editors must not block global shortcuts — treat them as non-input
   const isInlinePos = active?.classList.contains("posInlineSelect") ||
                       active?.classList.contains("posInlineInput");
   const inInput = !isInlinePos && active &&
     (active.tagName === "INPUT" || active.tagName === "SELECT" || active.tagName === "TEXTAREA");
 
-  // Ctrl+Z → Undo, Ctrl+Y / Ctrl+Shift+Z → Redo (immer, auch in Inputs)
+  // Ctrl+Z → Undo, Ctrl+Y / Ctrl+Shift+Z → Redo (always, even inside inputs)
   if((e.ctrlKey || e.metaKey) && e.key === "z"){
     e.preventDefault();
     undo();
@@ -39,7 +42,7 @@ document.addEventListener("keydown", (e) => {
     return;
   }
 
-  // ? → Help modal (immer, auch in Inputs)
+  // ? → toggle help modal (always, even inside inputs)
   if(e.key === "?" && !inInput){
     e.preventDefault();
     const modal = document.getElementById("helpModal");
@@ -52,7 +55,7 @@ document.addEventListener("keydown", (e) => {
 
   switch(e.key){
 
-    // ── Satz-Navigation ──────────────────────────────────────────────────────
+    // ── Sentence navigation ───────────────────────────────────────────────────
     case "ArrowLeft":
       e.preventDefault();
       if(e.ctrlKey || e.metaKey){
@@ -77,7 +80,7 @@ document.addEventListener("keydown", (e) => {
       renderSentence();
       break;
 
-    // ── Zeilen-Navigation ────────────────────────────────────────────────────
+    // ── Row navigation ────────────────────────────────────────────────────────
     case "ArrowUp": {
       const rows = getTableRows();
       if(!rows.length) return;
@@ -98,7 +101,7 @@ document.addEventListener("keydown", (e) => {
       break;
     }
 
-    // ── Gold-Popup für fokussierte Zeile öffnen ───────────────────────────────
+    // ── Open gold popup for the focused row ───────────────────────────────────
     case "Enter": {
       if(keyFocusTokId === null) break;
       e.preventDefault();
@@ -108,13 +111,14 @@ document.addEventListener("keydown", (e) => {
       break;
     }
 
-    // ── Gold bestätigen ──────────────────────────────────────────────────────
+    // ── Confirm / unconfirm sentence ──────────────────────────────────────────
     case " ":
       e.preventDefault();
       toggleConfirm();
       break;
 
-    // ── Nächster / vorheriger Satz mit Diffs ─────────────────────────────────
+    // ── Jump to next / previous sentence with diffs ───────────────────────────
+    // n = forward, N = backward; wraps around.
     case "n":
     case "N": {
       if(state.maxSents === 0) break;
@@ -124,6 +128,7 @@ document.addEventListener("keydown", (e) => {
       const start   = state.currentSent;
       let found = false;
       for(let i = 1; i < state.maxSents; i++){
+        // Modular arithmetic to wrap around in both directions
         const idx = ((start + step * i) % state.maxSents + state.maxSents) % state.maxSents;
         const stats = _sentStats(idx);
         if(stats.diffCount > 0){
@@ -134,11 +139,11 @@ document.addEventListener("keydown", (e) => {
           break;
         }
       }
-      if(!found) break; // kein Satz mit Diffs gefunden
+      if(!found) break; // no sentence with diffs found
       break;
     }
 
-    // ── Projekt wechseln ─────────────────────────────────────────────────────
+    // ── Switch project ────────────────────────────────────────────────────────
     case "[":
       e.preventDefault();
       if(state.activeProjectIdx > 0) switchProject(state.activeProjectIdx - 1);
@@ -150,7 +155,8 @@ document.addEventListener("keydown", (e) => {
         switchProject(state.activeProjectIdx + 1);
       break;
 
-    // ── Nächster / vorheriger Satz mit Flags ─────────────────────────────────
+    // ── Jump to next / previous sentence with flags ───────────────────────────
+    // f = forward, F = backward; wraps around.
     case "f":
     case "F": {
       if(state.maxSents === 0) break;
@@ -170,13 +176,13 @@ document.addEventListener("keydown", (e) => {
       break;
     }
 
-    // ── Clipboard copy ───────────────────────────────────────────────────────
+    // ── Copy current sentence as CoNLL-U to clipboard ─────────────────────────
     case "c":
       e.preventDefault();
       copySentenceConllu();
       break;
 
-    // ── Export ───────────────────────────────────────────────────────────────
+    // ── Export shortcuts ──────────────────────────────────────────────────────
     case "e":
       e.preventDefault();
       exportGoldConllu();
@@ -187,14 +193,14 @@ document.addEventListener("keydown", (e) => {
       exportTreesTxt();
       break;
 
-    // ── Custom löschen ───────────────────────────────────────────────────────
+    // ── Clear custom annotations for current sentence ─────────────────────────
     case "Delete":
     case "Backspace":
       e.preventDefault();
       clearCustomForSentence();
       break;
 
-    // ── Escape: Fokus + Popup schließen ──────────────────────────────────────
+    // ── Clear keyboard focus and close popup ──────────────────────────────────
     case "Escape":
       setKeyFocus(null);
       break;
@@ -203,7 +209,7 @@ document.addEventListener("keydown", (e) => {
       const num = parseInt(e.key, 10);
       if(isNaN(num) || num < 1 || num > 9) break;
 
-      // Ctrl+1–9: Custom aus Datei N laden
+      // Ctrl+1–9: initialise custom annotations from document N
       if(e.ctrlKey || e.metaKey){
         if(num > state.docs.length) break;
         e.preventDefault();
@@ -211,10 +217,11 @@ document.addEventListener("keydown", (e) => {
         break;
       }
 
-      // 1–9: Doc-Spalte als Gold wählen für fokussierte Zeile
+      // 1–9: choose document N as the gold source for the focused token
       if(keyFocusTokId === null) break;
       const docIdx = num - 1;
       if(docIdx >= state.docs.length) break;
+      // Skip if a custom override already exists for this token
       if(getCustomEntry(state.currentSent, keyFocusTokId)) break;
       e.preventDefault();
       setDocChoice(state.currentSent, keyFocusTokId, docIdx);

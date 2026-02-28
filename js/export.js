@@ -1,4 +1,6 @@
-// ---------- Export buttons ----------
+// Export (CoNLL-U, tree text, session JSON), session import, and localStorage autosave.
+
+// ── Export button references ───────────────────────────────────────────────────
 const exportConlluBtn    = document.getElementById("exportConlluBtn");
 const exportAllConlluBtn = document.getElementById("exportAllConlluBtn");
 const exportTreeBtn      = document.getElementById("exportTreeBtn");
@@ -19,6 +21,7 @@ importSessionInput.addEventListener("change", async () => {
   await _dispatchFiles(files);
 });
 
+// Enable/disable export buttons depending on whether documents are loaded.
 function updateExportButtons(){
   const ok   = state.docs.length >= 1;
   const tree = ok && state.maxSents > 0;
@@ -28,7 +31,9 @@ function updateExportButtons(){
   exportAllTreeBtn.disabled   = !tree;
 }
 
-// ---------- Download helper ----------
+// ── Download helper ────────────────────────────────────────────────────────────
+
+// Trigger a browser file download for arbitrary text content.
 function downloadText(content, filename){
   const blob = new Blob([content], { type:"text/plain;charset=utf-8" });
   const url  = URL.createObjectURL(blob);
@@ -39,7 +44,10 @@ function downloadText(content, filename){
   URL.revokeObjectURL(url);
 }
 
-// ---------- Gold CoNLL-U Kernlogik (nutzt state.* direkt) ----------
+// ── Gold CoNLL-U core logic ────────────────────────────────────────────────────
+
+// Build the full CoNLL-U output string for the active project using state.* directly.
+// Metadata lines (comments, MWT, empty nodes) are copied verbatim from the first source doc.
 function _buildConlluText(){
   const out = [];
   for(let sentIdx = 0; sentIdx < state.maxSents; sentIdx++){
@@ -91,10 +99,10 @@ function _buildConlluText(){
       const goldTok = goldMap.get(id);
       const head    = goldTok?.head   ?? null;
       const deprel  = goldTok?.deprel ?? "_";
-      // Map LABEL_COLS[0]→UPOS, LABEL_COLS[1]→XPOS; fall back to direct .upos/.xpos
+      // Map LABEL_COLS[0] → UPOS column, LABEL_COLS[1] → XPOS column; fall back to direct fields
       const upos = (LABEL_COLS[0] ? goldTok?.[LABEL_COLS[0].key] : goldTok?.upos) ?? "_";
       const xpos = (LABEL_COLS[1] ? goldTok?.[LABEL_COLS[1].key] : goldTok?.xpos) ?? "_";
-      // Extra label cols (index 2+) → append to MISC as key=value
+      // Extra label cols (index 2+) are serialised into MISC as key=value pairs
       let misc = base.misc || "_";
       for(let ci = 2; ci < LABEL_COLS.length; ci++){
         const col = LABEL_COLS[ci];
@@ -126,7 +134,8 @@ function _buildConlluText(){
   return out.join("\n");
 }
 
-// ---------- Gold CoNLL-U — aktives Projekt ----------
+// ── Gold CoNLL-U — active project ─────────────────────────────────────────────
+
 function exportGoldConllu(){
   if(state.docs.length < 1) return;
   const name = state.projects.length > 1
@@ -135,12 +144,14 @@ function exportGoldConllu(){
   downloadText(_buildConlluText(), name);
 }
 
-// ---------- Gold CoNLL-U — alle Projekte (je eine Datei) ----------
+// ── Gold CoNLL-U — all projects (one file each) ───────────────────────────────
+
 function exportAllProjectsConllu(){
   if(!state.projects.length) return;
-  _saveActiveProject(); // aktiven Stand einfrieren
+  // Freeze active project state before iterating
+  _saveActiveProject();
 
-  // Originale state-Felder sichern
+  // Save original live state fields so they can be restored after the loop
   const origDocs     = state.docs;
   const origMaxSents = state.maxSents;
   const origCustom   = state.custom;
@@ -149,7 +160,7 @@ function exportAllProjectsConllu(){
 
   for(const p of state.projects){
     if(!p.docs.length) continue;
-    // Temporären State einspielen (inkl. Tagset)
+    // Temporarily swap in this project's state (including its tagset)
     state.docs     = p.docs;
     state.maxSents = p.maxSents;
     state.custom   = p.custom;
@@ -160,7 +171,7 @@ function exportAllProjectsConllu(){
     downloadText(_buildConlluText(), `gold_${p.name}.conllu`);
   }
 
-  // State wiederherstellen (kein Re-Render nötig)
+  // Restore original live state (no re-render needed)
   state.docs     = origDocs;
   state.maxSents = origMaxSents;
   state.custom   = origCustom;
@@ -169,7 +180,8 @@ function exportAllProjectsConllu(){
   buildDeprelOptionsCache();
 }
 
-// ---------- Session Export ----------
+// ── Session Export ─────────────────────────────────────────────────────────────
+
 function exportSession(){
   const session = _buildSessionObject();
   const ts = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
@@ -178,7 +190,8 @@ function exportSession(){
   _showSessionMeta(t('session.exported', { n: totalDocs, u: session.projects[session.activeProjectIdx].undo?.length || 0 }));
 }
 
-// ---------- Session Import ----------
+// ── Session Import ─────────────────────────────────────────────────────────────
+
 function importSession(jsonText){
   let data;
   try { data = JSON.parse(jsonText); }
@@ -262,15 +275,19 @@ function importSession(jsonText){
   _showSessionMeta(t('session.loaded', { n: docs.length, s: maxSents, u: data.undo?.length || 0 }));
 }
 
+// Show a transient message in the session meta area, auto-clearing after 4 seconds.
 function _showSessionMeta(msg){
   if(!sessionMeta) return;
   sessionMeta.textContent = msg;
   setTimeout(() => { sessionMeta.textContent = ""; }, 4000);
 }
 
-// ---------- Baumansicht Kernlogik (nutzt state.* direkt) ----------
+// ── Tree text export — core logic ──────────────────────────────────────────────
+
+// Build a plain-text block of all trees for the active project using state.* directly.
 function _buildTreeText(){
   const parts = [];
+  // Helper to strip the first (sentence-text header) line from a tree string.
   const stripHeader = txt => txt.split("\n").slice(1).join("\n");
 
   for(let sentIdx = 0; sentIdx < state.maxSents; sentIdx++){
@@ -306,20 +323,23 @@ function _buildTreeText(){
   return parts.join("\n");
 }
 
-// ---------- Baumansicht — aktives Projekt ----------
+// ── Tree text export — active project ─────────────────────────────────────────
+
 function exportTreesTxt(){
   if(state.docs.length < 1) return;
   const name = state.projects.length > 1
-    ? `baeume_${state.projects[state.activeProjectIdx].name}.txt`
-    : "alle_baeume.txt";
+    ? `trees_${state.projects[state.activeProjectIdx].name}.txt`
+    : "all_trees.txt";
   downloadText(_buildTreeText(), name);
 }
 
-// ---------- Baumansicht — alle Projekte (je eine Datei) ----------
+// ── Tree text export — all projects (one file each) ───────────────────────────
+
 function exportAllProjectsTrees(){
   if(!state.projects.length) return;
   _saveActiveProject();
 
+  // Save original live state so it can be restored after the loop
   const origDocs     = state.docs;
   const origMaxSents = state.maxSents;
   const origCustom   = state.custom;
@@ -335,9 +355,10 @@ function exportAllProjectsTrees(){
     LABELS = p.labels || DEFAULT_LABELS || origLABELS;
     buildDeprelOptionsCache();
 
-    downloadText(_buildTreeText(), `baeume_${p.name}.txt`);
+    downloadText(_buildTreeText(), `trees_${p.name}.txt`);
   }
 
+  // Restore live state
   state.docs     = origDocs;
   state.maxSents = origMaxSents;
   state.custom   = origCustom;
@@ -346,9 +367,10 @@ function exportAllProjectsTrees(){
   buildDeprelOptionsCache();
 }
 
-// ---------- LocalStorage Autosave ----------
+// ── LocalStorage Autosave ──────────────────────────────────────────────────────
 const AUTOSAVE_KEY = "conllu_autosave";
 
+// Build the full session object (v2 format) for export or autosave.
 function _buildSessionObject(){
   // Snapshot active project before serialising
   _saveActiveProject();
@@ -373,6 +395,8 @@ function _buildSessionObject(){
   };
 }
 
+// Persist the current session to localStorage if any documents are loaded.
+// Silently swallows storage-full or unavailable errors.
 function _autoSave(){
   if(!state.projects.some(p => p.docs.length > 0) && state.docs.length === 0) return;
   try {
@@ -380,8 +404,11 @@ function _autoSave(){
   } catch { /* storage full or unavailable */ }
 }
 
+// Run autosave every 30 seconds.
 setInterval(_autoSave, 30_000);
 
+// On startup, check for a v1 autosave and show a restore banner if found.
+// v2 sessions are imported normally via the file dispatcher.
 function _tryAutoSaveRestore(){
   let raw;
   try { raw = localStorage.getItem(AUTOSAVE_KEY); } catch { return; }
@@ -389,6 +416,7 @@ function _tryAutoSaveRestore(){
 
   let data;
   try { data = JSON.parse(raw); } catch { return; }
+  // Only offer restore for v1 snapshots; v2 format is handled by normal import
   if(!data || data.version !== 1 || !Array.isArray(data.docs) || !data.docs.length) return;
 
   // Format the saved date for display

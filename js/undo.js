@@ -1,8 +1,11 @@
-// ---------- Undo / Redo ----------
+// Undo/redo stack management and session serialisation for annotation history.
+
+// ── Undo / Redo ───────────────────────────────────────────────────────────────
 const _undoStack = [];
 const _redoStack = [];
-const UNDO_MAX   = 80;
+const UNDO_MAX   = 80; // maximum number of snapshots kept on either stack
 
+// Capture a lightweight snapshot of the mutable annotation state.
 function _snapshot(){
   return {
     custom:   JSON.parse(JSON.stringify(state.custom)),
@@ -11,12 +14,15 @@ function _snapshot(){
   };
 }
 
+// Overwrite live state from a previously captured snapshot.
 function _restore(snap){
   state.custom    = snap.custom;
   state.goldPick  = snap.goldPick;
   state.confirmed = snap.confirmed;
 }
 
+// Push the current state onto the undo stack before a destructive edit.
+// Clears the redo stack so that branching histories don't accumulate.
 function pushUndo(){
   _undoStack.push(_snapshot());
   if(_undoStack.length > UNDO_MAX) _undoStack.shift();
@@ -40,6 +46,7 @@ function redo(){
   _syncUndoBtns();
 }
 
+// Update the disabled state and tooltip of the Undo/Redo toolbar buttons.
 function _syncUndoBtns(){
   const u = document.getElementById("undoBtn");
   const r = document.getElementById("redoBtn");
@@ -49,7 +56,10 @@ function _syncUndoBtns(){
   if(r) r.title = t('redo.title', { n: _redoStack.length, s: tpSuffix(_redoStack.length, 'undo') });
 }
 
-// ---------- Session serialisation helpers ----------
+// ── Session serialisation helpers ─────────────────────────────────────────────
+
+// Serialise both stacks to plain JSON-safe objects for session export.
+// Sets (confirmed) are converted to arrays so they survive JSON round-trips.
 function getUndoState(){
   const ser = snap => ({
     custom:    JSON.parse(JSON.stringify(snap.custom)),
@@ -59,6 +69,7 @@ function getUndoState(){
   return { undo: _undoStack.map(ser), redo: _redoStack.map(ser) };
 }
 
+// Deserialise stacks from a previously exported session object.
 function loadUndoState({ undo = [], redo = [] }){
   const des = s => ({
     custom:    JSON.parse(JSON.stringify(s.custom   || {})),
@@ -72,7 +83,7 @@ function loadUndoState({ undo = [], redo = [] }){
   _syncUndoBtns();
 }
 
-// Buttons werden nach DOM-Bereitschaft angebunden
+// Bind undo/redo buttons once the DOM is ready.
 document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("undoBtn")?.addEventListener("click", undo);
   document.getElementById("redoBtn")?.addEventListener("click", redo);

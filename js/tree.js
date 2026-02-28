@@ -1,4 +1,8 @@
-// ---------- Tree helpers ----------
+// ASCII dependency tree rendering, tree section DOM builder, and tree preview panel.
+
+// ── Tree helpers ───────────────────────────────────────────────────────────────
+
+// Return the sentence text string from the first document that has it.
 function getSentenceTextFallback(sentIndex){
   for(const d of state.docs){
     const s = d.sentences[sentIndex];
@@ -7,6 +11,8 @@ function getSentenceTextFallback(sentIndex){
   return "";
 }
 
+// Build a Map of "dep|head" → deprel strings from a token Map.
+// Tokens with null head are excluded (no outgoing arc).
 function edgesFromMap(tokMap){
   const edges = new Map();
   for(const [id, t] of tokMap.entries()){
@@ -17,23 +23,27 @@ function edgesFromMap(tokMap){
   return edges;
 }
 
+// Render a plain (non-diff) ASCII tree for a single token map.
 function renderTreePlain(sentIndex, tokMap, sentenceText){
   const edges = edgesFromMap(tokMap);
   return _buildTree(sentIndex, tokMap, tokMap, edges, edges, sentenceText, false);
 }
 
+// Render a diff ASCII tree comparing goldMap against otherMap.
 function renderTreeDiff(sentIndex, goldMap, otherMap, sentenceText){
   const edgesG = edgesFromMap(goldMap);
   const edgesO = edgesFromMap(otherMap);
   return _buildTree(sentIndex, goldMap, otherMap, edgesG, edgesO, sentenceText, true);
 }
 
+// Core tree builder: performs a DFS over the union of edges and emits indented lines.
+// isDiff=true annotates each edge/token with emoji markers showing agreement status.
 function _buildTree(sentIndex, goldMap, otherMap, edgesG, edgesO, sentenceText, isDiff){
   const union = isDiff ? new Set([...edgesG.keys(), ...edgesO.keys()]) : new Set(edgesG.keys());
 
   const children = new Map();
-  const nodes = new Set();
-  const incoming = new Set();
+  const nodes    = new Set();
+  const incoming = new Set(); // nodes that are dependents of another node
 
   for(const k of union){
     const [depS, headS] = k.split("|");
@@ -44,13 +54,17 @@ function _buildTree(sentIndex, goldMap, otherMap, edgesG, edgesO, sentenceText, 
     nodes.add(dep);
     if(head !== 0){ nodes.add(head); incoming.add(dep); }
   }
+  // Sort children numerically for a consistent left-to-right display
   for(const [, arr] of children.entries()) arr.sort((a,b)=>a-b);
 
+  // Roots are nodes with no incoming arc (or the minimum node as fallback)
   const rootsArr = Array.from(nodes).filter(n => !incoming.has(n)).sort((a,b)=>a-b);
   const roots = rootsArr.length ? rootsArr : (nodes.size ? [Math.min(...nodes)] : []);
 
   const lines = [];
 
+  // Recursive DFS: render each child branch with proper box-drawing prefixes.
+  // path tracks visited nodes to detect and break cycles.
   function rec(head, prefix, path){
     const deps = children.get(head) || [];
     for(let i=0; i<deps.length; i++){
@@ -77,6 +91,7 @@ function _buildTree(sentIndex, goldMap, otherMap, edgesG, edgesO, sentenceText, 
       }
 
       if(path.has(dep)){
+        // Cycle detected — print marker and stop recursing into this branch
         lines.push(`${nextPrefix}🔁 (cycle)`);
         continue;
       }
@@ -97,6 +112,8 @@ function _buildTree(sentIndex, goldMap, otherMap, edgesG, edgesO, sentenceText, 
   return lines.join("\n");
 }
 
+// Format a token's display string for diff mode.
+// Shows UPOS/XPOS differences in addition to form mismatches between gold and file.
 function tokDisplayPair(goldMap, otherMap, tokId){
   const g = goldMap.get(tokId);
   const o = otherMap.get(tokId);
@@ -104,7 +121,7 @@ function tokDisplayPair(goldMap, otherMap, tokId){
     const fg = g.form ?? "—";
     const fo = o.form ?? "—";
     let display = fg === fo ? `${tokId}:${fg}` : `${tokId}:🅶${fg}|🅵${fo}`;
-    // append UPOS/XPOS diff annotation when they differ
+    // Append UPOS/XPOS diff annotation when they differ
     const uDiff = (g.upos ?? "_") !== (o.upos ?? "_");
     const xDiff = (g.xpos ?? "_") !== (o.xpos ?? "_");
     if(uDiff || xDiff){
@@ -120,6 +137,8 @@ function tokDisplayPair(goldMap, otherMap, tokId){
   return `${tokId}:❓`;
 }
 
+// Return [emoji, label] for a given edge key based on its presence in gold vs file.
+// ✅ = both agree, ⚠️ = both present but labels differ, 🅶/🅵 = only in one side.
 function edgeEmojiAndLabel(edgesG, edgesO, key){
   const inG = edgesG.has(key);
   const inO = edgesO.has(key);
@@ -133,7 +152,9 @@ function edgeEmojiAndLabel(edgesG, edgesO, key){
   return ["🅵", edgesO.get(key)];
 }
 
-// ---------- Tree UI ----------
+// ── Tree UI ────────────────────────────────────────────────────────────────────
+
+// Smoothly scroll the comparison table to a token row and briefly highlight it.
 function scrollToToken(tokId){
   const tr = cmpTable.querySelector(`tr[data-id="${tokId}"]`);
   if(tr){
@@ -143,6 +164,7 @@ function scrollToToken(tokId){
   }
 }
 
+// Collect all token IDs in the subtree rooted at rootId using an iterative DFS.
 function getSubtreeIds(rootId, tokMap){
   const children = new Map();
   for(const [id, t] of tokMap.entries()){
@@ -161,6 +183,8 @@ function getSubtreeIds(rootId, tokMap){
   return ids;
 }
 
+// Return true if the union subtree of rootId contains any token that differs
+// between goldMap and otherMap in head, deprel, upos, or xpos.
 function hasSubtreeDiff(rootId, goldMap, otherMap){
   const subIds = new Set([
     ...getSubtreeIds(rootId, goldMap),
@@ -226,6 +250,7 @@ function buildTreeSection(title, sub, text, opts = {}){
   const pre = document.createElement("pre");
   pre.className = "treePre";
 
+  // Parse the plain-text tree line by line and create interactive span elements.
   const lines = text.split("\n");
   for(const line of lines){
     const rootMatch = line.match(/^🌱\s*(\d+):/);
@@ -241,7 +266,7 @@ function buildTreeSection(title, sub, text, opts = {}){
       txt.textContent = line;
       wrapper.appendChild(txt);
 
-      // "→ Gold" subtree button
+      // "→ Gold" subtree adoption button — only shown when subtree has differences
       if(onAdoptSubtree && (!subtreeDiffCheck || subtreeDiffCheck(rootId))){
         const btn = document.createElement("button");
         btn.textContent = t('tree.toGold');
@@ -258,6 +283,7 @@ function buildTreeSection(title, sub, text, opts = {}){
       pre.appendChild(wrapper);
     } else if(tokMatch){
       const tokId = parseInt(tokMatch[1], 10);
+      // Determine color class from the diff emoji markers present in the line
       const hasOk   = line.includes("✅");
       const hasWarn = line.includes("⚠");
       const hasG    = line.includes("🅶");
@@ -279,7 +305,7 @@ function buildTreeSection(title, sub, text, opts = {}){
       txt.textContent = line + "\n";
       wrapper.appendChild(txt);
 
-      // Single-token "→" adoption button (only on diff lines, only for file diff trees)
+      // Single-token adoption button — only on diff lines, only for file diff trees
       if(hasDiff && onAdoptToken){
         const btn = document.createElement("button");
         btn.textContent = t('tree.adoptToken');
@@ -306,6 +332,8 @@ function buildTreeSection(title, sub, text, opts = {}){
   return section;
 }
 
+// Re-render the tree preview panel for the current sentence.
+// Shows a GOLD tree followed by one diff tree per loaded document.
 function renderPreview(){
   const sentIndex = state.currentSent;
   const { docMaps, idList } = buildDocMapsAndIds();
@@ -341,7 +369,7 @@ function renderPreview(){
     );
   }
 
-  // goldEdges cached for file-arc comparisons
+  // Cache gold edges for file-arc comparisons below
   const goldEdges = edgesFromMap(goldMap);
 
   const goldSection = buildTreeSection(`S${sentIndex + 1}: ⭐ GOLD`, null, renderTreePlain(sentIndex, goldMap, sentenceText), {
@@ -382,7 +410,7 @@ function renderPreview(){
     const diff     = renderTreeDiff(sentIndex, goldMap, otherMap, sentenceText);
     const docIdx   = i;
 
-    // File arc colors: compare each file arc to gold
+    // File arc colors: green when matching gold, orange when head matches but deprel differs, blue when gold-only
     const fileArcColors = new Map();
     for(const [id, tok] of otherMap.entries()){
       if(tok.head == null) continue;
@@ -399,6 +427,7 @@ function renderPreview(){
       arcEdgeColors: fileArcColors,
       onAdoptSubtree: (rootId) => {
         pushUndo();
+        // Adopt the entire subtree from this file: clear custom overrides and point picks at docIdx
         const subIds = new Set([
           ...getSubtreeIds(rootId, goldMap),
           ...getSubtreeIds(rootId, otherMap),
@@ -419,6 +448,7 @@ function renderPreview(){
       subtreeDiffCheck: (rootId) => hasSubtreeDiff(rootId, goldMap, otherMap),
       onAdoptToken: (tokId) => {
         pushUndo();
+        // Adopt a single token from this file: clear custom overrides and point pick at docIdx
         const e = state.custom[sentIndex]?.[tokId];
         if(e){
           e.head   = null;

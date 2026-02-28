@@ -1,4 +1,8 @@
-// ---------- CoNLL-U Parser ----------
+// CoNLL-U file parser, file-key generation, and file management (load, remove, reorder).
+
+// ── CoNLL-U Parser ────────────────────────────────────────────────────────────
+
+// Read a File object as UTF-8 text using the FileReader API.
 function readFileAsText(file){
   return new Promise((resolve, reject) => {
     const fr = new FileReader();
@@ -8,6 +12,8 @@ function readFileAsText(file){
   });
 }
 
+// Parse a CoNLL-U text string into a structured {sentences} object.
+// Handles multi-word tokens (MWT), empty nodes, and sentence-level comments.
 function parseConllu(text){
   const lines = text.replace(/\r\n/g, "\n").split("\n");
   const sentences = [];
@@ -16,6 +22,7 @@ function parseConllu(text){
   let comments = [];  // all # lines preserved verbatim
   let extras   = [];  // MWT and empty-node lines: {type:"mwt"|"empty", insertBefore, raw}
 
+  // Flush the current token buffer into a new sentence entry.
   const push = () => {
     if(tokens.length === 0 && comments.length === 0) return;
     const fallbackText = tokens.map(t => t.form).join(" ");
@@ -31,6 +38,7 @@ function parseConllu(text){
     if(line.trim() === ""){ push(); continue; }
     if(line.startsWith("#")){
       comments.push(line);
+      // Extract the sentence text from the "# text = …" metadata line.
       const m = line.match(/^#\s*text\s*=\s*(.*)$/i);
       if(m) textLine = m[1];
       continue;
@@ -71,11 +79,15 @@ function parseConllu(text){
   return { sentences };
 }
 
+// Produce a stable identity key for a File object based on name, size, and last-modified time.
 function fileKey(f){
   return `${f.name}::${f.size}::${f.lastModified}`;
 }
 
-// ---------- File management ----------
+// ── File management ───────────────────────────────────────────────────────────
+
+// Parse an array of File objects and delegate them to autoAssignToProjects().
+// Files already present in the current project (matched by key) are skipped.
 async function processFiles(files){
   const parsed = [];
   for(const f of files){
@@ -90,6 +102,7 @@ async function processFiles(files){
   autoAssignToProjects(parsed);
 }
 
+// Handler for the file <input> change event.
 async function onFilesChosen(){
   const files = Array.from(fileInput.files || []);
   if(files.length === 0) return;
@@ -97,9 +110,12 @@ async function onFilesChosen(){
   await _dispatchFiles(files);
 }
 
+// Remove a document by index from the current project, then remap all
+// dependent index references (hiddenCols, goldPick) accordingly.
 function removeDoc(index){
   state.docs.splice(index, 1);
   state.hiddenCols.delete(index);
+  // Shift indices above the removed doc down by 1
   const newHidden = new Set();
   for(const v of state.hiddenCols){
     if(v > index) newHidden.add(v - 1);
@@ -107,6 +123,7 @@ function removeDoc(index){
   }
   state.hiddenCols = newHidden;
 
+  // Remap goldPick: picks pointing at the removed doc default to 0
   for(const sKey of Object.keys(state.goldPick)){
     const m = state.goldPick[sKey];
     for(const tKey of Object.keys(m)){
@@ -123,6 +140,7 @@ function removeDoc(index){
   renderSentence();
 }
 
+// Swap the positions of two documents and remap hiddenCols / goldPick accordingly.
 function moveDoc(idx, dir){
   const other = idx + dir;
   if(other < 0 || other >= state.docs.length) return;
@@ -130,7 +148,7 @@ function moveDoc(idx, dir){
   // Swap docs
   [state.docs[idx], state.docs[other]] = [state.docs[other], state.docs[idx]];
 
-  // Remap hiddenCols
+  // Remap hiddenCols: swap entries for the two affected indices
   const newHidden = new Set();
   for(const v of state.hiddenCols){
     if(v === idx)   newHidden.add(other);
@@ -139,7 +157,7 @@ function moveDoc(idx, dir){
   }
   state.hiddenCols = newHidden;
 
-  // Remap goldPick: swap values idx <-> other
+  // Remap goldPick: swap values idx <-> other so picks follow the moved docs
   for(const sKey of Object.keys(state.goldPick)){
     const m = state.goldPick[sKey];
     for(const tKey of Object.keys(m)){
@@ -197,6 +215,7 @@ function resetAll(){
   renderSentence();
 }
 
+// Recompute state.maxSents as the length of the longest loaded document.
 function recomputeMaxSents(){
   state.maxSents = Math.max(0, ...state.docs.map(d => d.sentences.length), 0);
 }

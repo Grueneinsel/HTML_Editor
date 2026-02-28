@@ -1,4 +1,6 @@
-// ---------- DOM ----------
+// Application entry point: DOM references, event wiring, UI rendering, and initialisation.
+
+// ── DOM references ─────────────────────────────────────────────────────────────
 const fileInput = document.getElementById("fileInput");
 const resetBtn  = document.getElementById("resetBtn");
 const fileList  = document.getElementById("fileList");
@@ -31,12 +33,12 @@ const tagsetInput       = document.getElementById("tagsetInput");
 const tagsetDownloadBtn = document.getElementById("tagsetDownloadBtn");
 const tagsetMeta        = document.getElementById("tagsetMeta");
 
-// ---------- Events ----------
+// ── Events ─────────────────────────────────────────────────────────────────────
 fileInput.addEventListener("change", onFilesChosen);
 resetBtn.addEventListener("click", resetProject);
 if(globalResetBtn) globalResetBtn.addEventListener("click", resetAll);
 
-// ── Smart file dispatch (shared by all upload paths + drag & drop) ────────────
+// ── Smart file dispatch (shared by all upload paths and drag & drop) ───────────
 
 /** Returns true if parsed JSON looks like a saved session. */
 function _isSessionJson(data){
@@ -53,10 +55,11 @@ function applyTagsetJson(data){
   LABELS = data;
   buildDeprelOptionsCache();
   if(typeof _resetPopup === "function") _resetPopup();
-  // Persist tagset in the active project (not globally)
+  // Persist tagset in the active project snapshot (not globally)
   const p = state.projects[state.activeProjectIdx];
   if(p) p.labels = JSON.parse(JSON.stringify(LABELS));
   renderSentence();
+  // Show a summary of loaded label counts in the tagset meta area
   const deprelCount = Object.keys(LABELS)
     .filter(k => !k.startsWith("__"))
     .reduce((s, k) => s + (LABELS[k]?.length || 0), 0);
@@ -94,7 +97,7 @@ async function _dispatchFiles(files){
   if(conlluFiles.length > 0) await processFiles(conlluFiles);
 }
 
-// ── Tagset upload ─────────────────────────────────────────────────────────────
+// ── Tagset upload ──────────────────────────────────────────────────────────────
 if(tagsetInput){
   tagsetInput.addEventListener("change", async (e) => {
     const files = Array.from(e.target.files || []);
@@ -104,7 +107,7 @@ if(tagsetInput){
   });
 }
 
-// ── Tagset download ───────────────────────────────────────────────────────────
+// ── Tagset download ────────────────────────────────────────────────────────────
 if(tagsetDownloadBtn){
   tagsetDownloadBtn.addEventListener("click", () => {
     const json = JSON.stringify(LABELS, null, 2);
@@ -117,6 +120,7 @@ if(tagsetDownloadBtn){
   });
 }
 
+// Persist the note for the current sentence as the user types.
 if(sentNote){
   sentNote.addEventListener("input", () => {
     const val = sentNote.value;
@@ -142,7 +146,7 @@ customClearBtn.addEventListener("click", clearCustomForSentence);
 confirmBtn.addEventListener("click", toggleConfirm);
 if(copyConlluBtn) copyConlluBtn.addEventListener("click", copySentenceConllu);
 
-// Klick auf Token im Satztext → Tabellenzeile fokussieren + scrollen
+// Click on a token span in the sentence text → focus and scroll to its table row.
 sentText.addEventListener("click", (e) => {
   const span = e.target.closest(".sentToken");
   if(!span) return;
@@ -151,7 +155,7 @@ sentText.addEventListener("click", (e) => {
   cmpTable.closest(".card")?.scrollIntoView({ block: "nearest", behavior: "smooth" });
 });
 
-// Klick auf Datei-Zelle → Gold wählen
+// Click on a file cell in the comparison table → choose that doc as gold for the token.
 cmpTable.addEventListener("click", (e) => {
   const td = e.target.closest?.("td[data-col^='doc']");
   if(!td) return;
@@ -159,13 +163,17 @@ cmpTable.addEventListener("click", (e) => {
   if(!tr) return;
   const tokId = parseInt(tr.dataset.id, 10);
   const docIdx = parseInt(td.dataset.docIdx, 10);
+  // Ignore clicks when a custom override is active — the cell is visually disabled
   if(getCustomEntry(state.currentSent, tokId)) return;
   pushUndo();
   setDocChoice(state.currentSent, tokId, docIdx);
   renderSentence();
 });
 
-// ---------- Text compatibility check ----------
+// ── Text compatibility check ───────────────────────────────────────────────────
+
+// Return the set of document indices whose token forms differ from the first document.
+// Used to flag mismatched files in the file list.
 function getWarnedDocIndices(){
   const warned = new Set();
   if(state.docs.length < 2) return warned;
@@ -182,7 +190,9 @@ function getWarnedDocIndices(){
   return warned;
 }
 
-// ---------- UI: Files ----------
+// ── UI: Files ──────────────────────────────────────────────────────────────────
+
+// Re-render the file list panel for the current project.
 function renderFiles(){
   fileList.innerHTML = "";
   fileMeta.textContent = state.docs.length
@@ -202,7 +212,7 @@ function renderFiles(){
     const div = document.createElement("div");
     div.className = "fileItem";
 
-    // Info column
+    // Left column: file name and sentence count
     const left = document.createElement("div");
     left.className = "left";
     const nameDiv = document.createElement("div");
@@ -222,18 +232,18 @@ function renderFiles(){
     left.appendChild(metaDiv);
     div.appendChild(left);
 
-    // Actions column
+    // Right column: action buttons
     const actions = document.createElement("div");
     actions.className = "fileActions";
 
-    // Download button
+    // Download source file button
     const dlBtn = document.createElement("button");
     dlBtn.title = t('files.download');
     dlBtn.textContent = "⬇ Download";
     dlBtn.addEventListener("click", () => downloadText(d.content || "", d.name));
     actions.appendChild(dlBtn);
 
-    // Move-to-project select (always shown so new project can be created)
+    // Move-to-project select (always shown so a new project can be created inline)
     {
       const sel = document.createElement("select");
       sel.className = "moveToProjectSel";
@@ -245,7 +255,7 @@ function renderFiles(){
         if(pi === state.activeProjectIdx) opt.selected = true;
         sel.appendChild(opt);
       });
-      // "New project…" sentinel option
+      // Sentinel option that triggers new-project creation
       const newOpt = document.createElement("option");
       newOpt.value = "__new__";
       newOpt.textContent = t('files.moveToNewProject');
@@ -260,7 +270,7 @@ function renderFiles(){
           const newIdx = state.projects.length;
           _saveActiveProject();
           state.projects.push(_emptyProject(name));
-          // Now move the doc; moveDocToProject handles all re-renders
+          // moveDocToProject handles all re-renders
           moveDocToProject(idx, newIdx);
         } else {
           moveDocToProject(idx, parseInt(sel.value, 10));
@@ -269,7 +279,7 @@ function renderFiles(){
       actions.appendChild(sel);
     }
 
-    // Move up / down
+    // Move up button
     const upBtn = document.createElement("button");
     upBtn.className = "moveUpBtn";
     upBtn.title = t('files.moveUp');
@@ -278,6 +288,7 @@ function renderFiles(){
     upBtn.addEventListener("click", () => moveDoc(idx, -1));
     actions.appendChild(upBtn);
 
+    // Move down button
     const downBtn = document.createElement("button");
     downBtn.className = "moveDownBtn";
     downBtn.title = t('files.moveDown');
@@ -286,7 +297,7 @@ function renderFiles(){
     downBtn.addEventListener("click", () => moveDoc(idx, +1));
     actions.appendChild(downBtn);
 
-    // Delete
+    // Delete button
     const delBtn = document.createElement("button");
     delBtn.className = "danger";
     delBtn.textContent = t('files.delete');
@@ -302,7 +313,10 @@ function renderFiles(){
     : "";
 }
 
-// ---------- Drag & Drop (ganze Seite) ----------
+// ── Drag & Drop (entire page) ──────────────────────────────────────────────────
+
+// Counter tracks nested dragenter/dragleave events so the overlay is only
+// hidden when the drag actually leaves the page (not when moving over child elements).
 let dragCounter = 0;
 
 document.addEventListener("dragenter", (e) => {
@@ -325,7 +339,9 @@ document.addEventListener("drop", (e) => {
   _dispatchFiles(allFiles);
 });
 
-// ---------- UI: Sentence selector ----------
+// ── UI: Sentence selector ──────────────────────────────────────────────────────
+
+// Rebuild the sentence navigation controls and "init custom from doc" buttons.
 function renderSentSelect(){
   const ok = state.docs.length >= 2 && state.maxSents > 0;
   sentSelect.disabled = !ok;
@@ -349,7 +365,7 @@ function renderSentSelect(){
   updateExportButtons();
 }
 
-// Berechnet Stats für einen Satz (wiederverwendbar)
+// Compute diff/token statistics for a sentence index (reusable across renders).
 function _sentStats(i){
   const docMaps = state.docs.map(d => {
     const s = d.sentences[i];
@@ -366,6 +382,7 @@ function _sentStats(i){
   return computeStats(i, idList, docMaps, goldMap);
 }
 
+// Toggle the confirmed state for the current sentence.
 function toggleConfirm(){
   if(state.docs.length < 2) return;
   pushUndo();
@@ -376,6 +393,7 @@ function toggleConfirm(){
   renderSentSelectOptions();
 }
 
+// Update the confirm button's label and active CSS class to reflect current state.
 function updateConfirmBtn(){
   if(!confirmBtn) return;
   const isConfirmed = state.confirmed.has(state.currentSent);
@@ -383,6 +401,7 @@ function updateConfirmBtn(){
   confirmBtn.classList.toggle("confirmBtnActive", isConfirmed);
 }
 
+// Rebuild all <option> elements in the sentence <select> dropdown with diff/flag styling.
 function renderSentSelectOptions(){
   if(state.docs.length < 2 || state.maxSents === 0) return;
   sentSelect.innerHTML = "";
@@ -398,6 +417,7 @@ function renderSentSelectOptions(){
       : ` ${t('sent.optOk')}`;
     const flagPart = hasFlags ? t('flag.sentOpt') : '';
     opt.textContent = `${t('sent.optLabel', { n: i+1 })}${confirmed ? ' ★' : ''}${flagPart}  (${stats.totalTokens} Tok${diffPart})`;
+    // Color-code options: confirmed (gold), flagged (orange), diff (red), ok (green)
     if(confirmed && hasFlags){
       opt.style.background = '#1a0c00';
       opt.style.color = '#ffcc44';   // gold + slight warm tint to show both
@@ -415,7 +435,7 @@ function renderSentSelectOptions(){
   }
   sentSelect.value = String(state.currentSent);
 
-  // Rahmenfarbe des Selects nach aktuellem Satz
+  // Update the select border color to reflect the current sentence's status
   const curConfirmed = state.confirmed.has(state.currentSent);
   const curFlagged   = state.flags[state.currentSent]?.size > 0;
   const curStats = _sentStats(state.currentSent);
@@ -429,6 +449,7 @@ function renderSentSelectOptions(){
   _updateProgressMeta();
 }
 
+// Update the progress counter showing how many sentences are confirmed.
 function _updateProgressMeta(){
   if(!progressMeta) return;
   if(state.docs.length < 2 || state.maxSents === 0){ progressMeta.textContent = ""; return; }
@@ -438,6 +459,7 @@ function _updateProgressMeta(){
   });
 }
 
+// Show or hide the sentence note textarea and load the note for the current sentence.
 function _updateSentNote(){
   if(!sentNote || !sentNoteRow) return;
   const ok = state.docs.length >= 2 && state.maxSents > 0;
@@ -448,6 +470,7 @@ function _updateSentNote(){
   }
 }
 
+// Re-render the minimap of sentence dots below the sentence selector.
 function renderSentMap(){
   if(!sentMap) return;
   if(state.docs.length < 2 || state.maxSents === 0){ sentMap.innerHTML = ""; return; }
@@ -469,7 +492,7 @@ function renderSentMap(){
     dot.title = t(confirmed ? 'sent.dotTitleConf' : (hasFlags ? 'flag.sentDot' : 'sent.dotTitle'), {
       n: i + 1, toks: stats.totalTokens, diffs: stats.diffCount
     });
-    // Accessibility: symbol inside dot conveys state independently of color
+    // Accessibility: text symbol inside dot conveys state independently of color
     if     (confirmed && hasFlags)        dot.textContent = "★!";
     else if(confirmed)                    dot.textContent = "★";
     else if(hasFlags   && hasDiff)        dot.textContent = "×!";
@@ -484,7 +507,9 @@ function renderSentMap(){
   }
 }
 
-// ---------- Flags ----------
+// ── Flags ──────────────────────────────────────────────────────────────────────
+
+// Toggle the flag for a single token and update the row, minimap, and selector in place.
 function toggleFlag(sentIdx, tokId){
   if(!state.flags[sentIdx]) state.flags[sentIdx] = new Set();
   const s = state.flags[sentIdx];
@@ -500,12 +525,14 @@ function toggleFlag(sentIdx, tokId){
   const isFlagged = !!state.flags[sentIdx]?.has(tokId);
   if(btn)  btn.classList.toggle("flagBtnActive", isFlagged);
   if(tr)   tr.classList.toggle("rowFlagged", isFlagged);
-  // Reflect in sentMap and sentSelect
+  // Reflect flag change in the minimap and dropdown without a full re-render
   renderSentMap();
   renderSentSelectOptions();
 }
 
-// ---------- UI: Column toggle ----------
+// ── UI: Column toggle ──────────────────────────────────────────────────────────
+
+// Rebuild the column visibility toggle bar (shown when ≥2 documents are loaded).
 function renderColToggleBar(){
   colToggleBar.innerHTML = "";
   if(state.docs.length < 2){ return; }
@@ -528,7 +555,9 @@ function renderColToggleBar(){
   });
 }
 
-// ---------- Custom ----------
+// ── Custom annotations ─────────────────────────────────────────────────────────
+
+// Copy all annotations from document docIdx into custom for the current sentence.
 function initCustomFromDoc(docIdx){
   const s = state.docs[docIdx]?.sentences?.[state.currentSent];
   if(!s) return;
@@ -540,6 +569,7 @@ function initCustomFromDoc(docIdx){
   renderSentence();
 }
 
+// Remove all custom overrides for the current sentence after user confirmation.
 function clearCustomForSentence(){
   if(!confirm(t('sent.clearConfirm'))) return;
   pushUndo();
@@ -547,7 +577,9 @@ function clearCustomForSentence(){
   renderSentence();
 }
 
-// ---------- Main render ----------
+// ── Main render ────────────────────────────────────────────────────────────────
+
+// Re-render the entire sentence view: sentence text, stats, table, trees, note.
 function renderSentence(){
   const ok = state.docs.length >= 2 && state.maxSents > 0;
   if(!ok){
@@ -563,6 +595,7 @@ function renderSentence(){
 
   state.currentSent = Math.max(0, Math.min(state.currentSent, state.maxSents - 1));
 
+  // Render clickable token spans from the first document's token forms
   const s0 = state.docs[0].sentences[state.currentSent];
   if(s0){
     sentText.innerHTML = s0.tokens
@@ -581,7 +614,9 @@ function renderSentence(){
   _updateSentNote();
 }
 
-// ---------- Clipboard copy ----------
+// ── Clipboard copy ─────────────────────────────────────────────────────────────
+
+// Copy the current sentence's gold CoNLL-U to the clipboard and briefly update the button label.
 function copySentenceConllu(){
   if(state.docs.length < 1 || state.maxSents === 0) return;
   const sentIdx = state.currentSent;
@@ -632,13 +667,15 @@ function copySentenceConllu(){
   }).catch(() => {});
 }
 
-// ---------- Demo ----------
+// ── Demo ───────────────────────────────────────────────────────────────────────
+
+// Load the built-in example files (defined in the EXAMPLES global constant).
 async function loadExamples(){
   const files = EXAMPLES.map(e => new File([e.content], e.name, { type: "text/plain" }));
   await processFiles(files);
 }
 
-// ---------- Init ----------
+// ── Init ───────────────────────────────────────────────────────────────────────
 buildDeprelOptionsCache();
 DEFAULT_LABELS = JSON.parse(JSON.stringify(LABELS)); // snapshot before any project overrides
 initProjects();

@@ -1,3 +1,5 @@
+// Global application state, label/tagset helpers, and statistics utilities.
+
 // Set by labels.js before main.js runs
 let LABELS = {};
 // Snapshot of LABELS from labels.js — set once in main.js init, used as fallback for projects with no custom tagset
@@ -15,7 +17,7 @@ let XPOS_LABEL_NAME = "XPOS";
 let LABEL_COLS = [];
 let DEP_COLS   = [];
 
-// ---------- App State ----------
+// ── App State ──────────────────────────────────────────────────────────────────
 const state = {
   docs: [],
   currentSent: 0,
@@ -31,11 +33,14 @@ const state = {
   activeProjectIdx: 0,
 };
 
-// ---------- Label helpers ----------
+// ── Label helpers ──────────────────────────────────────────────────────────────
+
+// Strip trailing '*' (used in tagset JSON to mark default values) and trim whitespace.
 function normalizeLabel(label){
   return String(label).replace(/\*$/,"").trim();
 }
 
+// Build an <option> list HTML string from a flat array of label values.
 function buildOptionsHtmlFromList(items){
   let html = `<option value="">${escapeHtml(t('label.empty'))}</option>`;
   for(const raw of items){
@@ -46,6 +51,10 @@ function buildOptionsHtmlFromList(items){
   return html;
 }
 
+// Rebuild DEP_COLS and LABEL_COLS from the current LABELS object.
+// Supports two tagset formats:
+//   New: __dep_cols__ / __cols__ arrays with explicit key/name/groups/values.
+//   Old: top-level group keys for deprels, __upos__ / __xpos__ lists for POS.
 function buildDeprelOptionsCache(){
   // ── DEP_COLS ──────────────────────────────────────────────────────────────
   // New format: __dep_cols__ = [{key, name, groups:{section:[label,...]}}]
@@ -126,12 +135,17 @@ function buildDeprelOptionsCache(){
   }
 }
 
-// ---------- State helpers ----------
+// ── State helpers ──────────────────────────────────────────────────────────────
+
+// Lazily create and return the custom-annotation map for a sentence.
 function ensureCustomSent(sentIndex){ if(!state.custom[sentIndex]) state.custom[sentIndex] = {}; return state.custom[sentIndex]; }
+// Lazily create and return the gold-pick map for a sentence.
 function ensureGoldSent(sentIndex){ if(!state.goldPick[sentIndex]) state.goldPick[sentIndex] = {}; return state.goldPick[sentIndex]; }
 
+// Return null for empty/undefined values so stored entries stay clean.
 function nullIfEmpty(v){ return (v === null || v === undefined || v === "") ? null : v; }
 
+// Return the custom annotation entry for a token, or null if all fields are empty.
 function getCustomEntry(sentIndex, tokId){
   const e = state.custom[sentIndex]?.[tokId];
   if(!e) return null;
@@ -145,12 +159,15 @@ function getCustomEntry(sentIndex, tokId){
   return hasAny ? result : null;
 }
 
+// Write a single field into the custom annotation for a token.
+// Automatically cleans up empty entries so state stays minimal.
 function setCustomField(sentIndex, tokId, field, value){
   const sent = ensureCustomSent(sentIndex);
   if(!sent[tokId]) sent[tokId] = {};
   sent[tokId][field] = value;
   const e = getCustomEntry(sentIndex, tokId);
   if(!e){
+    // All fields are now empty — remove the token entry entirely
     delete sent[tokId];
     if(Object.keys(sent).length === 0) delete state.custom[sentIndex];
   }
@@ -159,6 +176,8 @@ function setCustomField(sentIndex, tokId, field, value){
 function getCustomUpos(sentIndex, tokId){ return getCustomEntry(sentIndex, tokId)?.upos ?? null; }
 function getCustomXpos(sentIndex, tokId){ return getCustomEntry(sentIndex, tokId)?.xpos ?? null; }
 
+// Return the index of the document chosen as gold source for a given token.
+// Defaults to doc 0 if the stored value is out of range.
 function getDocChoice(sentIndex, tokId){
   const m = ensureGoldSent(sentIndex);
   const v = m[tokId];
@@ -167,11 +186,14 @@ function getDocChoice(sentIndex, tokId){
 }
 function setDocChoice(sentIndex, tokId, docIdx){ ensureGoldSent(sentIndex)[tokId] = docIdx; }
 
+// Format a head/deprel pair as a display string for comparison.
 function valueStr(head, deprel){
   return `${head ?? "_"} / ${deprel ?? "_"}`;
 }
 
-// ---------- Statistics ----------
+// ── Statistics ─────────────────────────────────────────────────────────────────
+
+// Count tokens that differ from the gold annotation across all loaded documents.
 function computeStats(sentIndex, idList, docMaps, goldMap){
   const totalTokens = idList.length;
   if(docMaps.length < 2) return { totalTokens, diffCount: 0 };
@@ -185,6 +207,7 @@ function computeStats(sentIndex, idList, docMaps, goldMap){
       if(!t) continue;
       let diff = valueStr(t.head, t.deprel) !== goldHd;
       if(!diff){
+        // Also check all dynamic label columns (UPOS, XPOS, …)
         for(const col of LABEL_COLS){
           if((t[col.key] ?? "_") !== (goldTok[col.key] ?? "_")){ diff = true; break; }
         }
@@ -195,7 +218,9 @@ function computeStats(sentIndex, idList, docMaps, goldMap){
   return { totalTokens, diffCount };
 }
 
-// ---------- Helpers ----------
+// ── Helpers ────────────────────────────────────────────────────────────────────
+
+// Escape special HTML characters to prevent XSS when inserting dynamic text.
 function escapeHtml(s){
   return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 }

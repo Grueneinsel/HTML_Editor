@@ -1,4 +1,9 @@
-// ---------- Data structures ----------
+// Comparison table rendering, gold-cell popup, and inline label editing.
+
+// ── Data structures ────────────────────────────────────────────────────────────
+
+// Build per-document token Maps and the union of token IDs for the current sentence.
+// Custom-only tokens (not present in any file) are included via state.custom.
 function buildDocMapsAndIds(){
   const sentIndex = state.currentSent;
   const docMaps = state.docs.map(d => {
@@ -15,11 +20,14 @@ function buildDocMapsAndIds(){
   return { docMaps, idList };
 }
 
+// Return the first token found across all docMaps for a given token ID.
 function firstToken(docMaps, tokId){
   for(const m of docMaps){ const t = m.get(tokId); if(t) return t; }
   return null;
 }
 
+// Build the "gold" token map for one sentence: each token reflects the user's
+// current annotation choices (custom overrides > chosen doc > first available doc).
 function buildGoldTokenMap(sentIndex, idList, docMaps){
   const gold = new Map();
   for(const id of idList){
@@ -47,11 +55,15 @@ function buildGoldTokenMap(sentIndex, idList, docMaps){
   return gold;
 }
 
-// ---------- Comparison table ----------
+// ── Comparison table ──────────────────────────────────────────────────────────
+
+// Re-render the full comparison table for the current sentence.
+// Also computes per-sentence diff statistics shown in the stat badges.
 function renderCompareTable(){
   const sentIndex = state.currentSent;
   const { docMaps, idList } = buildDocMapsAndIds();
   const goldMap = buildGoldTokenMap(sentIndex, idList, docMaps);
+  // Cache for popup and tree view re-use
   _lastIdList  = idList;
   _lastDocMaps = docMaps;
 
@@ -84,7 +96,7 @@ function renderCompareTable(){
     const ce           = getCustomEntry(sentIndex, id);
     const customExists = !!ce;
 
-    // per-file values
+    // Collect head/deprel and label values per file for comparison
     const allVals = state.docs.map((_, i) => {
       const tok = docMaps[i].get(id);
       if(!tok) return null;
@@ -93,7 +105,7 @@ function renderCompareTable(){
       return v;
     });
 
-    // row is "diff" if any file differs from gold in any field
+    // Row is "diff" if any file differs from gold in any field
     const hasDiff = goldTok != null && allVals.some(v => v !== null && (
       v.hd !== goldVal ||
       LABEL_COLS.some(col => v[col.key] !== (goldTok[col.key] ?? "_"))
@@ -117,7 +129,7 @@ function renderCompareTable(){
       html += `<td class="posCell${customColVal ? ' posCustom' : ''}${colDiff ? ' posDiff' : ''}" title="${escapeHtml(col.name)}">${colEl}</td>`;
     }
 
-    // GOLD column — HEAD/DEPREL + label cols posLine
+    // Gold column — HEAD/DEPREL + label col summary line
     const goldSrc = customExists ? '<span class="srcTag srcCustom">C</span>' :
       `<span class="srcTag srcDoc">D${getDocChoice(sentIndex,id)+1}</span>`;
     const posLineHtml = LABEL_COLS.map(col => escapeHtml(goldTok?.[col.key] ?? "_")).join('·');
@@ -169,15 +181,18 @@ function renderCompareTable(){
   }
 }
 
-// ── Gold-cell popup ──────────────────────────────────────────────────────
+// ── Gold-cell popup ───────────────────────────────────────────────────────────
 let _popup      = null;
 let _popupTokId = null;
 
-// Called by i18n.js setLang() to force popup recreation with new language
+// Called by i18n.js setLang() to force popup recreation with new language strings.
 function _resetPopup(){ _popup?.remove(); _popup = null; }
+// Cached token list and doc maps from the last renderCompareTable() call.
 let _lastIdList  = [];
 let _lastDocMaps = [];
 
+// Lazily create and return the floating gold-edit popup element.
+// The popup is built once per language; _resetPopup() forces recreation on language change.
 function _ensurePopup(){
   if(_popup) return _popup;
   _popup = document.createElement("div");
@@ -227,6 +242,7 @@ function _ensurePopup(){
     if(el) el.addEventListener(el.tagName === "SELECT" ? "change" : "input", _onPopupChange);
   }
 
+  // "Reset" button clears all custom overrides for the current token.
   document.getElementById("gpClear").addEventListener("click", () => {
     if(_popupTokId === null) return;
     const si = state.currentSent;
@@ -261,7 +277,7 @@ function _ensurePopup(){
       return;
     }
 
-    // r → Zurücksetzen (nur wenn kein Input-Feld fokussiert)
+    // "r" key resets the token (only when no text input is focused)
     if(e.key === "r" || e.key === "R"){
       const active = document.activeElement;
       if(active?.tagName !== "INPUT"){
@@ -272,7 +288,7 @@ function _ensurePopup(){
       }
     }
 
-    // Tab-Trap: innerhalb des Popups bleiben
+    // Tab trap: keep keyboard focus within the popup
     if(e.key === "Tab"){
       const focusable = Array.from(_popup.querySelectorAll("select, input, button"));
       if(!focusable.length) return;
@@ -289,6 +305,7 @@ function _ensurePopup(){
   return _popup;
 }
 
+// Handle any field change inside the popup and write it to state.custom.
 function _onPopupChange(e){
   if(_popupTokId === null) return;
   const eid = e.target.id;
@@ -313,6 +330,7 @@ function _onPopupChange(e){
   }
   if(field === null) return;
   const raw = e.target.value.trim();
+  // Head fields are stored as integers (or null); deprel/label fields as strings.
   const val = isHead
     ? (raw === "" ? null : (parseInt(raw, 10) >= 0 ? parseInt(raw, 10) : null))
     : (raw === "" ? null : raw);
@@ -325,6 +343,8 @@ function _closePopup(){
   _popupTokId = null;
 }
 
+// Set a <select> or <input> element to a given value.
+// If the value is not in the option list, inject a temporary extra option.
 function _setSelectOrInput(eid, value){
   const el = document.getElementById(eid);
   if(!el) return;
@@ -344,6 +364,8 @@ function _setSelectOrInput(eid, value){
   }
 }
 
+// Populate a head <select> with options for all tokens in the current sentence,
+// then set it to the current head value of the given token.
 function _buildHeadDropdown(selId, goldTok, headField){
   const sel = document.getElementById(selId);
   if(!sel) return;
@@ -359,6 +381,7 @@ function _buildHeadDropdown(selId, goldTok, headField){
   sel.value = hv != null ? String(hv) : "0";
 }
 
+// Fill all popup fields with the current gold values for the given token.
 function _populatePopup(tokId){
   _ensurePopup();
   const si      = state.currentSent;
@@ -386,15 +409,17 @@ function _populatePopup(tokId){
   }
 }
 
+// Open the popup for a token and push an undo snapshot.
 function _openPopup(tokId, cellEl){
   pushUndo();
   _popupTokId = tokId;
   _populatePopup(tokId);
   _positionPopup(cellEl);
-  // Auto-focus HEAD-Feld
+  // Auto-focus the HEAD field for immediate keyboard editing
   setTimeout(() => document.getElementById("gpHead")?.focus(), 0);
 }
 
+// Position the popup below (or above if clipped) the triggering table cell.
 function _positionPopup(cellEl){
   if(!_popup) return;
   _popup.classList.add("active");
@@ -411,7 +436,7 @@ function _positionPopup(cellEl){
   _popup.style.left = `${left}px`;
 }
 
-// Click on flag button → toggle flag
+// Click on flag button → toggle flag for that token row.
 cmpTable.addEventListener("click", (e) => {
   const btn = e.target.closest?.(".flagBtn");
   if(!btn) return;
@@ -421,7 +446,7 @@ cmpTable.addEventListener("click", (e) => {
   toggleFlag(state.currentSent, parseInt(tr.dataset.id, 10));
 });
 
-// Click on Gold cell → open / close popup
+// Click on Gold cell → open or close the annotation popup for that token.
 cmpTable.addEventListener("click", (e) => {
   const td = e.target.closest?.("td[data-col='gold']");
   if(!td) return;
@@ -434,8 +459,10 @@ cmpTable.addEventListener("click", (e) => {
   _openPopup(tokId, td);
 });
 
-// ── Inline UPOS / XPOS editing ──────────────────────────────────────────────
+// ── Inline label (UPOS / XPOS) editing ───────────────────────────────────────
 
+// Set the value of an inline label select or input within a table row.
+// Injects a temporary option when the value is not in the predefined list.
 function _setPosEl(tr, field, value){
   const el = tr.querySelector(`[data-col="${field}"]`);
   if(!el) return;
@@ -452,6 +479,7 @@ function _setPosEl(tr, field, value){
   }
 }
 
+// Handle change events on inline label dropdowns/inputs in the table.
 cmpTable.addEventListener("change", (e) => {
   const el = e.target;
   const field = el.dataset?.col;
