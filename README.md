@@ -58,12 +58,19 @@ Wenn ein neues Projekt automatisch angelegt wurde, erscheint kurz eine Hinweisme
 | Aktion | Beschreibung |
 |--------|-------------|
 | **„Dateien hinzufügen"** | Öffnet den Datei-Dialog; `.conllu`, `.conll`, `.txt` und `.json` wählbar |
-| **Drag & Drop** | Dateien direkt auf die Seite ziehen |
-| **Drag & Drop (Session)** | `.json`-Session-Datei auf die Seite ziehen → wird automatisch importiert |
+| **„📤 Tagset hochladen"** | Öffnet ebenfalls den Datei-Dialog — akzeptiert alle Dateitypen |
+| **„📂 Session laden"** | Öffnet den Datei-Dialog — akzeptiert alle Dateitypen |
+| **Drag & Drop** | Dateien direkt auf die Seite ziehen — alle Typen werden erkannt |
 | **„Demo laden"** | Drei vorgefertigte Beispieldateien, die alle Vergleichsfälle abdecken |
 | **„Reset"** | Alle Dateien und Annotationen zurücksetzen |
 
-Unterstützte Formate: `.conllu`, `.conll`, `.txt` (Daten) · `.json` (Session)
+Alle Upload-Wege (Buttons und Drag & Drop) erkennen den Dateityp automatisch:
+
+| Dateiendung | Erkannter Typ | Aktion |
+|-------------|---------------|--------|
+| `.conllu`, `.conll`, `.txt` | CoNLL-U-Datei | Als Annotator-Datei laden |
+| `.json` mit `version` + `docs`/`projects` | Session | Session importieren |
+| `.json` (alles andere) | Tagset | Als neues Tagset laden |
 
 ### Datei-Aktionen pro Zeile
 
@@ -488,8 +495,12 @@ HTML_Editor/
     │   ├── tagset.json        ← SRL-Tagset (UD DepRel + SRL-Dep-Schicht)
     │   ├── annotator_A.conllu
     │   └── annotator_B.conllu
-    └── custom/                ← Beispiel: Eigenes vereinfachtes Schema
-        ├── tagset.json        ← Custom-Tagset (Wortart, Belebtheit, Sentiment, Vereinfachte Syntax)
+    ├── custom/                ← Beispiel: Eigenes vereinfachtes Schema
+    │   ├── tagset.json        ← Custom-Tagset (Wortart, Belebtheit, Sentiment, Vereinfachte Syntax)
+    │   ├── annotator_A.conllu
+    │   └── annotator_B.conllu
+    └── morph/                 ← Beispiel: Morphologie + Topologische Felder
+        ├── tagset.json        ← Genus / Kasus als Label-Spalten; Topologisches Feld als Dep-Layer
         ├── annotator_A.conllu
         └── annotator_B.conllu
 ```

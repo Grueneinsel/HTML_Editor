@@ -36,34 +36,71 @@ fileInput.addEventListener("change", onFilesChosen);
 resetBtn.addEventListener("click", resetProject);
 if(globalResetBtn) globalResetBtn.addEventListener("click", resetAll);
 
+// ── Smart file dispatch (shared by all upload paths + drag & drop) ────────────
+
+/** Returns true if parsed JSON looks like a saved session. */
+function _isSessionJson(data){
+  if(!data || typeof data !== "object" || Array.isArray(data)) return false;
+  return (data.version === 1 || data.version === 2) &&
+         (Array.isArray(data.docs) || Array.isArray(data.projects));
+}
+
+/** Apply a parsed tagset object (LABELS) to the active project only. */
+function applyTagsetJson(data){
+  if(typeof data !== "object" || Array.isArray(data) || !data){
+    alert(t("tagset.errFormat")); return;
+  }
+  LABELS = data;
+  buildDeprelOptionsCache();
+  if(typeof _resetPopup === "function") _resetPopup();
+  // Persist tagset in the active project (not globally)
+  const p = state.projects[state.activeProjectIdx];
+  if(p) p.labels = JSON.parse(JSON.stringify(LABELS));
+  renderSentence();
+  const deprelCount = Object.keys(LABELS)
+    .filter(k => !k.startsWith("__"))
+    .reduce((s, k) => s + (LABELS[k]?.length || 0), 0);
+  if(tagsetMeta) tagsetMeta.textContent = t("tagset.loaded", {
+    deprel: deprelCount,
+    upos: (LABELS["__upos__"] || []).length,
+    xpos: (LABELS["__xpos__"] || []).length,
+  });
+}
+
+/**
+ * Smart dispatch for a JSON text string:
+ *  - Session JSON  → importSession()
+ *  - Everything else → applyTagsetJson()
+ */
+function _smartDispatchJson(jsonText){
+  let data;
+  try { data = JSON.parse(jsonText); }
+  catch { alert(t("tagset.errJson")); return; }
+  if(_isSessionJson(data)) importSession(jsonText);
+  else                     applyTagsetJson(data);
+}
+
+/**
+ * Universal file dispatcher: handles .json (smart), .conllu/.conll/.txt.
+ * Returns a Promise so callers can await if needed.
+ */
+async function _dispatchFiles(files){
+  const jsonFiles   = files.filter(f => /\.json$/i.test(f.name));
+  const conlluFiles = files.filter(f => /\.(conllu|conll|txt)$/i.test(f.name));
+  for(const f of jsonFiles){
+    const text = await f.text();
+    _smartDispatchJson(text);
+  }
+  if(conlluFiles.length > 0) await processFiles(conlluFiles);
+}
+
 // ── Tagset upload ─────────────────────────────────────────────────────────────
 if(tagsetInput){
   tagsetInput.addEventListener("change", async (e) => {
-    const file = e.target.files[0];
+    const files = Array.from(e.target.files || []);
     e.target.value = "";
-    if(!file) return;
-    let data;
-    try {
-      const text = await file.text();
-      data = JSON.parse(text);
-    } catch {
-      alert(t("tagset.errJson"));
-      return;
-    }
-    if(typeof data !== "object" || Array.isArray(data) || !data){
-      alert(t("tagset.errFormat"));
-      return;
-    }
-    LABELS = data;
-    buildDeprelOptionsCache();
-    if(typeof _resetPopup === "function") _resetPopup();
-    renderSentence();
-    const deprelCount = Object.keys(LABELS).filter(k => !k.startsWith("__")).reduce((s, k) => s + (LABELS[k]?.length || 0), 0);
-    if(tagsetMeta) tagsetMeta.textContent = t("tagset.loaded", {
-      deprel: deprelCount,
-      upos: (LABELS["__upos__"] || []).length,
-      xpos: (LABELS["__xpos__"] || []).length,
-    });
+    if(!files.length) return;
+    await _dispatchFiles(files);
   });
 }
 
@@ -285,18 +322,7 @@ document.addEventListener("drop", (e) => {
   dragCounter = 0;
   dropOverlay.classList.remove("active");
   const allFiles = Array.from(e.dataTransfer.files);
-
-  // Session-JSON hat Vorrang — erste .json-Datei wird importiert
-  const jsonFile = allFiles.find(f => /\.json$/i.test(f.name));
-  if(jsonFile){
-    const fr = new FileReader();
-    fr.onload = () => importSession(fr.result);
-    fr.readAsText(jsonFile, "utf-8");
-    return;
-  }
-
-  const conlluFiles = allFiles.filter(f => /\.(conllu|conll|txt)$/i.test(f.name));
-  if(conlluFiles.length > 0) processFiles(conlluFiles);
+  _dispatchFiles(allFiles);
 });
 
 // ---------- UI: Sentence selector ----------
@@ -614,6 +640,7 @@ async function loadExamples(){
 
 // ---------- Init ----------
 buildDeprelOptionsCache();
+DEFAULT_LABELS = JSON.parse(JSON.stringify(LABELS)); // snapshot before any project overrides
 initProjects();
 renderFiles();
 renderSentSelect();

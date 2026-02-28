@@ -11,42 +11,58 @@ function readFileAsText(file){
 function parseConllu(text){
   const lines = text.replace(/\r\n/g, "\n").split("\n");
   const sentences = [];
-  let tokens = [];
+  let tokens   = [];
   let textLine = null;
+  let comments = [];  // all # lines preserved verbatim
+  let extras   = [];  // MWT and empty-node lines: {type:"mwt"|"empty", insertBefore, raw}
 
   const push = () => {
-    if(tokens.length === 0 && !textLine) return;
+    if(tokens.length === 0 && comments.length === 0) return;
     const fallbackText = tokens.map(t => t.form).join(" ");
-    sentences.push({ text: textLine || fallbackText, tokens });
-    tokens = [];
+    sentences.push({ text: textLine || fallbackText, tokens, comments: [...comments], extras: [...extras] });
+    tokens   = [];
     textLine = null;
+    comments = [];
+    extras   = [];
   };
 
   for(const line0 of lines){
     const line = line0.trimEnd();
     if(line.trim() === ""){ push(); continue; }
     if(line.startsWith("#")){
+      comments.push(line);
       const m = line.match(/^#\s*text\s*=\s*(.*)$/i);
       if(m) textLine = m[1];
       continue;
     }
     const cols = line.split("\t");
-    if(cols.length < 8) continue;
+    if(cols.length < 2) continue;
     const idRaw = cols[0];
-    if(idRaw.includes("-") || idRaw.includes(".")) continue;
+    if(idRaw.includes("-")){
+      // Multi-word token: output before the first token of the range
+      const insertBefore = parseInt(idRaw.split("-")[0], 10);
+      extras.push({ type: "mwt", insertBefore, raw: line });
+      continue;
+    }
+    if(idRaw.includes(".")){
+      // Empty node: output after its integer anchor, so insertBefore = anchor + 1
+      const insertBefore = parseInt(idRaw.split(".")[0], 10) + 1;
+      extras.push({ type: "empty", insertBefore, raw: line });
+      continue;
+    }
     if(!/^\d+$/.test(idRaw)) continue;
+    if(cols.length < 8) continue;
     const id = parseInt(idRaw, 10);
-    const form   = cols[1] || "_";
-    const upos   = cols[3] || "_";
-    const xpos   = cols[4] || "_";
-    const head   = /^\d+$/.test(cols[6]) ? parseInt(cols[6], 10) : null;
-    const deprel = cols[7] || "_";
+    const head = /^\d+$/.test(cols[6]) ? parseInt(cols[6], 10) : null;
     tokens.push({
-      id, form,
+      id,
+      form:   cols[1] || "_",
       lemma:  cols[2] || "_",
-      upos,   xpos,
+      upos:   cols[3] || "_",
+      xpos:   cols[4] || "_",
       feats:  cols[5] || "_",
-      head,   deprel,
+      head,
+      deprel: cols[7] || "_",
       deps:   cols[8] || "_",
       misc:   cols[9] || "_",
     });
@@ -78,19 +94,7 @@ async function onFilesChosen(){
   const files = Array.from(fileInput.files || []);
   if(files.length === 0) return;
   fileInput.value = "";
-
-  // If exactly one .json was selected (and no CoNLL-U), treat it as a session import
-  const jsonFiles   = files.filter(f => /\.json$/i.test(f.name));
-  const conlluFiles = files.filter(f => /\.(conllu|conll|txt)$/i.test(f.name));
-
-  if(jsonFiles.length === 1 && conlluFiles.length === 0){
-    const fr = new FileReader();
-    fr.onload = () => importSession(fr.result);
-    fr.readAsText(jsonFiles[0], "utf-8");
-    return;
-  }
-  const toProcess = conlluFiles.length > 0 ? conlluFiles : files.filter(f => !/\.json$/i.test(f.name));
-  if(toProcess.length > 0) await processFiles(toProcess);
+  await _dispatchFiles(files);
 }
 
 function removeDoc(index){

@@ -1,5 +1,7 @@
 // Set by labels.js before main.js runs
 let LABELS = {};
+// Snapshot of LABELS from labels.js — set once in main.js init, used as fallback for projects with no custom tagset
+let DEFAULT_LABELS = null;
 let DEPREL_OPTIONS_HTML = "";
 let DEPREL_VALUE_SET = new Set();
 let UPOS_OPTIONS_HTML = "";

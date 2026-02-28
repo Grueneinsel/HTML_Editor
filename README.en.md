@@ -58,12 +58,19 @@ A brief notification appears when a new project is created automatically.
 | Action | Description |
 |--------|-------------|
 | **"Add files"** | Opens the file dialog; `.conllu`, `.conll`, `.txt` and `.json` files selectable |
-| **Drag & Drop** | Drop files directly onto the page |
-| **Drag & Drop (Session)** | Drop a `.json` session file onto the page → imported automatically |
+| **"📤 Upload tagset"** | Also opens the file dialog — accepts all file types |
+| **"📂 Load session"** | Also opens the file dialog — accepts all file types |
+| **Drag & Drop** | Drop files directly onto the page — all types are recognised |
 | **"Load demo"** | Three pre-built example files covering all comparison cases |
 | **"Reset"** | Reset all files and annotations |
 
-Supported formats: `.conllu`, `.conll`, `.txt` (data) · `.json` (session)
+All upload paths (buttons and drag & drop) detect the file type automatically:
+
+| Extension | Detected type | Action |
+|-----------|---------------|--------|
+| `.conllu`, `.conll`, `.txt` | CoNLL-U file | Load as annotator file |
+| `.json` with `version` + `docs`/`projects` | Session | Import session |
+| `.json` (everything else) | Tagset | Load as new tagset |
 
 ### Per-File Actions
 
@@ -488,8 +495,12 @@ HTML_Editor/
     │   ├── tagset.json        ← SRL tagset (UD DepRel + SRL dependency layer)
     │   ├── annotator_A.conllu
     │   └── annotator_B.conllu
-    └── custom/                ← Example: Custom simplified schema
-        ├── tagset.json        ← Custom tagset (word class, animacy, sentiment, simplified syntax)
+    ├── custom/                ← Example: Custom simplified schema
+    │   ├── tagset.json        ← Custom tagset (word class, animacy, sentiment, simplified syntax)
+    │   ├── annotator_A.conllu
+    │   └── annotator_B.conllu
+    └── morph/                 ← Example: Morphology + Topological Fields
+        ├── tagset.json        ← Genus / Kasus as label columns; topological field as dep layer
         ├── annotator_A.conllu
         └── annotator_B.conllu
 ```

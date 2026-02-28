@@ -12,22 +12,11 @@ exportAllConlluBtn.addEventListener("click", exportAllProjectsConllu);
 exportTreeBtn.addEventListener("click",      exportTreesTxt);
 exportAllTreeBtn.addEventListener("click",   exportAllProjectsTrees);
 exportSessionBtn.addEventListener("click",   exportSession);
-importSessionInput.addEventListener("change", () => {
+importSessionInput.addEventListener("change", async () => {
   const files = Array.from(importSessionInput.files || []);
   if(!files.length) return;
   importSessionInput.value = "";
-
-  // If a CoNLL-U / txt file was chosen via the session input, load it as data
-  const conlluFiles = files.filter(f => /\.(conllu|conll|txt)$/i.test(f.name));
-  if(conlluFiles.length > 0){
-    processFiles(conlluFiles);
-    return;
-  }
-  const f = files[0];
-  if(!f) return;
-  const fr = new FileReader();
-  fr.onload = () => importSession(fr.result);
-  fr.readAsText(f, "utf-8");
+  await _dispatchFiles(files);
 });
 
 function updateExportButtons(){
@@ -69,14 +58,32 @@ function _buildConlluText(){
 
     const goldMap = buildGoldTokenMap(sentIdx, idList, docMaps);
 
-    let sentText = "";
-    for(const d of state.docs){
-      const s = d.sentences[sentIdx];
-      if(s && s.text){ sentText = s.text; break; }
+    // Use the first source sentence for metadata (comments, MWT, empty nodes)
+    let baseSent = null;
+    for(const d of state.docs){ const s = d.sentences[sentIdx]; if(s){ baseSent = s; break; } }
+
+    // Output all comment lines verbatim (preserves # sent_id, # text, # newdoc, etc.)
+    if(baseSent?.comments?.length > 0){
+      for(const c of baseSent.comments) out.push(c);
+    } else {
+      let sentText = "";
+      for(const d of state.docs){ const s = d.sentences[sentIdx]; if(s?.text){ sentText = s.text; break; } }
+      if(sentText) out.push(`# text = ${sentText}`);
     }
-    if(sentText) out.push(`# text = ${sentText}`);
+
+    // Build a lookup for MWT and empty-node lines keyed by insertBefore
+    const extrasByInsertBefore = new Map();
+    for(const ex of baseSent?.extras || []){
+      if(!extrasByInsertBefore.has(ex.insertBefore)) extrasByInsertBefore.set(ex.insertBefore, []);
+      extrasByInsertBefore.get(ex.insertBefore).push(ex);
+    }
 
     for(const id of idList){
+      // MWT lines go before the first token of their range
+      for(const ex of extrasByInsertBefore.get(id) || []){
+        if(ex.type === "mwt") out.push(ex.raw);
+      }
+
       let base = null;
       for(const m of docMaps){ const t = m.get(id); if(t){ base = t; break; } }
       if(!base) continue;
@@ -108,6 +115,11 @@ function _buildConlluText(){
         base.deps   || "_",
         misc,
       ].join("\t"));
+
+      // Empty nodes go after their anchor token (insertBefore = anchor + 1)
+      for(const ex of extrasByInsertBefore.get(id + 1) || []){
+        if(ex.type === "empty") out.push(ex.raw);
+      }
     }
     out.push("");
   }
@@ -133,14 +145,17 @@ function exportAllProjectsConllu(){
   const origMaxSents = state.maxSents;
   const origCustom   = state.custom;
   const origGoldPick = state.goldPick;
+  const origLABELS   = LABELS;
 
   for(const p of state.projects){
     if(!p.docs.length) continue;
-    // Temporären State einspielen
+    // Temporären State einspielen (inkl. Tagset)
     state.docs     = p.docs;
     state.maxSents = p.maxSents;
     state.custom   = p.custom;
     state.goldPick = p.goldPick;
+    LABELS = p.labels || DEFAULT_LABELS || origLABELS;
+    buildDeprelOptionsCache();
 
     downloadText(_buildConlluText(), `gold_${p.name}.conllu`);
   }
@@ -150,6 +165,8 @@ function exportAllProjectsConllu(){
   state.maxSents = origMaxSents;
   state.custom   = origCustom;
   state.goldPick = origGoldPick;
+  LABELS = origLABELS;
+  buildDeprelOptionsCache();
 }
 
 // ---------- Session Export ----------
@@ -167,12 +184,6 @@ function importSession(jsonText){
   try { data = JSON.parse(jsonText); }
   catch { alert(t('session.errJson')); return; }
 
-  // Labels wiederherstellen (vor buildDeprelOptionsCache)
-  if(data.labels && typeof data.labels === "object"){
-    LABELS = data.labels;
-    buildDeprelOptionsCache();
-  }
-
   // ── v2: multi-project format ──────────────────────────────────────────────
   if(data.version === 2 && Array.isArray(data.projects) && data.projects.length){
     state.projects = data.projects.map(p => {
@@ -180,6 +191,9 @@ function importSession(jsonText){
         const parsed = parseConllu(d.content);
         return { key: `session::${d.name}`, name: d.name, content: d.content, sentences: parsed.sentences };
       });
+      // Per-project labels: use saved labels, fall back to top-level (old sessions), then default
+      const projLabels = p.labels
+        || (data.labels && typeof data.labels === "object" ? data.labels : null);
       return {
         name:        p.name || t('project.default'),
         docs,
@@ -193,6 +207,7 @@ function importSession(jsonText){
         hiddenCols:  p.hiddenCols  || [],
         undoStack:   p.undo  || [],
         redoStack:   p.redo  || [],
+        labels:      projLabels,
       };
     });
     state.activeProjectIdx = Math.min(data.activeProjectIdx || 0, state.projects.length - 1);
@@ -236,6 +251,7 @@ function importSession(jsonText){
     hiddenCols:  [],
     undoStack:   data.undo || [],
     redoStack:   data.redo || [],
+    labels:      (data.labels && typeof data.labels === "object") ? data.labels : null,
   }];
   state.activeProjectIdx = 0;
   _loadActiveProject();
@@ -308,6 +324,7 @@ function exportAllProjectsTrees(){
   const origMaxSents = state.maxSents;
   const origCustom   = state.custom;
   const origGoldPick = state.goldPick;
+  const origLABELS   = LABELS;
 
   for(const p of state.projects){
     if(!p.docs.length) continue;
@@ -315,6 +332,8 @@ function exportAllProjectsTrees(){
     state.maxSents = p.maxSents;
     state.custom   = p.custom;
     state.goldPick = p.goldPick;
+    LABELS = p.labels || DEFAULT_LABELS || origLABELS;
+    buildDeprelOptionsCache();
 
     downloadText(_buildTreeText(), `baeume_${p.name}.txt`);
   }
@@ -323,6 +342,8 @@ function exportAllProjectsTrees(){
   state.maxSents = origMaxSents;
   state.custom   = origCustom;
   state.goldPick = origGoldPick;
+  LABELS = origLABELS;
+  buildDeprelOptionsCache();
 }
 
 // ---------- LocalStorage Autosave ----------
@@ -347,8 +368,8 @@ function _buildSessionObject(){
       hiddenCols:  p.hiddenCols instanceof Set ? Array.from(p.hiddenCols) : (p.hiddenCols || []),
       undo:        p.undoStack || [],
       redo:        p.redoStack || [],
+      labels:      p.labels ? JSON.parse(JSON.stringify(p.labels)) : null,
     })),
-    labels: JSON.parse(JSON.stringify(LABELS)),
   };
 }
 

@@ -16,6 +16,7 @@ function _emptyProject(name){
     hiddenCols:  [],   // serialised Set (array of ints)
     undoStack:   [],
     redoStack:   [],
+    labels:      null, // null → use DEFAULT_LABELS; object → project-specific tagset
   };
 }
 
@@ -56,6 +57,7 @@ function _saveActiveProject(){
     hiddenCols:  Array.from(state.hiddenCols),
     undoStack:   undo,
     redoStack:   redo,
+    labels:      JSON.parse(JSON.stringify(LABELS)),
   };
 }
 
@@ -72,6 +74,10 @@ function _loadActiveProject(){
   state.maxSents    = p.maxSents    || 0;
   state.hiddenCols  = new Set(p.hiddenCols || []);
   loadUndoState({ undo: p.undoStack || [], redo: p.redoStack || [] });
+  // Restore project-specific tagset (fall back to default when null)
+  LABELS = JSON.parse(JSON.stringify(p.labels || DEFAULT_LABELS || {}));
+  buildDeprelOptionsCache();
+  if(typeof _resetPopup === "function") _resetPopup();
 }
 
 // ── Public API ────────────────────────────────────────────────────────────────
