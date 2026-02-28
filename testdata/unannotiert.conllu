@@ -1,0 +1,25 @@
+# text = Der Hund beißt den Mann .
+# sent_id = 1
+1	Der	der	_	_	_	_	_	_	_
+2	Hund	Hund	_	_	_	_	_	_	_
+3	beißt	beißen	_	_	_	_	_	_	_
+4	den	der	_	_	_	_	_	_	_
+5	Mann	Mann	_	_	_	_	_	_	_
+6	.	.	_	_	_	_	_	_	_
+
+# text = Sie lächelt immer .
+# sent_id = 2
+1	Sie	sie	_	_	_	_	_	_	_
+2	lächelt	lächeln	_	_	_	_	_	_	_
+3	immer	immer	_	_	_	_	_	_	_
+4	.	.	_	_	_	_	_	_	_
+
+# text = Das schnelle Pferd gewinnt das Rennen .
+# sent_id = 3
+1	Das	der	_	_	_	_	_	_	_
+2	schnelle	schnell	_	_	_	_	_	_	_
+3	Pferd	Pferd	_	_	_	_	_	_	_
+4	gewinnt	gewinnen	_	_	_	_	_	_	_
+5	das	der	_	_	_	_	_	_	_
+6	Rennen	Rennen	_	_	_	_	_	_	_
+7	.	.	_	_	_	_	_	_	_

@@ -78,7 +78,8 @@ function _loadActiveProject(){
   // Restore project-specific tagset (fall back to default when null)
   LABELS = JSON.parse(JSON.stringify(p.labels || DEFAULT_LABELS || {}));
   buildDeprelOptionsCache();
-  if(typeof _resetPopup === "function") _resetPopup();
+  if(typeof _resetPopup       === "function") _resetPopup();
+  if(typeof _updateTagsetMeta === "function") _updateTagsetMeta();
 }
 
 // ── Public API ────────────────────────────────────────────────────────────────

@@ -86,6 +86,7 @@ window.LANG_DE = {
   'popup.reset':     'Zurücksetzen',
   'popup.hint':      'Tab/Shift+Tab · Enter schließt · r zurücksetzen',
   'popup.root':      '(root)',
+  'popup.unset':     '(kein Kopf)',
 
   // Export
   'export.conllu':     'Gold CoNLL-U herunterladen',
@@ -157,8 +158,12 @@ window.LANG_DE = {
   'kbd.copy':  'Kopieren',
 
   // Datei-Reihenfolge
-  'files.moveUp':   'Nach oben',
-  'files.moveDown': 'Nach unten',
+  'files.moveUp':     'Nach oben',
+  'files.moveDown':   'Nach unten',
+  'files.unlockEdit': 'Datei bearbeiten (entsperren)',
+  'files.lockEdit':   'Bearbeitung sperren',
+  'files.applyEdit':  'Übernehmen',
+  'files.cancelEdit': 'Abbrechen',
 
   // Autosave
   'autosave.found':   'Automatische Sicherung vom {date} gefunden.',
@@ -188,4 +193,23 @@ window.LANG_DE = {
   // Hilfe
   'help.unavailable': 'Hilfe nicht verfügbar.',
   'help.runScript':   'Bitte python make_readme_js.py ausführen und die Seite neu laden.',
+  'help.hintTitle':   'Diesen Abschnitt in der Hilfe öffnen',
+
+  // Text-to-Speech
+  'tts.speak':        '🔊 Vorlesen',
+  'tts.stop':         '⏹ Stoppen',
+  'tts.noSupport':    'TTS wird vom Browser nicht unterstützt.',
+  'kbd.tts':          'Vorlesen',
+
+  // Auto-weiter
+  'sent.autoAdvance': 'Auto-weiter',
+
+  // Massenoperationen
+  'sent.confirmAll':  '✓ Alle ohne Diffs bestätigen',
+  'sent.flagDiffs':   '⚑ Alle Diffs markieren',
+  'sent.unflagAll':   '⚑ Markierungen löschen',
+
+  // Plain CoNLL-U Ansicht
+  'plain.toggle':     '📄 Rohdaten',
+  'plain.toggleOff':  '📄 Rohdaten ausblenden',
 };

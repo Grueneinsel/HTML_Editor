@@ -33,6 +33,15 @@ const tagsetInput       = document.getElementById("tagsetInput");
 const tagsetDownloadBtn = document.getElementById("tagsetDownloadBtn");
 const tagsetMeta        = document.getElementById("tagsetMeta");
 
+const ttsBtn        = document.getElementById("ttsBtn");
+const autoAdvanceCb = document.getElementById("autoAdvanceCb");
+const confirmAllBtn = document.getElementById("confirmAllBtn");
+const flagDiffsBtn  = document.getElementById("flagDiffsBtn");
+const unflagAllBtn  = document.getElementById("unflagAllBtn");
+
+// Tracks which file keys currently have their source editor open
+const _editingFiles = new Set();
+
 // ── Events ─────────────────────────────────────────────────────────────────────
 fileInput.addEventListener("change", onFilesChosen);
 resetBtn.addEventListener("click", resetProject);
@@ -59,15 +68,21 @@ function applyTagsetJson(data){
   const p = state.projects[state.activeProjectIdx];
   if(p) p.labels = JSON.parse(JSON.stringify(LABELS));
   renderSentence();
-  // Show a summary of loaded label counts in the tagset meta area
-  const deprelCount = Object.keys(LABELS)
-    .filter(k => !k.startsWith("__"))
-    .reduce((s, k) => s + (LABELS[k]?.length || 0), 0);
-  if(tagsetMeta) tagsetMeta.textContent = t("tagset.loaded", {
-    deprel: deprelCount,
-    upos: (LABELS["__upos__"] || []).length,
-    xpos: (LABELS["__xpos__"] || []).length,
-  });
+  _updateTagsetMeta();
+}
+
+// Update the tagset-meta display line with counts from the currently active LABELS.
+// Works for both old (__upos__/__xpos__) and new (__cols__/__dep_cols__) formats.
+function _updateTagsetMeta(){
+  if(!tagsetMeta) return;
+  // Deprel count: sum of value-set sizes across all dep columns.
+  const totalDeprels = DEP_COLS.reduce((sum, dc) => sum + (dc.valueSet?.size ?? 0), 0);
+  // Label column counts: prefer __cols__ array, fall back to __upos__/__xpos__.
+  const cols = LABELS["__cols__"];
+  const col0 = Array.isArray(cols) ? (cols[0]?.values?.length ?? 0) : (LABELS["__upos__"]?.length ?? 0);
+  const col1 = Array.isArray(cols) ? (cols[1]?.values?.length ?? 0) : (LABELS["__xpos__"]?.length ?? 0);
+  if(totalDeprels === 0 && col0 === 0 && col1 === 0){ tagsetMeta.textContent = ""; return; }
+  tagsetMeta.textContent = t("tagset.loaded", { deprel: totalDeprels, upos: col0, xpos: col1 });
 }
 
 /**
@@ -209,6 +224,9 @@ function renderFiles(){
   }
   const warnedIndices = getWarnedDocIndices();
   state.docs.forEach((d, idx) => {
+    const wrapper = document.createElement("div");
+    wrapper.className = "fileItemWrapper";
+
     const div = document.createElement("div");
     div.className = "fileItem";
 
@@ -235,6 +253,20 @@ function renderFiles(){
     // Right column: action buttons
     const actions = document.createElement("div");
     actions.className = "fileActions";
+
+    // Lock / unlock source edit button (first in actions row)
+    const isEditing = _editingFiles.has(d.key);
+    const lockBtn = document.createElement("button");
+    lockBtn.className = "fileLockBtn" + (isEditing ? " fileLockOpen" : "");
+    lockBtn.textContent = isEditing ? "🔓" : "🔒";
+    lockBtn.title = t(isEditing ? 'files.lockEdit' : 'files.unlockEdit');
+    lockBtn.addEventListener("click", () => {
+      if(_editingFiles.has(d.key)) _editingFiles.delete(d.key);
+      else _editingFiles.add(d.key);
+      renderFiles();
+      renderSentence();
+    });
+    actions.appendChild(lockBtn);
 
     // Download source file button
     const dlBtn = document.createElement("button");
@@ -305,7 +337,52 @@ function renderFiles(){
     actions.appendChild(delBtn);
 
     div.appendChild(actions);
-    fileList.appendChild(div);
+    wrapper.appendChild(div);
+
+    // Source editor (shown when file is unlocked for editing)
+    if(isEditing){
+      const editWrap = document.createElement("div");
+      editWrap.className = "fileEditWrap";
+
+      const ta = document.createElement("textarea");
+      ta.className = "fileEditTa";
+      ta.value = d.content || "";
+      ta.spellcheck = false;
+      editWrap.appendChild(ta);
+
+      const btnRow = document.createElement("div");
+      btnRow.className = "fileEditBtns";
+
+      const applyBtn = document.createElement("button");
+      applyBtn.textContent = t('files.applyEdit');
+      applyBtn.addEventListener("click", () => {
+        pushUndo();
+        const newContent = ta.value;
+        const parsed = parseConllu(newContent);
+        d.content  = newContent;
+        d.sentences = parsed.sentences;
+        _editingFiles.delete(d.key);
+        recomputeMaxSents();
+        state.currentSent = Math.min(state.currentSent, Math.max(0, state.maxSents - 1));
+        renderFiles();
+        renderSentSelect();
+        renderSentence();
+      });
+      btnRow.appendChild(applyBtn);
+
+      const cancelBtn = document.createElement("button");
+      cancelBtn.textContent = t('files.cancelEdit');
+      cancelBtn.addEventListener("click", () => {
+        _editingFiles.delete(d.key);
+        renderFiles();
+      });
+      btnRow.appendChild(cancelBtn);
+
+      editWrap.appendChild(btnRow);
+      wrapper.appendChild(editWrap);
+    }
+
+    fileList.appendChild(wrapper);
   });
 
   textWarn.innerHTML = warnedIndices.size > 0
@@ -343,7 +420,7 @@ document.addEventListener("drop", (e) => {
 
 // Rebuild the sentence navigation controls and "init custom from doc" buttons.
 function renderSentSelect(){
-  const ok = state.docs.length >= 2 && state.maxSents > 0;
+  const ok = state.docs.length >= 1 && state.maxSents > 0;
   sentSelect.disabled = !ok;
   prevBtn.disabled = !ok;
   nextBtn.disabled = !ok;
@@ -383,14 +460,30 @@ function _sentStats(i){
 }
 
 // Toggle the confirmed state for the current sentence.
+// When confirming (not unconfirming) and auto-advance is on, jump to the next
+// unconfirmed sentence automatically.
 function toggleConfirm(){
-  if(state.docs.length < 2) return;
+  if(state.docs.length < 1) return;
   pushUndo();
   const i = state.currentSent;
-  if(state.confirmed.has(i)) state.confirmed.delete(i);
-  else state.confirmed.add(i);
+  const wasConfirmed = state.confirmed.has(i);
+  if(wasConfirmed){
+    state.confirmed.delete(i);
+  } else {
+    state.confirmed.add(i);
+  }
   updateConfirmBtn();
   renderSentSelectOptions();
+  // Auto-advance: after confirming, jump to the next unconfirmed sentence.
+  if(!wasConfirmed && _autoAdvance){
+    for(let j = state.currentSent + 1; j < state.maxSents; j++){
+      if(!state.confirmed.has(j)){
+        state.currentSent = j;
+        renderSentence();
+        return;
+      }
+    }
+  }
 }
 
 // Update the confirm button's label and active CSS class to reflect current state.
@@ -403,7 +496,7 @@ function updateConfirmBtn(){
 
 // Rebuild all <option> elements in the sentence <select> dropdown with diff/flag styling.
 function renderSentSelectOptions(){
-  if(state.docs.length < 2 || state.maxSents === 0) return;
+  if(state.docs.length < 1 || state.maxSents === 0) return;
   sentSelect.innerHTML = "";
   for(let i=0;i<state.maxSents;i++){
     const stats = _sentStats(i);
@@ -452,7 +545,7 @@ function renderSentSelectOptions(){
 // Update the progress counter showing how many sentences are confirmed.
 function _updateProgressMeta(){
   if(!progressMeta) return;
-  if(state.docs.length < 2 || state.maxSents === 0){ progressMeta.textContent = ""; return; }
+  if(state.docs.length < 1 || state.maxSents === 0){ progressMeta.textContent = ""; return; }
   progressMeta.textContent = t('sent.progress', {
     done:  state.confirmed.size,
     total: state.maxSents,
@@ -462,7 +555,7 @@ function _updateProgressMeta(){
 // Show or hide the sentence note textarea and load the note for the current sentence.
 function _updateSentNote(){
   if(!sentNote || !sentNoteRow) return;
-  const ok = state.docs.length >= 2 && state.maxSents > 0;
+  const ok = state.docs.length >= 1 && state.maxSents > 0;
   sentNoteRow.style.display = ok ? "" : "none";
   if(ok){
     sentNote.value = state.notes[state.currentSent] ?? "";
@@ -473,7 +566,7 @@ function _updateSentNote(){
 // Re-render the minimap of sentence dots below the sentence selector.
 function renderSentMap(){
   if(!sentMap) return;
-  if(state.docs.length < 2 || state.maxSents === 0){ sentMap.innerHTML = ""; return; }
+  if(state.docs.length < 1 || state.maxSents === 0){ sentMap.innerHTML = ""; return; }
   sentMap.innerHTML = "";
   for(let i=0;i<state.maxSents;i++){
     const stats = _sentStats(i);
@@ -581,7 +674,13 @@ function clearCustomForSentence(){
 
 // Re-render the entire sentence view: sentence text, stats, table, trees, note.
 function renderSentence(){
-  const ok = state.docs.length >= 2 && state.maxSents > 0;
+  // Stop any running TTS when the displayed sentence changes.
+  stopTts();
+  const ok = state.docs.length >= 1 && state.maxSents > 0;
+  if(ttsBtn)        ttsBtn.disabled        = !ok;
+  if(confirmAllBtn) confirmAllBtn.disabled = !ok;
+  if(flagDiffsBtn)  flagDiffsBtn.disabled  = !ok;
+  if(unflagAllBtn)  unflagAllBtn.disabled  = !ok;
   if(!ok){
     sentText.textContent = "";
     sentMeta.textContent = "";
@@ -590,6 +689,7 @@ function renderSentence(){
     cmpTable.innerHTML = "";
     colToggleBar.innerHTML = "";
     _updateSentNote();
+    renderPlainView();
     return;
   }
 
@@ -612,6 +712,66 @@ function renderSentence(){
   renderSentSelectOptions();
   renderPreview();
   _updateSentNote();
+  renderPlainView();
+}
+
+// ── Plain CoNLL-U view ─────────────────────────────────────────────────────────
+
+let _plainViewOpen = localStorage.getItem('plain-view') === 'true';
+
+// Build and return the raw CoNLL-U lines for a single parsed sentence.
+function _sentToConlluLines(sent){
+  const lines = [];
+  for(const c of (sent.comments || [])) lines.push(c);
+  for(const tk of (sent.tokens || [])){
+    const before = (sent.extras || []).filter(e => e.insertBefore === tk.id);
+    for(const e of before) lines.push(e.raw);
+    lines.push([
+      tk.id, tk.form || "_", tk.lemma || "_",
+      tk.upos || "_", tk.xpos || "_", tk.feats || "_",
+      tk.head == null ? "_" : tk.head,
+      tk.deprel || "_", tk.deps || "_", tk.misc || "_",
+    ].join("\t"));
+  }
+  return lines;
+}
+
+// Re-render the plain CoNLL-U view panel (only when open).
+function renderPlainView(){
+  const pv = document.getElementById("plainView");
+  const btn = document.getElementById("plainViewToggle");
+  if(!pv) return;
+  if(btn){
+    btn.textContent = _plainViewOpen ? t('plain.toggleOff') : t('plain.toggle');
+    btn.classList.toggle("plainViewToggleActive", _plainViewOpen);
+  }
+  if(!_plainViewOpen){ pv.innerHTML = ""; return; }
+
+  const sentIndex = state.currentSent;
+  if(state.docs.length === 0 || state.maxSents === 0){ pv.innerHTML = ""; return; }
+
+  let html = `<div class="pvWrap">`;
+
+  for(const doc of state.docs){
+    const sent = doc.sentences[sentIndex];
+    const raw = sent ? _sentToConlluLines(sent).join("\n") : t('sent.missing');
+    html += `<div class="pvBlock">
+      <div class="pvTitle">${escapeHtml(doc.name)}</div>
+      <pre class="pvPre">${escapeHtml(raw)}</pre>
+    </div>`;
+  }
+
+  html += `</div>`;
+  pv.innerHTML = html;
+}
+
+const _pvToggleBtn = document.getElementById("plainViewToggle");
+if(_pvToggleBtn){
+  _pvToggleBtn.addEventListener("click", () => {
+    _plainViewOpen = !_plainViewOpen;
+    localStorage.setItem("plain-view", String(_plainViewOpen));
+    renderPlainView();
+  });
 }
 
 // ── Clipboard copy ─────────────────────────────────────────────────────────────
@@ -675,10 +835,106 @@ async function loadExamples(){
   await processFiles(files);
 }
 
+// ── TTS (Browser Text-To-Speech) ───────────────────────────────────────────────
+
+let _ttsActive = false;
+
+// Speak the current sentence text using the Web Speech API.
+function speakSentence(){
+  if(!window.speechSynthesis){ alert(t('tts.noSupport')); return; }
+  if(_ttsActive){ stopTts(); return; }
+  const s0 = state.docs[0]?.sentences?.[state.currentSent];
+  if(!s0) return;
+  // Prefer # text metadata; fall back to space-joined token forms.
+  const text = s0.text || s0.tokens.map(tk => tk.form).join(' ');
+  const lang = (typeof getLang === 'function' && getLang() === 'en') ? 'en-US' : 'de-DE';
+  const utt  = new SpeechSynthesisUtterance(text);
+  utt.lang   = lang;
+  utt.onend  = utt.onerror = () => { _ttsActive = false; _updateTtsBtn(); };
+  _ttsActive = true;
+  _updateTtsBtn();
+  window.speechSynthesis.speak(utt);
+}
+
+// Stop any ongoing TTS playback.
+function stopTts(){
+  if(window.speechSynthesis) window.speechSynthesis.cancel();
+  _ttsActive = false;
+  _updateTtsBtn();
+}
+
+// Sync the TTS button label and active CSS class with the current TTS state.
+function _updateTtsBtn(){
+  if(!ttsBtn) return;
+  ttsBtn.textContent = _ttsActive ? t('tts.stop') : t('tts.speak');
+  ttsBtn.classList.toggle('ttsActive', _ttsActive);
+}
+
+if(ttsBtn){
+  ttsBtn.addEventListener('click', speakSentence);
+}
+
+// ── Auto-advance after confirm ─────────────────────────────────────────────────
+
+let _autoAdvance = localStorage.getItem('auto-advance') === 'true';
+
+// Persist auto-advance preference and keep the checkbox in sync.
+function _initAutoAdvance(){
+  if(!autoAdvanceCb) return;
+  autoAdvanceCb.checked = _autoAdvance;
+  autoAdvanceCb.addEventListener('change', () => {
+    _autoAdvance = autoAdvanceCb.checked;
+    localStorage.setItem('auto-advance', String(_autoAdvance));
+  });
+}
+
+// ── Bulk actions ───────────────────────────────────────────────────────────────
+
+// Confirm every sentence that currently has zero diffs.
+function confirmAllMatching(){
+  if(state.docs.length < 1 || state.maxSents === 0) return;
+  pushUndo();
+  for(let i = 0; i < state.maxSents; i++){
+    if(!state.confirmed.has(i) && _sentStats(i).diffCount === 0){
+      state.confirmed.add(i);
+    }
+  }
+  renderSentence();
+}
+
+// Flag the first token (id=1) of every sentence that has diffs, so they are
+// easy to identify and jump to with the f/F shortcut.
+function flagAllDiffs(){
+  if(state.docs.length < 1 || state.maxSents === 0) return;
+  pushUndo();
+  for(let i = 0; i < state.maxSents; i++){
+    if(_sentStats(i).diffCount > 0){
+      if(!state.flags[i]) state.flags[i] = new Set();
+      // Flag token 1 as a representative marker for the whole sentence.
+      const firstId = state.docs[0]?.sentences?.[i]?.tokens?.[0]?.id ?? 1;
+      state.flags[i].add(firstId);
+    }
+  }
+  renderSentence();
+}
+
+// Remove all manual flags across all sentences.
+function unflagAll(){
+  if(state.docs.length < 1) return;
+  pushUndo();
+  state.flags = {};
+  renderSentence();
+}
+
+if(confirmAllBtn) confirmAllBtn.addEventListener('click', confirmAllMatching);
+if(flagDiffsBtn)  flagDiffsBtn.addEventListener('click',  flagAllDiffs);
+if(unflagAllBtn)  unflagAllBtn.addEventListener('click',  unflagAll);
+
 // ── Init ───────────────────────────────────────────────────────────────────────
 buildDeprelOptionsCache();
 DEFAULT_LABELS = JSON.parse(JSON.stringify(LABELS)); // snapshot before any project overrides
 initProjects();
+_initAutoAdvance();   // restore auto-advance checkbox from localStorage
 renderFiles();
 renderSentSelect();
 renderSentence();

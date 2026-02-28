@@ -75,13 +75,21 @@ function renderCompareTable(){
     </span>
   `;
 
+  const anyUnlocked = (typeof _editingFiles !== 'undefined') &&
+    state.docs.some(d => _editingFiles.has(d.key));
+
   let html = "<thead><tr>";
   html += `<th>${t('col.id')}</th><th>${t('col.form')}</th>`;
   for(const col of LABEL_COLS) html += `<th>${escapeHtml(col.name)}</th>`;
+  if(anyUnlocked){
+    html += `<th>${escapeHtml(t('popup.head'))}</th><th>${escapeHtml(t('popup.deprel'))}</th>`;
+  }
   html += `<th>${t('col.gold')}</th>`;
-  for(let i=0; i<state.docs.length; i++){
-    if(state.hiddenCols.has(i)) continue;
-    html += `<th>${escapeHtml(state.docs[i].name)}</th>`;
+  if(state.docs.length >= 2){
+    for(let i=0; i<state.docs.length; i++){
+      if(state.hiddenCols.has(i)) continue;
+      html += `<th>${escapeHtml(state.docs[i].name)}</th>`;
+    }
   }
   // Custom column removed — editing via Gold-cell popup
   html += "</tr></thead><tbody>";
@@ -129,33 +137,46 @@ function renderCompareTable(){
       html += `<td class="posCell${customColVal ? ' posCustom' : ''}${colDiff ? ' posDiff' : ''}" title="${escapeHtml(col.name)}">${colEl}</td>`;
     }
 
+    // Inline HEAD / DEPREL cells — only when single file is in edit mode
+    if(anyUnlocked){
+      const hv = goldTok?.head;
+      const headVal = hv != null ? String(hv) : "";
+      html += `<td class="posCell"><input type="number" min="0" class="posInlineInput headInlineInput" data-col="head" value="${escapeHtml(headVal)}" placeholder="HEAD"></td>`;
+      html += `<td class="posCell"><select class="posInlineSelect deprelInlineSelect" data-col="deprel"><option value=""></option>${DEPREL_OPTIONS_HTML}</select></td>`;
+    }
+
     // Gold column — HEAD/DEPREL + label col summary line
-    const goldSrc = customExists ? '<span class="srcTag srcCustom">C</span>' :
-      `<span class="srcTag srcDoc">D${getDocChoice(sentIndex,id)+1}</span>`;
+    // Source tag (D1/C) only shown when comparing 2+ files
+    const goldSrc = state.docs.length >= 2
+      ? (customExists ? '<span class="srcTag srcCustom">C</span>'
+          : `<span class="srcTag srcDoc">D${getDocChoice(sentIndex,id)+1}</span>`)
+      : '';
     const posLineHtml = LABEL_COLS.map(col => escapeHtml(goldTok?.[col.key] ?? "_")).join('·');
     html += `<td data-col="gold" class="goldCell goldEditable" title="${escapeHtml(t('popup.editTitle'))}">${goldSrc} ${escapeHtml(goldVal)}` +
       `<div class="posLine">${posLineHtml}</div></td>`;
 
-    // Per-file columns — HEAD/DEPREL + dynamic label cols with per-field diff coloring
-    for(let i=0; i<state.docs.length; i++){
-      if(state.hiddenCols.has(i)) continue;
-      const v          = allVals[i];
-      const clsDisabled = customExists ? "disabledPick" : "";
-      const clsPicked   = (!customExists && i === getDocChoice(sentIndex, id)) ? "picked" : "";
-      if(v === null){
-        html += `<td data-col="doc${i}" data-doc-idx="${i}" class="pickable ${clsDisabled} ${clsPicked}">—</td>`;
-      } else {
-        const hdOk      = goldTok && v.hd === goldVal;
-        const labelsOk  = LABEL_COLS.every(col => !goldTok || v[col.key] === (goldTok[col.key] ?? "_"));
-        const clsCmp    = goldTok ? (hdOk && labelsOk ? "same" : "diff") : "";
-        const labelSpans = LABEL_COLS.map(col => {
-          const gv = goldTok?.[col.key] ?? "_";
-          const ok = goldTok && v[col.key] === gv;
-          return `<span class="${ok ? '' : 'fDiff'}">${escapeHtml(v[col.key] ?? "_")}</span>`;
-        }).join('·');
-        html += `<td data-col="doc${i}" data-doc-idx="${i}" class="pickable ${clsCmp} ${clsDisabled} ${clsPicked}">` +
-          `<div class="${hdOk ? '' : 'fDiff'}">${escapeHtml(v.hd)}</div>` +
-          `<div class="posLine">${labelSpans}</div></td>`;
+    // Per-file columns — only rendered when 2+ docs are loaded
+    if(state.docs.length >= 2){
+      for(let i=0; i<state.docs.length; i++){
+        if(state.hiddenCols.has(i)) continue;
+        const v          = allVals[i];
+        const clsDisabled = customExists ? "disabledPick" : "";
+        const clsPicked   = (!customExists && i === getDocChoice(sentIndex, id)) ? "picked" : "";
+        if(v === null){
+          html += `<td data-col="doc${i}" data-doc-idx="${i}" class="pickable ${clsDisabled} ${clsPicked}">—</td>`;
+        } else {
+          const hdOk      = goldTok && v.hd === goldVal;
+          const labelsOk  = LABEL_COLS.every(col => !goldTok || v[col.key] === (goldTok[col.key] ?? "_"));
+          const clsCmp    = goldTok ? (hdOk && labelsOk ? "same" : "diff") : "";
+          const labelSpans = LABEL_COLS.map(col => {
+            const gv = goldTok?.[col.key] ?? "_";
+            const ok = goldTok && v[col.key] === gv;
+            return `<span class="${ok ? '' : 'fDiff'}">${escapeHtml(v[col.key] ?? "_")}</span>`;
+          }).join('·');
+          html += `<td data-col="doc${i}" data-doc-idx="${i}" class="pickable ${clsCmp} ${clsDisabled} ${clsPicked}">` +
+            `<div class="${hdOk ? '' : 'fDiff'}">${escapeHtml(v.hd)}</div>` +
+            `<div class="posLine">${labelSpans}</div></td>`;
+        }
       }
     }
 
@@ -171,6 +192,9 @@ function renderCompareTable(){
     const gt = goldMap.get(id);
     for(const col of LABEL_COLS){
       _setPosEl(tr, col.key, gt?.[col.key] ?? "_");
+    }
+    if(anyUnlocked){
+      _setPosEl(tr, "deprel", gt?.deprel ?? "_");
     }
   }
 
@@ -369,7 +393,7 @@ function _setSelectOrInput(eid, value){
 function _buildHeadDropdown(selId, goldTok, headField){
   const sel = document.getElementById(selId);
   if(!sel) return;
-  sel.innerHTML = `<option value="0">0 — ${t('popup.root')}</option>`;
+  sel.innerHTML = `<option value="">${t('popup.unset')}</option><option value="0">0 — ${t('popup.root')}</option>`;
   for(const id of _lastIdList){
     let f = "?";
     for(const m of _lastDocMaps){ const tok = m.get(id); if(tok){ f = tok.form; break; } }
@@ -378,7 +402,7 @@ function _buildHeadDropdown(selId, goldTok, headField){
     sel.appendChild(opt);
   }
   const hv = goldTok?.[headField];
-  sel.value = hv != null ? String(hv) : "0";
+  sel.value = hv != null ? String(hv) : "";
 }
 
 // Fill all popup fields with the current gold values for the given token.
@@ -403,9 +427,10 @@ function _populatePopup(tokId){
     _setSelectOrInput(`gpDeprel_${dc.key}`, goldTok?.[dc.deprelField] ?? "");
   }
 
-  // Label cols
+  // Label cols — treat "_" (CoNLL-U null marker) and null as empty/unset
   for(const col of LABEL_COLS){
-    _setSelectOrInput(`gpLabelCol_${col.key}`, goldTok?.[col.key] ?? "_");
+    const cv = goldTok?.[col.key];
+    _setSelectOrInput(`gpLabelCol_${col.key}`, (cv == null || cv === "_") ? "" : cv);
   }
 }
 
@@ -463,19 +488,23 @@ cmpTable.addEventListener("click", (e) => {
 
 // Set the value of an inline label select or input within a table row.
 // Injects a temporary option when the value is not in the predefined list.
+// "_" (CoNLL-U null marker) is treated as empty/unset in the UI.
 function _setPosEl(tr, field, value){
   const el = tr.querySelector(`[data-col="${field}"]`);
   if(!el) return;
+  // Treat CoNLL-U null marker "_" and null/undefined as empty (the blank option)
+  const displayVal = (value == null || value === "_") ? "" : String(value);
   if(el.tagName === "SELECT"){
-    el.value = value;
-    if(el.value !== String(value)){
+    el.querySelector("option[data-extra]")?.remove();
+    el.value = displayVal;
+    if(displayVal && el.value !== displayVal){
       const opt = document.createElement("option");
-      opt.value = String(value); opt.textContent = String(value); opt.dataset.extra = "1";
+      opt.value = displayVal; opt.textContent = displayVal; opt.dataset.extra = "1";
       el.insertBefore(opt, el.firstChild);
-      el.value = String(value);
+      el.value = displayVal;
     }
   } else {
-    el.value = value;
+    el.value = displayVal;
   }
 }
 
@@ -483,12 +512,20 @@ function _setPosEl(tr, field, value){
 cmpTable.addEventListener("change", (e) => {
   const el = e.target;
   const field = el.dataset?.col;
-  if(!LABEL_COLS.some(col => col.key === field)) return;
+  const isLabelCol   = LABEL_COLS.some(col => col.key === field);
+  const isInlineHead = field === "head"   && el.classList.contains("headInlineInput");
+  const isInlineDep  = field === "deprel" && el.classList.contains("deprelInlineSelect");
+  if(!isLabelCol && !isInlineHead && !isInlineDep) return;
   const tr = el.closest("tr[data-id]");
   if(!tr) return;
   const tokId = parseInt(tr.dataset.id, 10);
   const raw = el.value.trim();
-  const val = (raw === "" || raw === "_") ? null : raw;
+  let val;
+  if(isInlineHead){
+    val = raw === "" ? null : (parseInt(raw, 10) >= 0 ? parseInt(raw, 10) : null);
+  } else {
+    val = (raw === "" || raw === "_") ? null : raw;
+  }
   pushUndo();
   setCustomField(state.currentSent, tokId, field, val);
   el.blur();

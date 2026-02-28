@@ -334,6 +334,7 @@ td select.posInlineSelect:focus, td input.posInlineInput:focus{
   border-radius:6px !important;
 }
 td input.posInlineInput{ cursor:text !important; }
+td input.headInlineInput{ width:4.5em !important; text-align:center !important; }
 .rowDiff td:first-child{ border-left:3px solid #ff5f5f44 }
 .rowFlagged{ background:rgba(255,145,0,0.06) !important; }
 .rowFlagged td:first-child{ border-left:3px solid #ff910066 !important; }
@@ -475,6 +476,26 @@ tr.keyFocus > td:first-child{ border-left:2px solid var(--accent) }
   max-width:110px; cursor:pointer;
 }
 .fileWarnIcon{ font-size:13px; vertical-align:middle; margin-left:4px; cursor:default }
+.fileItemWrapper{ display:flex; flex-direction:column; gap:4px; }
+.fileLockBtn{
+  background:transparent; border:1px solid var(--line); border-radius:5px;
+  font-size:13px; padding:2px 5px; cursor:pointer; opacity:.55;
+  transition:opacity .15s, border-color .15s;
+}
+.fileLockBtn:hover,.fileLockOpen{ opacity:1; border-color:var(--accent); }
+.fileEditWrap{
+  display:flex; flex-direction:column; gap:6px;
+  padding:8px 10px; background:var(--bg);
+  border:1px solid var(--accent); border-radius:8px;
+}
+.fileEditTa{
+  width:100%; min-height:180px; max-height:420px; resize:vertical;
+  font-family:var(--mono); font-size:11.5px; line-height:1.5;
+  background:var(--card); color:var(--text);
+  border:1px solid var(--line); border-radius:6px;
+  padding:8px; box-sizing:border-box;
+}
+.fileEditBtns{ display:flex; gap:6px; }
 
 /* Tree blocks */
 .treeGrid{
@@ -771,6 +792,73 @@ html[data-theme="light"] .projectTabActive{ background:#fff; border-color:#3a7fc
 .globalResetBtn:hover{ background:rgba(200,50,50,0.12) !important; border-color:#c05050 !important; }
 html[data-theme="light"] .globalResetBtn{ border-color:#c05050 !important; color:#b02020 !important; }
 html[data-theme="light"] .globalResetBtn:hover{ background:rgba(200,50,50,0.1) !important; }
+
+/* ── ? help-hint buttons inside section headings ── */
+.helpHintBtn{
+  display:inline-flex; align-items:center; justify-content:center;
+  width:16px; height:16px; border-radius:50%;
+  font-size:10px; font-weight:800; line-height:1;
+  padding:0; margin-left:6px; vertical-align:middle;
+  border:1px solid var(--line2); background:var(--bg-control);
+  color:var(--muted); cursor:pointer; opacity:.6;
+  transition: opacity .1s, border-color .1s, color .1s;
+}
+.helpHintBtn:hover{ opacity:1; border-color:var(--accent); color:var(--accent); }
+
+/* ── TTS button ── */
+.ttsBtn{
+  border-color:#1a3a2a; background:#0b1e15; color:#6dce8a;
+}
+.ttsBtn:hover:not(:disabled){ border-color:#3de89a; background:#0f2a1a; }
+.ttsActive{
+  border-color:#3de89a !important; background:#0f2a1a !important;
+  color:#3de89a !important; animation: ttsPulse 1.2s ease-in-out infinite;
+}
+@keyframes ttsPulse{
+  0%,100%{ box-shadow:0 0 0 0 #3de89a33 }
+  50%    { box-shadow:0 0 0 6px #3de89a00 }
+}
+
+/* ── Auto-advance checkbox row ── */
+.autoAdvanceRow{
+  display:flex; align-items:center; gap:5px;
+  font-size:11px; color:var(--muted); cursor:pointer; user-select:none;
+}
+.autoAdvanceRow input[type=checkbox]{
+  width:14px; height:14px; accent-color:var(--accent);
+  cursor:pointer; border-radius:3px; padding:0;
+}
+
+/* ── Bulk action buttons row ── */
+.bulkRow{
+  display:flex; gap:6px; align-items:center; flex-wrap:wrap;
+  margin-top:6px; padding-top:6px;
+  border-top:1px solid var(--line);
+}
+
+/* ── Plain CoNLL-U view ── */
+.plainViewToggle{
+  font-size:12px; padding:4px 8px; border-radius:6px;
+  border:1px solid var(--line); background:transparent;
+  color:var(--muted); cursor:pointer; transition:border-color .15s, color .15s;
+}
+.plainViewToggle:hover,.plainViewToggleActive{
+  border-color:var(--accent); color:var(--text);
+}
+.plainView{ margin-top:10px; }
+.pvWrap{ display:flex; flex-direction:column; gap:10px; }
+.pvBlock{ display:flex; flex-direction:column; gap:4px; }
+.pvTitle{
+  font-size:11px; font-weight:700; color:var(--muted);
+  text-transform:uppercase; letter-spacing:.04em;
+}
+.pvPre{
+  margin:0; padding:8px 10px;
+  font-family:var(--mono); font-size:11.5px; line-height:1.55;
+  background:var(--bg); color:var(--text);
+  border:1px solid var(--line); border-radius:6px;
+  overflow-x:auto; white-space:pre;
+}
 
 /* POS edit cells */
 .posEditCell { padding: 4px 6px !important; }

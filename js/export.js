@@ -407,8 +407,7 @@ function _autoSave(){
 // Run autosave every 30 seconds.
 setInterval(_autoSave, 30_000);
 
-// On startup, check for a v1 autosave and show a restore banner if found.
-// v2 sessions are imported normally via the file dispatcher.
+// On startup, check for an autosave (v1 or v2) and show a restore banner if found.
 function _tryAutoSaveRestore(){
   let raw;
   try { raw = localStorage.getItem(AUTOSAVE_KEY); } catch { return; }
@@ -416,14 +415,16 @@ function _tryAutoSaveRestore(){
 
   let data;
   try { data = JSON.parse(raw); } catch { return; }
-  // Only offer restore for v1 snapshots; v2 format is handled by normal import
-  if(!data || data.version !== 1 || !Array.isArray(data.docs) || !data.docs.length) return;
+
+  // Accept both v1 (single-project) and v2 (multi-project) autosaves.
+  const isV1 = data?.version === 1 && Array.isArray(data.docs) && data.docs.length > 0;
+  const isV2 = data?.version === 2 && Array.isArray(data.projects)
+               && data.projects.some(p => Array.isArray(p.docs) && p.docs.length > 0);
+  if(!isV1 && !isV2) return;
 
   // Format the saved date for display
   let dateStr = data.savedAt || "";
-  try {
-    dateStr = new Date(dateStr).toLocaleString();
-  } catch { /* keep raw */ }
+  try { dateStr = new Date(dateStr).toLocaleString(); } catch { /* keep raw */ }
 
   const banner = document.getElementById("autosaveBanner");
   if(!banner) return;

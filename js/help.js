@@ -56,6 +56,25 @@ function closeHelp(){
   helpModal.classList.remove("active");
 }
 
+// Open the help modal and scroll to the section whose heading contains the
+// translated label of the given i18n key (e.g. 'sec.files' → 'Dateien').
+function openHelpSection(sectionKey){
+  openHelp();
+  // Use a short delay so the modal content is fully rendered before scrolling.
+  setTimeout(() => {
+    // Derive a short keyword from the translated section label.
+    // Strip leading "N) " prefix (e.g. "1) Dateien" → "Dateien").
+    const label = t(sectionKey).replace(/^\d+\)\s*/, '').trim().toLowerCase();
+    const headings = helpContent.querySelectorAll('h1.helpH, h2.helpH, h3.helpH');
+    for(const h of headings){
+      if(h.textContent.trim().toLowerCase().includes(label)){
+        h.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        break;
+      }
+    }
+  }, 80);
+}
+
 // ── Markdown → HTML renderer ───────────────────────────────────────────────────
 
 // Convert a Markdown string to an HTML string.

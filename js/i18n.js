@@ -62,9 +62,22 @@ function registerLang(code, dict){
 }
 
 // Apply translations to all elements that carry a data-i18n or data-i18n-title attribute.
+// When an element has child elements (e.g. a ? help button), only the leading text node
+// is updated so that child nodes are preserved.
 function applyI18n(){
   document.querySelectorAll('[data-i18n]').forEach(el => {
-    el.textContent = t(el.dataset.i18n);
+    const text = t(el.dataset.i18n);
+    if(el.children.length === 0){
+      el.textContent = text;
+    } else {
+      // Find or create the leading text node and update only that
+      let tn = null;
+      for(const node of el.childNodes){
+        if(node.nodeType === 3){ tn = node; break; }
+      }
+      if(tn) tn.nodeValue = text + " ";
+      else   el.insertBefore(document.createTextNode(text + " "), el.firstChild);
+    }
   });
   document.querySelectorAll('[data-i18n-title]').forEach(el => {
     el.title = t(el.dataset['i18nTitle']);

@@ -176,6 +176,12 @@ document.addEventListener("keydown", (e) => {
       break;
     }
 
+    // ── TTS: read current sentence aloud (toggle) ─────────────────────────────
+    case "r":
+      e.preventDefault();
+      if(typeof speakSentence === 'function') speakSentence();
+      break;
+
     // ── Copy current sentence as CoNLL-U to clipboard ─────────────────────────
     case "c":
       e.preventDefault();

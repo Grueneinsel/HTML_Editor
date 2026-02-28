@@ -409,6 +409,7 @@ function renderPreview(){
     const otherMap = docMaps[i];
     const diff     = renderTreeDiff(sentIndex, goldMap, otherMap, sentenceText);
     const docIdx   = i;
+    const fileUnlocked = (typeof _editingFiles !== 'undefined') && _editingFiles.has(state.docs[i]?.key);
 
     // File arc colors: green when matching gold, orange when head matches but deprel differs, blue when gold-only
     const fileArcColors = new Map();
@@ -421,10 +422,40 @@ function renderPreview(){
         fileArcColors.set(id, 'var(--file)');
     }
 
-    const section = buildTreeSection(`S${sentIndex + 1}: ${name}`, t('tree.vsGold'), diff, {
+    // When unlocked, use goldMap as arcMap so custom-edited arcs appear immediately after dragging.
+    // (Arc edits write to state.custom → goldMap; otherMap is the raw file and would stay blank.)
+    const sectionArcMap    = fileUnlocked ? goldMap     : otherMap;
+    const sectionArcColors = fileUnlocked ? goldArcColors : fileArcColors;
+
+    const section = buildTreeSection(`S${sentIndex + 1}: ${name}`, state.docs.length > 1 ? t('tree.vsGold') : null, diff, {
       tokenList,
-      arcMap: otherMap,
-      arcEdgeColors: fileArcColors,
+      arcMap: sectionArcMap,
+      arcEdgeColors: sectionArcColors,
+      ...(fileUnlocked ? {
+        arcOnSetHead: (depId, newHeadId) => {
+          pushUndo();
+          setCustomField(sentIndex, depId, 'head', newHeadId);
+          renderSentence();
+        },
+        arcOnDeleteArc: (depId) => {
+          pushUndo();
+          const rawEntry = state.custom[sentIndex]?.[depId];
+          const hasCustomHead = rawEntry?.head != null;
+          if(hasCustomHead){
+            setCustomField(sentIndex, depId, 'head',   null);
+            setCustomField(sentIndex, depId, 'deprel', null);
+          } else {
+            setCustomField(sentIndex, depId, 'head',   0);
+            setCustomField(sentIndex, depId, 'deprel', 'root');
+          }
+          renderSentence();
+        },
+        arcOnSetDeprel: (depId, deprel) => {
+          pushUndo();
+          setCustomField(sentIndex, depId, 'deprel', deprel);
+          renderSentence();
+        },
+      } : {}),
       onAdoptSubtree: (rootId) => {
         pushUndo();
         // Adopt the entire subtree from this file: clear custom overrides and point picks at docIdx
