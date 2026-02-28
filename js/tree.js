@@ -402,14 +402,17 @@ function renderPreview(){
       renderSentence();
     },
   });
-  wrap.appendChild(goldSection);
+  // In single-file unlocked mode the Gold and file section would be identical —
+  // skip the Gold section so the user only sees one editable diagram.
+  if(!(state.unlocked && state.docs.length === 1)){
+    wrap.appendChild(goldSection);
+  }
 
   for(let i=0; i<state.docs.length; i++){
     const name     = state.docs[i]?.name ?? t('tree.fileDefault', { n: i+1 });
     const otherMap = docMaps[i];
     const diff     = renderTreeDiff(sentIndex, goldMap, otherMap, sentenceText);
     const docIdx   = i;
-    const fileUnlocked = (typeof _editingFiles !== 'undefined') && _editingFiles.has(state.docs[i]?.key);
 
     // File arc colors: green when matching gold, orange when head matches but deprel differs, blue when gold-only
     const fileArcColors = new Map();
@@ -422,37 +425,29 @@ function renderPreview(){
         fileArcColors.set(id, 'var(--file)');
     }
 
-    // When unlocked, use goldMap as arcMap so custom-edited arcs appear immediately after dragging.
-    // (Arc edits write to state.custom → goldMap; otherMap is the raw file and would stay blank.)
-    const sectionArcMap    = fileUnlocked ? goldMap     : otherMap;
-    const sectionArcColors = fileUnlocked ? goldArcColors : fileArcColors;
-
     const section = buildTreeSection(`S${sentIndex + 1}: ${name}`, state.docs.length > 1 ? t('tree.vsGold') : null, diff, {
       tokenList,
-      arcMap: sectionArcMap,
-      arcEdgeColors: sectionArcColors,
-      ...(fileUnlocked ? {
+      arcMap: otherMap,
+      arcEdgeColors: fileArcColors,
+      // Arc editing: enabled when project is unlocked; writes directly to the file's token data
+      // (not state.custom) so each file section is independent.
+      ...(state.unlocked ? {
         arcOnSetHead: (depId, newHeadId) => {
           pushUndo();
-          setCustomField(sentIndex, depId, 'head', newHeadId);
+          const tok = state.docs[i].sentences[sentIndex]?.tokens.find(t => t.id === depId);
+          if(tok) tok.head = newHeadId;
           renderSentence();
         },
         arcOnDeleteArc: (depId) => {
           pushUndo();
-          const rawEntry = state.custom[sentIndex]?.[depId];
-          const hasCustomHead = rawEntry?.head != null;
-          if(hasCustomHead){
-            setCustomField(sentIndex, depId, 'head',   null);
-            setCustomField(sentIndex, depId, 'deprel', null);
-          } else {
-            setCustomField(sentIndex, depId, 'head',   0);
-            setCustomField(sentIndex, depId, 'deprel', 'root');
-          }
+          const tok = state.docs[i].sentences[sentIndex]?.tokens.find(t => t.id === depId);
+          if(tok){ tok.head = null; tok.deprel = "_"; }
           renderSentence();
         },
         arcOnSetDeprel: (depId, deprel) => {
           pushUndo();
-          setCustomField(sentIndex, depId, 'deprel', deprel);
+          const tok = state.docs[i].sentences[sentIndex]?.tokens.find(t => t.id === depId);
+          if(tok) tok.deprel = deprel;
           renderSentence();
         },
       } : {}),

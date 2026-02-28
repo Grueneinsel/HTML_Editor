@@ -39,9 +39,6 @@ const confirmAllBtn = document.getElementById("confirmAllBtn");
 const flagDiffsBtn  = document.getElementById("flagDiffsBtn");
 const unflagAllBtn  = document.getElementById("unflagAllBtn");
 
-// Tracks which file keys currently have their source editor open
-const _editingFiles = new Set();
-
 // ── Events ─────────────────────────────────────────────────────────────────────
 fileInput.addEventListener("change", onFilesChosen);
 resetBtn.addEventListener("click", resetProject);
@@ -146,14 +143,17 @@ if(sentNote){
 
 sentSelect.addEventListener("change", () => {
   state.currentSent = parseInt(sentSelect.value, 10) || 0;
+  _sentEditOpen = false;
   renderSentence();
 });
 prevBtn.addEventListener("click", () => {
   state.currentSent = Math.max(0, state.currentSent - 1);
+  _sentEditOpen = false;
   renderSentence();
 });
 nextBtn.addEventListener("click", () => {
   state.currentSent = Math.min(state.maxSents - 1, state.currentSent + 1);
+  _sentEditOpen = false;
   renderSentence();
 });
 
@@ -162,12 +162,44 @@ confirmBtn.addEventListener("click", toggleConfirm);
 if(copyConlluBtn) copyConlluBtn.addEventListener("click", copySentenceConllu);
 
 // Click on a token span in the sentence text → focus and scroll to its table row.
+// In unlocked mode handle insert/delete buttons; skip focus/scroll for inputs.
 sentText.addEventListener("click", (e) => {
+  // Insert button: add a new blank token before the given ID (0 = append)
+  const insBtn = e.target.closest(".sentInsertBtn");
+  if(insBtn){ _insertToken(parseInt(insBtn.dataset.before, 10)); return; }
+
+  // Delete button: remove the token with the given ID
+  const delBtn = e.target.closest(".sentDeleteBtn");
+  if(delBtn){ _deleteToken(parseInt(delBtn.dataset.id, 10)); return; }
+
+  if(e.target.tagName === "INPUT") return;
   const span = e.target.closest(".sentToken");
   if(!span) return;
   const tokId = parseInt(span.dataset.id, 10);
   setKeyFocus(tokId);
   cmpTable.closest(".card")?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+});
+
+// Auto-resize token form input as the user types.
+sentText.addEventListener("input", (e) => {
+  const inp = e.target.closest(".sentFormInput");
+  if(!inp) return;
+  inp.size = Math.max(1, inp.value.length || 1);
+});
+
+// On blur (change): write the new form into ALL docs for the current sentence.
+sentText.addEventListener("change", (e) => {
+  const inp = e.target.closest(".sentFormInput");
+  if(!inp || !state.unlocked) return;
+  const tokId  = parseInt(inp.dataset.id, 10);
+  const newForm = inp.value;
+  pushUndo();
+  for(const d of state.docs){
+    const s = d.sentences[state.currentSent];
+    if(!s) continue;
+    const tok = s.tokens.find(t => t.id === tokId);
+    if(tok) tok.form = newForm;
+  }
 });
 
 // Click on a file cell in the comparison table → choose that doc as gold for the token.
@@ -254,20 +286,6 @@ function renderFiles(){
     const actions = document.createElement("div");
     actions.className = "fileActions";
 
-    // Lock / unlock source edit button (first in actions row)
-    const isEditing = _editingFiles.has(d.key);
-    const lockBtn = document.createElement("button");
-    lockBtn.className = "fileLockBtn" + (isEditing ? " fileLockOpen" : "");
-    lockBtn.textContent = isEditing ? "🔓" : "🔒";
-    lockBtn.title = t(isEditing ? 'files.lockEdit' : 'files.unlockEdit');
-    lockBtn.addEventListener("click", () => {
-      if(_editingFiles.has(d.key)) _editingFiles.delete(d.key);
-      else _editingFiles.add(d.key);
-      renderFiles();
-      renderSentence();
-    });
-    actions.appendChild(lockBtn);
-
     // Download source file button
     const dlBtn = document.createElement("button");
     dlBtn.title = t('files.download');
@@ -338,52 +356,10 @@ function renderFiles(){
 
     div.appendChild(actions);
     wrapper.appendChild(div);
-
-    // Source editor (shown when file is unlocked for editing)
-    if(isEditing){
-      const editWrap = document.createElement("div");
-      editWrap.className = "fileEditWrap";
-
-      const ta = document.createElement("textarea");
-      ta.className = "fileEditTa";
-      ta.value = d.content || "";
-      ta.spellcheck = false;
-      editWrap.appendChild(ta);
-
-      const btnRow = document.createElement("div");
-      btnRow.className = "fileEditBtns";
-
-      const applyBtn = document.createElement("button");
-      applyBtn.textContent = t('files.applyEdit');
-      applyBtn.addEventListener("click", () => {
-        pushUndo();
-        const newContent = ta.value;
-        const parsed = parseConllu(newContent);
-        d.content  = newContent;
-        d.sentences = parsed.sentences;
-        _editingFiles.delete(d.key);
-        recomputeMaxSents();
-        state.currentSent = Math.min(state.currentSent, Math.max(0, state.maxSents - 1));
-        renderFiles();
-        renderSentSelect();
-        renderSentence();
-      });
-      btnRow.appendChild(applyBtn);
-
-      const cancelBtn = document.createElement("button");
-      cancelBtn.textContent = t('files.cancelEdit');
-      cancelBtn.addEventListener("click", () => {
-        _editingFiles.delete(d.key);
-        renderFiles();
-      });
-      btnRow.appendChild(cancelBtn);
-
-      editWrap.appendChild(btnRow);
-      wrapper.appendChild(editWrap);
-    }
-
     fileList.appendChild(wrapper);
   });
+
+  renderProjectLock();
 
   textWarn.innerHTML = warnedIndices.size > 0
     ? `<div class="textWarnBanner">${escapeHtml(t('files.warnBanner'))}</div>`
@@ -437,7 +413,7 @@ function renderSentSelect(){
   confirmBtn.disabled = !ok;
   if(copyConlluBtn) copyConlluBtn.disabled = !ok;
   sentSelect.innerHTML = "";
-  if(!ok){ sentStats.textContent = ""; if(progressMeta) progressMeta.textContent = ""; return; }
+  if(!ok){ sentStats.textContent = ""; if(progressMeta) progressMeta.textContent = ""; renderSentManage(); return; }
   renderSentSelectOptions();
   updateExportButtons();
 }
@@ -625,10 +601,10 @@ function toggleFlag(sentIdx, tokId){
 
 // ── UI: Column toggle ──────────────────────────────────────────────────────────
 
-// Rebuild the column visibility toggle bar (shown when ≥2 documents are loaded).
+// Rebuild the column visibility toggle bar (shown when ≥2 documents are loaded, or project is unlocked).
 function renderColToggleBar(){
   colToggleBar.innerHTML = "";
-  if(state.docs.length < 2){ return; }
+  if(state.docs.length < 2 && !state.unlocked){ return; }
   const label = document.createElement("span");
   label.className = "muted small";
   label.textContent = t('cols.label');
@@ -646,6 +622,221 @@ function renderColToggleBar(){
     });
     colToggleBar.appendChild(btn);
   });
+}
+
+// ── Project lock ───────────────────────────────────────────────────────────────
+
+// Render the project lock toggle button into #projectLockBar.
+function renderProjectLock(){
+  const bar = document.getElementById("projectLockBar");
+  if(!bar) return;
+  bar.innerHTML = "";
+  if(state.docs.length === 0) return;
+  const btn = document.createElement("button");
+  btn.className = "projectLockBtn" + (state.unlocked ? " projectLockBtnOpen" : "");
+  btn.textContent = state.unlocked ? t('project.unlock') : t('project.lock');
+  btn.addEventListener("click", () => {
+    state.unlocked = !state.unlocked;
+    _saveActiveProject();
+    renderProjectLock();
+    renderFiles();
+    renderSentence();
+  });
+  bar.appendChild(btn);
+}
+
+// ── Token insert / delete helpers ─────────────────────────────────────────────
+
+// Re-assign IDs 1..n to all tokens in a sentence and update HEAD references.
+// Returns the Map<oldId, newId> used for annotation remapping.
+function _renumberTokens(sent){
+  const map = new Map();
+  sent.tokens.forEach((tk, i) => map.set(tk.id, i + 1));
+  sent.tokens.forEach((tk, i) => {
+    tk.id = i + 1;
+    if(tk.head != null && tk.head !== 0)
+      tk.head = map.has(tk.head) ? map.get(tk.head) : null;
+  });
+  return map;
+}
+
+// Remap token IDs in state.custom and state.goldPick after renumbering.
+function _remapAnnotations(si, oldToNew){
+  const remapObj = (obj, remapVals) => {
+    if(!obj) return;
+    const next = {};
+    for(const [k, v] of Object.entries(obj)){
+      const nk = oldToNew.get(parseInt(k, 10));
+      if(nk == null) continue;
+      next[nk] = remapVals ? Object.fromEntries(
+        Object.entries(v).map(([fk, fv]) => [
+          fk,
+          (fk === 'head' && fv != null && fv !== 0)
+            ? (oldToNew.get(fv) ?? null)
+            : fv
+        ])
+      ) : v;
+    }
+    return next;
+  };
+  const nc = remapObj(state.custom[si], true);
+  if(nc && Object.keys(nc).length) state.custom[si] = nc;
+  else delete state.custom[si];
+  const ng = remapObj(state.goldPick[si], false);
+  if(ng && Object.keys(ng).length) state.goldPick[si] = ng;
+  else delete state.goldPick[si];
+}
+
+// Insert a blank token before the token with `beforeId` in all docs (0 = append).
+// Focuses the new input after re-render.
+function _insertToken(beforeId){
+  pushUndo();
+  const si = state.currentSent;
+  let newId = 1;
+  for(const d of state.docs){
+    const s = d.sentences[si];
+    if(!s) continue;
+    let pos = beforeId === 0
+      ? s.tokens.length
+      : s.tokens.findIndex(t => t.id === beforeId);
+    if(pos < 0) pos = s.tokens.length;
+    s.tokens.splice(pos, 0, { id: 0, form: '_', lemma: '_', upos: '_', xpos: '_', feats: '_', head: null, deprel: '_', deps: '_', misc: '_' });
+    const map = _renumberTokens(s);
+    if(d === state.docs[0]){ _remapAnnotations(si, map); newId = pos + 1; }
+  }
+  renderSentence();
+  // Focus the new token's input after the DOM has been repainted
+  setTimeout(() => {
+    const inp = sentText.querySelector(`.sentFormInput[data-id="${newId}"]`);
+    if(inp){ inp.focus(); inp.select(); }
+  }, 0);
+}
+
+// Delete the token with the given ID from all docs.
+function _deleteToken(tokId){
+  const s0tok = state.docs[0]?.sentences?.[state.currentSent]?.tokens;
+  if(s0tok && s0tok.length <= 1) return; // keep at least one token
+  pushUndo();
+  const si = state.currentSent;
+  for(const d of state.docs){
+    const s = d.sentences[si];
+    if(!s) continue;
+    const idx = s.tokens.findIndex(t => t.id === tokId);
+    if(idx < 0) continue;
+    s.tokens.splice(idx, 1);
+    const map = _renumberTokens(s);
+    if(d === state.docs[0]) _remapAnnotations(si, map);
+  }
+  renderSentence();
+}
+
+// ── Sentence management ────────────────────────────────────────────────────────
+
+let _sentEditOpen = false;
+
+// Render sentence edit/insert/delete controls into #sentManageBar.
+function renderSentManage(){
+  const bar = document.getElementById("sentManageBar");
+  if(!bar) return;
+  if(!state.unlocked || state.maxSents === 0){ bar.innerHTML = ""; return; }
+
+  bar.innerHTML = "";
+
+  // ✎ Edit current sentence
+  const editBtn = document.createElement("button");
+  editBtn.className = "sentManageBtn";
+  editBtn.textContent = t('sent.editSentBtn');
+  editBtn.addEventListener("click", () => {
+    _sentEditOpen = !_sentEditOpen;
+    renderSentManage();
+  });
+  bar.appendChild(editBtn);
+
+  // ➕ Insert new sentence after current
+  const addBtn = document.createElement("button");
+  addBtn.className = "sentManageBtn";
+  addBtn.textContent = t('sent.addSentBtn');
+  addBtn.addEventListener("click", () => {
+    const text = prompt(t('sent.addSentPrompt')) ?? "";
+    pushUndo();
+    const newSent = { text: text.trim(), tokens: [], comments: text.trim() ? [`# text = ${text.trim()}`] : [], extras: [] };
+    for(const d of state.docs) d.sentences.splice(state.currentSent + 1, 0, JSON.parse(JSON.stringify(newSent)));
+    recomputeMaxSents();
+    state.currentSent = state.currentSent + 1;
+    renderSentSelect();
+    renderSentence();
+  });
+  bar.appendChild(addBtn);
+
+  // 🗑 Delete current sentence
+  const delBtn = document.createElement("button");
+  delBtn.className = "sentManageBtn danger";
+  delBtn.textContent = t('sent.delSentBtn');
+  delBtn.addEventListener("click", () => {
+    if(!confirm(t('sent.delSentConfirm'))) return;
+    pushUndo();
+    for(const d of state.docs) d.sentences.splice(state.currentSent, 1);
+    recomputeMaxSents();
+    state.currentSent = Math.min(state.currentSent, Math.max(0, state.maxSents - 1));
+    renderSentSelect();
+    renderSentence();
+  });
+  bar.appendChild(delBtn);
+
+  // Inline sentence editor (shown when _sentEditOpen)
+  if(_sentEditOpen){
+    const panel = document.createElement("div");
+    panel.className = "sentEditPanel";
+
+    for(let i = 0; i < state.docs.length; i++){
+      const d = state.docs[i];
+      const label = document.createElement("div");
+      label.className = "sentEditLabel";
+      label.textContent = d.name;
+      panel.appendChild(label);
+
+      const ta = document.createElement("textarea");
+      ta.className = "sentEditTa";
+      ta.spellcheck = false;
+      const sent = d.sentences[state.currentSent];
+      ta.value = sent ? _sentToConlluLines(sent).join("\n") : "";
+      ta.dataset.docIdx = i;
+      panel.appendChild(ta);
+    }
+
+    const btnRow = document.createElement("div");
+    btnRow.className = "sentEditBtns";
+
+    const saveBtn = document.createElement("button");
+    saveBtn.textContent = t('sent.editSentSave');
+    saveBtn.addEventListener("click", () => {
+      pushUndo();
+      const textareas = panel.querySelectorAll("textarea[data-doc-idx]");
+      textareas.forEach(ta => {
+        const i = parseInt(ta.dataset.docIdx, 10);
+        const d = state.docs[i];
+        if(!d) return;
+        const parsed = parseConllu(ta.value);
+        if(parsed.sentences.length > 0) d.sentences[state.currentSent] = parsed.sentences[0];
+      });
+      recomputeMaxSents();
+      _sentEditOpen = false;
+      renderSentSelect();
+      renderSentence();
+    });
+    btnRow.appendChild(saveBtn);
+
+    const cancelBtn = document.createElement("button");
+    cancelBtn.textContent = t('sent.editSentCancel');
+    cancelBtn.addEventListener("click", () => {
+      _sentEditOpen = false;
+      renderSentManage();
+    });
+    btnRow.appendChild(cancelBtn);
+
+    panel.appendChild(btnRow);
+    bar.appendChild(panel);
+  }
 }
 
 // ── Custom annotations ─────────────────────────────────────────────────────────
@@ -689,29 +880,46 @@ function renderSentence(){
     cmpTable.innerHTML = "";
     colToggleBar.innerHTML = "";
     _updateSentNote();
+    renderSentManage();
     renderPlainView();
     return;
   }
 
   state.currentSent = Math.max(0, Math.min(state.currentSent, state.maxSents - 1));
 
-  // Render clickable token spans from the first document's token forms
+  // Render clickable token spans (or editable inputs when project is unlocked)
   const s0 = state.docs[0].sentences[state.currentSent];
   if(s0){
-    sentText.innerHTML = s0.tokens
-      .map(tk => `<span class="sentToken" data-id="${tk.id}">${escapeHtml(tk.form)}</span>`)
-      .join(' ');
+    if(state.unlocked){
+      // Insert button before each token + one at the end; delete button on each token
+      const insertBtn = id => `<button class="sentInsertBtn" data-before="${id}" title="Wort einfügen">+</button>`;
+      sentText.innerHTML =
+        s0.tokens.map(tk => {
+          const form = tk.form || '';
+          return insertBtn(tk.id) +
+            `<span class="sentTokenEdit" data-id="${tk.id}">` +
+              `<input type="text" class="sentFormInput" data-id="${tk.id}" value="${escapeHtml(form)}" size="${Math.max(1, form.length)}" spellcheck="false" autocomplete="off">` +
+              `<button class="sentDeleteBtn" data-id="${tk.id}" title="Wort löschen">×</button>` +
+            `</span>`;
+        }).join('') + insertBtn(0);
+    } else {
+      sentText.innerHTML = s0.tokens
+        .map(tk => `<span class="sentToken" data-id="${tk.id}">${escapeHtml(tk.form)}</span>`)
+        .join(' ');
+    }
   } else {
     sentText.textContent = t('sent.missing');
   }
   sentMeta.textContent = t('sent.label', { cur: state.currentSent + 1, max: state.maxSents });
   sentText.classList.toggle("sentTextConfirmed", state.confirmed.has(state.currentSent));
+  sentText.classList.toggle("sentTextUnlocked", state.unlocked && !!s0);
 
   renderColToggleBar();
   renderCompareTable();
   renderSentSelectOptions();
   renderPreview();
   _updateSentNote();
+  renderSentManage();
   renderPlainView();
 }
 

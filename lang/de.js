@@ -212,4 +212,17 @@ window.LANG_DE = {
   // Plain CoNLL-U Ansicht
   'plain.toggle':     '📄 Rohdaten',
   'plain.toggleOff':  '📄 Rohdaten ausblenden',
+
+  // Projektschloss
+  'project.lock':   '🔒 Projekt sperren',
+  'project.unlock': '🔓 Projekt entsperren',
+
+  // Satzverwaltung
+  'sent.editSentBtn':    '✎ Satz bearbeiten',
+  'sent.editSentSave':   '✓ Übernehmen',
+  'sent.editSentCancel': '✕ Abbrechen',
+  'sent.addSentBtn':     '➕ Satz einfügen',
+  'sent.addSentPrompt':  'Satztext (optional):',
+  'sent.delSentBtn':     '🗑 Satz löschen',
+  'sent.delSentConfirm': 'Aktuellen Satz wirklich löschen?',
 };

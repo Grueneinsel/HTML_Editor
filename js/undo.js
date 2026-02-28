@@ -6,11 +6,20 @@ const _redoStack = [];
 const UNDO_MAX   = 80; // maximum number of snapshots kept on either stack
 
 // Capture a lightweight snapshot of the mutable annotation state.
+// Also saves a shallow copy of the current sentence's tokens from each doc
+// so that direct edits to d.sentences (arc editing) can be undone.
 function _snapshot(){
+  const si = state.currentSent;
   return {
-    custom:   JSON.parse(JSON.stringify(state.custom)),
-    goldPick: JSON.parse(JSON.stringify(state.goldPick)),
+    custom:    JSON.parse(JSON.stringify(state.custom)),
+    goldPick:  JSON.parse(JSON.stringify(state.goldPick)),
     confirmed: new Set(state.confirmed),
+    sentIndex: si,
+    docTokens: state.docs.map(d => {
+      const s = d.sentences[si];
+      if(!s) return null;
+      return s.tokens.map(t => ({ ...t }));
+    }),
   };
 }
 
@@ -19,6 +28,14 @@ function _restore(snap){
   state.custom    = snap.custom;
   state.goldPick  = snap.goldPick;
   state.confirmed = snap.confirmed;
+  if(snap.docTokens != null){
+    state.docs.forEach((d, i) => {
+      const toks = snap.docTokens[i];
+      if(!toks) return;
+      const s = d.sentences[snap.sentIndex];
+      if(s) s.tokens = toks.map(t => ({ ...t }));
+    });
+  }
 }
 
 // Push the current state onto the undo stack before a destructive edit.
@@ -65,6 +82,8 @@ function getUndoState(){
     custom:    JSON.parse(JSON.stringify(snap.custom)),
     goldPick:  JSON.parse(JSON.stringify(snap.goldPick)),
     confirmed: Array.from(snap.confirmed),
+    sentIndex: snap.sentIndex ?? null,
+    docTokens: snap.docTokens ? snap.docTokens.map(arr => arr ? arr.map(t => ({ ...t })) : null) : null,
   });
   return { undo: _undoStack.map(ser), redo: _redoStack.map(ser) };
 }
@@ -75,6 +94,8 @@ function loadUndoState({ undo = [], redo = [] }){
     custom:    JSON.parse(JSON.stringify(s.custom   || {})),
     goldPick:  JSON.parse(JSON.stringify(s.goldPick || {})),
     confirmed: new Set(s.confirmed || []),
+    sentIndex: s.sentIndex ?? null,
+    docTokens: s.docTokens ? s.docTokens.map(arr => arr ? arr.map(t => ({ ...t })) : null) : null,
   });
   _undoStack.length = 0;
   _redoStack.length = 0;

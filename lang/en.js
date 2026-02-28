@@ -212,4 +212,17 @@ window.LANG_EN = {
   // Plain CoNLL-U view
   'plain.toggle':     '📄 Raw data',
   'plain.toggleOff':  '📄 Hide raw data',
+
+  // Project lock
+  'project.lock':   '🔒 Lock project',
+  'project.unlock': '🔓 Unlock project',
+
+  // Sentence management
+  'sent.editSentBtn':    '✎ Edit sentence',
+  'sent.editSentSave':   '✓ Apply',
+  'sent.editSentCancel': '✕ Cancel',
+  'sent.addSentBtn':     '➕ Insert sentence',
+  'sent.addSentPrompt':  'Sentence text (optional):',
+  'sent.delSentBtn':     '🗑 Delete sentence',
+  'sent.delSentConfirm': 'Really delete this sentence?',
 };

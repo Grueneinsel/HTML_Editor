@@ -75,8 +75,10 @@ function renderCompareTable(){
     </span>
   `;
 
-  const anyUnlocked = (typeof _editingFiles !== 'undefined') &&
-    state.docs.some(d => _editingFiles.has(d.key));
+  const anyUnlocked = state.unlocked;
+  // Show per-file columns when comparing 2+ docs, or when any file is unlocked for editing
+  // (so the user can see raw-file data alongside the edited GOLD column)
+  const showFileCols = state.docs.length >= 2 || anyUnlocked;
 
   let html = "<thead><tr>";
   html += `<th>${t('col.id')}</th><th>${t('col.form')}</th>`;
@@ -85,7 +87,7 @@ function renderCompareTable(){
     html += `<th>${escapeHtml(t('popup.head'))}</th><th>${escapeHtml(t('popup.deprel'))}</th>`;
   }
   html += `<th>${t('col.gold')}</th>`;
-  if(state.docs.length >= 2){
+  if(showFileCols){
     for(let i=0; i<state.docs.length; i++){
       if(state.hiddenCols.has(i)) continue;
       html += `<th>${escapeHtml(state.docs[i].name)}</th>`;
@@ -146,8 +148,8 @@ function renderCompareTable(){
     }
 
     // Gold column — HEAD/DEPREL + label col summary line
-    // Source tag (D1/C) only shown when comparing 2+ files
-    const goldSrc = state.docs.length >= 2
+    // Source tag (D1/C) only shown when per-file columns are visible
+    const goldSrc = showFileCols
       ? (customExists ? '<span class="srcTag srcCustom">C</span>'
           : `<span class="srcTag srcDoc">D${getDocChoice(sentIndex,id)+1}</span>`)
       : '';
@@ -155,8 +157,8 @@ function renderCompareTable(){
     html += `<td data-col="gold" class="goldCell goldEditable" title="${escapeHtml(t('popup.editTitle'))}">${goldSrc} ${escapeHtml(goldVal)}` +
       `<div class="posLine">${posLineHtml}</div></td>`;
 
-    // Per-file columns — only rendered when 2+ docs are loaded
-    if(state.docs.length >= 2){
+    // Per-file columns — rendered when 2+ docs loaded, or any file is unlocked
+    if(showFileCols){
       for(let i=0; i<state.docs.length; i++){
         if(state.hiddenCols.has(i)) continue;
         const v          = allVals[i];

@@ -28,6 +28,7 @@ const state = {
   confirmed: new Set(), // confirmed sentence indices
   notes: {},           // notes[sentIndex] = string
   flags: {},           // flags[sentIndex] = Set<tokId> — flagged for attention
+  unlocked: false,     // project-level edit lock (replaces per-file _editingFiles)
   // Project management
   projects: [],        // array of project snapshots
   activeProjectIdx: 0,

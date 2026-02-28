@@ -18,6 +18,7 @@ function _emptyProject(name){
     undoStack:   [],
     redoStack:   [],
     labels:      null, // null → use DEFAULT_LABELS; object → project-specific tagset
+    unlocked:    false,
   };
 }
 
@@ -59,6 +60,7 @@ function _saveActiveProject(){
     undoStack:   undo,
     redoStack:   redo,
     labels:      JSON.parse(JSON.stringify(LABELS)),
+    unlocked:    state.unlocked,
   };
 }
 
@@ -74,6 +76,7 @@ function _loadActiveProject(){
   state.currentSent = p.currentSent || 0;
   state.maxSents    = p.maxSents    || 0;
   state.hiddenCols  = new Set(p.hiddenCols || []);
+  state.unlocked    = p.unlocked    || false;
   loadUndoState({ undo: p.undoStack || [], redo: p.redoStack || [] });
   // Restore project-specific tagset (fall back to default when null)
   LABELS = JSON.parse(JSON.stringify(p.labels || DEFAULT_LABELS || {}));
