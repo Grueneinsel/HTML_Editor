@@ -214,12 +214,14 @@ window.LANG_DE = {
   'plain.toggle':     '📄 Rohdaten',
   'plain.toggleOff':  '📄 Rohdaten ausblenden',
 
-  // Projektschloss
-  'project.lock':   '🔒 Projekt sperren',
-  'project.unlock': '🔓 Projekt entsperren',
+  // Projektmodus
+  'project.statusView': '📄 Datei-Bearbeitung aus',
+  'project.statusEdit': '✏ Datei-Bearbeitung ein',
+  'project.btnEdit':    'Datei-Bearbeitung einschalten',
+  'project.btnView':    'Datei-Bearbeitung ausschalten',
 
   // Satzverwaltung
-  'sent.editSentBtn':    '✎ Satz bearbeiten',
+  'sent.editSentBtn':    '✎ CoNLL-U bearbeiten',
   'sent.editSentSave':   '✓ Übernehmen',
   'sent.editSentCancel': '✕ Abbrechen',
   'sent.addSentBtn':     '➕ Satz einfügen',

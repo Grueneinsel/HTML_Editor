@@ -143,17 +143,17 @@ if(sentNote){
 
 sentSelect.addEventListener("change", () => {
   state.currentSent = parseInt(sentSelect.value, 10) || 0;
-  _sentEditOpen = false; _sentListOpen = false;
+  _sentEditOpen = false;
   renderSentence();
 });
 prevBtn.addEventListener("click", () => {
   state.currentSent = Math.max(0, state.currentSent - 1);
-  _sentEditOpen = false; _sentListOpen = false;
+  _sentEditOpen = false;
   renderSentence();
 });
 nextBtn.addEventListener("click", () => {
   state.currentSent = Math.min(state.maxSents - 1, state.currentSent + 1);
-  _sentEditOpen = false; _sentListOpen = false;
+  _sentEditOpen = false;
   renderSentence();
 });
 
@@ -626,15 +626,20 @@ function renderColToggleBar(){
 
 // ── Project lock ───────────────────────────────────────────────────────────────
 
-// Render the project lock toggle button into #projectLockBar.
+// Render project mode indicator + toggle button into #projectLockBar.
 function renderProjectLock(){
   const bar = document.getElementById("projectLockBar");
   if(!bar) return;
   bar.innerHTML = "";
   if(state.docs.length === 0) return;
+
+  const status = document.createElement("span");
+  status.className = "projectModeStatus" + (state.unlocked ? " projectModeEdit" : " projectModeView");
+  status.textContent = state.unlocked ? t('project.statusEdit') : t('project.statusView');
+
   const btn = document.createElement("button");
-  btn.className = "projectLockBtn" + (state.unlocked ? " projectLockBtnOpen" : "");
-  btn.textContent = state.unlocked ? t('project.unlock') : t('project.lock');
+  btn.className = "projectLockBtn";
+  btn.textContent = state.unlocked ? t('project.btnView') : t('project.btnEdit');
   btn.addEventListener("click", () => {
     state.unlocked = !state.unlocked;
     _saveActiveProject();
@@ -642,6 +647,8 @@ function renderProjectLock(){
     renderFiles();
     renderSentence();
   });
+
+  bar.appendChild(status);
   bar.appendChild(btn);
 }
 
@@ -733,7 +740,6 @@ function _deleteToken(tokId){
 // ── Sentence management ────────────────────────────────────────────────────────
 
 let _sentEditOpen    = false;
-let _sentListOpen    = false;
 
 // Render sentence edit/insert/delete controls into #sentManageBar.
 function renderSentManage(){
@@ -839,83 +845,66 @@ function renderSentManage(){
     bar.appendChild(panel);
   }
 
-  // 📋 Sentence list toggle button
-  const listToggleBtn = document.createElement("button");
-  listToggleBtn.className = "sentManageBtn" + (_sentListOpen ? " sentManageBtnActive" : "");
-  listToggleBtn.textContent = "📋 Alle Sätze";
-  listToggleBtn.addEventListener("click", () => {
-    _sentListOpen = !_sentListOpen;
-    renderSentManage();
-  });
-  bar.appendChild(listToggleBtn);
+  // Sentence list — always visible, active sentence highlighted with accent color
+  const listPanel = document.createElement("div");
+  listPanel.className = "sentListPanel";
 
-  // Sentence list panel (all sentences in a scrollable list)
-  if(_sentListOpen){
-    const listPanel = document.createElement("div");
-    listPanel.className = "sentListPanel";
+  for(let si = 0; si < state.maxSents; si++){
+    const row = document.createElement("div");
+    row.className = "sentListRow" + (si === state.currentSent ? " sentListRowActive" : "");
 
-    for(let si = 0; si < state.maxSents; si++){
-      const row = document.createElement("div");
-      row.className = "sentListRow" + (si === state.currentSent ? " sentListRowActive" : "");
+    // Sentence number
+    const numSpan = document.createElement("span");
+    numSpan.className = "sentListNum";
+    numSpan.textContent = si + 1;
+    row.appendChild(numSpan);
 
-      // Sentence number
-      const numSpan = document.createElement("span");
-      numSpan.className = "sentListNum";
-      numSpan.textContent = si + 1;
-      row.appendChild(numSpan);
-
-      // Sentence text preview (from first doc that has it)
-      let preview = "";
-      for(const d of state.docs){
-        const s = d.sentences[si];
-        if(s){
-          preview = s.text || s.tokens.map(t => t.form).join(" ");
-          break;
-        }
-      }
-      const textSpan = document.createElement("span");
-      textSpan.className = "sentListText";
-      textSpan.textContent = preview || t('sent.missing');
-      row.appendChild(textSpan);
-
-      // Status icons
-      const iconsSpan = document.createElement("span");
-      iconsSpan.className = "sentListIcons";
-      if(state.confirmed.has(si)) iconsSpan.appendChild(Object.assign(document.createElement("span"), { textContent: "✓", title: t('sent.confirmed') }));
-      const hasFlagsForSent = state.flags[si] && state.flags[si].size > 0;
-      if(hasFlagsForSent)       iconsSpan.appendChild(Object.assign(document.createElement("span"), { textContent: "⚑" }));
-      row.appendChild(iconsSpan);
-
-      // ✎ Edit button
-      const editBtn2 = document.createElement("button");
-      editBtn2.className = "sentListEditBtn";
-      editBtn2.textContent = "✎";
-      editBtn2.title = t('sent.editSentBtn');
-      editBtn2.addEventListener("click", (e) => {
-        e.stopPropagation();
-        state.currentSent = si;
-        _sentEditOpen = true;
-        _sentListOpen = false;
-        renderSentSelect();
-        renderSentence();
-      });
-      row.appendChild(editBtn2);
-
-      // Click row → navigate to that sentence
-      row.addEventListener("click", () => {
-        state.currentSent = si;
-        renderSentSelect();
-        renderSentence();
-      });
-
-      listPanel.appendChild(row);
+    // Sentence text preview (from first doc that has it)
+    let preview = "";
+    for(const d of state.docs){
+      const s = d.sentences[si];
+      if(s){ preview = s.text || s.tokens.map(t => t.form).join(" "); break; }
     }
+    const textSpan = document.createElement("span");
+    textSpan.className = "sentListText";
+    textSpan.textContent = preview || t('sent.missing');
+    row.appendChild(textSpan);
 
-    // Scroll active row into view after append
-    bar.appendChild(listPanel);
-    const activeRow = listPanel.querySelector(".sentListRowActive");
-    if(activeRow) activeRow.scrollIntoView({ block: "nearest" });
+    // Status icons
+    const iconsSpan = document.createElement("span");
+    iconsSpan.className = "sentListIcons";
+    if(state.confirmed.has(si)) iconsSpan.appendChild(Object.assign(document.createElement("span"), { textContent: "✓", title: t('sent.confirmed') }));
+    if(state.flags[si]?.size > 0) iconsSpan.appendChild(Object.assign(document.createElement("span"), { textContent: "⚑" }));
+    row.appendChild(iconsSpan);
+
+    // ✎ Edit button
+    const editBtn2 = document.createElement("button");
+    editBtn2.className = "sentListEditBtn";
+    editBtn2.textContent = "✎";
+    editBtn2.title = t('sent.editSentBtn');
+    editBtn2.addEventListener("click", (e) => {
+      e.stopPropagation();
+      state.currentSent = si;
+      _sentEditOpen = true;
+      renderSentSelect();
+      renderSentence();
+    });
+    row.appendChild(editBtn2);
+
+    // Click row → navigate to that sentence
+    row.addEventListener("click", () => {
+      state.currentSent = si;
+      renderSentSelect();
+      renderSentence();
+    });
+
+    listPanel.appendChild(row);
   }
+
+  // Scroll active row into view after append
+  bar.appendChild(listPanel);
+  const activeRow = listPanel.querySelector(".sentListRowActive");
+  if(activeRow) requestAnimationFrame(() => activeRow.scrollIntoView({ block: "nearest" }));
 }
 
 // ── Custom annotations ─────────────────────────────────────────────────────────

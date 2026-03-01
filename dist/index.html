@@ -1,4 +1,4 @@
-<!doctype html><html lang="de"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><title>CoNLL-U Vergleich</title> <style>@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;800&display=swap');:root{--bg:#090d12;--card:#0f1620;--card2:#111a26;--line:#1e2e42;--line2:#243548;--text:#dde8f5;--muted:#7a96b5;--bad:#ff5f5f;--ok:#3de89a;--warn:#f5c842;--gold:#ff9f43;--file:#5b9fff;--accent:#4a9eff;--mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;--sans:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;--bg-control:#0c1420;--bg-control-hover:#101e2f;--bg-focus:#0d2040;--bg-focus-soft:#0e1e32;--bg-tree-head:#0f1e30;--bg-sent:#0c1420;--shadow:rgba(0,0,0,.65)}html[data-theme="light"]{--bg:#f0f5fb;--card:#ffffff;--card2:#edf3fa;--line:#ccd8ea;--line2:#a8c0d8;--text:#18283a;--muted:#4e6880;--bad:#c0282a;--ok:#176e38;--warn:#7a5500;--gold:#a86000;--file:#1448a0;--accent:#1558b0;--bg-control:#ffffff;--bg-control-hover:#ddeeff;--bg-focus:#c8dff8;--bg-focus-soft:#d8ecff;--bg-tree-head:#e8f2fc;--bg-sent:#fafcff;--shadow:rgba(0,0,0,.18)}html[data-theme="light"] .bar{background:linear-gradient(135deg,#ddeaf8 0%,#cee0f4 100%)}html[data-theme="light"] kbd{background:#eef4fb;border-color:var(--line2)}html[data-theme="light"] .langBtn:hover:not(:disabled){background:#ddeef8}html[data-theme="light"] .langBtnActive{background:#c8e0f8 !important}html[data-theme="light"] button.danger{border-color:#e0a0a0;background:#fff5f5;color:#c03030}html[data-theme="light"] button.danger:hover:not(:disabled){border-color:#c83030;background:#ffe0e0}html[data-theme="light"] .sentText{background:var(--bg-sent);border-color:var(--line)}html[data-theme="light"] .sentNote{background:var(--bg-control);border-color:var(--line2)}html[data-theme="light"] .sentTextConfirmed{background:#fffae8 !important;border-color:#c07000 !important}html[data-theme="light"] .sentDotOk{background:#a8e4c0;border-color:#28904a;color:#1a5a30}html[data-theme="light"] .sentDotDiff{background:#f0b0b0;border-color:#c04040;color:#7a1818}html[data-theme="light"] .sentDotConfirmed{background:#ffe88a;border-color:#b07800;color:#6a4000}html[data-theme="light"] .sentDotFlagged{outline-color:#c06000;color:#c06000}html[data-theme="light"] .sentDotConfirmed.sentDotFlagged{color:#6a4000}html[data-theme="light"] .treeTokenChip{background:#e8f0f8;border-color:#b0c8e0;color:#18283a}html[data-theme="light"] .treeTokenChip:hover{border-color:#3a78c0;background:#c8dff8;color:#1a3050}html[data-theme="light"] .rowFlagged{background:rgba(200,100,0,0.06) !important}html[data-theme="light"] .rowFlagged td:first-child{border-left-color:#c0700066 !important}html[data-theme="light"] .flagBtnActive{color:#c06000;background:rgba(200,100,0,0.12);border-color:#c0700055}html[data-theme="light"] .statBadge{background:#e4edf8;border-color:var(--line2)}html[data-theme="light"] .statOk{color:#0a6030;border-color:#80cca0;background:#e0f8ec}html[data-theme="light"] .statDiff{color:#c02828;border-color:#e0a0a0;background:#fce8e8}html[data-theme="light"] td.posDiff::after{color:#c030a0}html[data-theme="light"] .confirmBtn{border-color:#b07000;background:#fff8e8;color:#8a5000}html[data-theme="light"] .confirmBtn:hover:not(:disabled){border-color:var(--gold);background:#fff0c8;color:var(--gold)}html[data-theme="light"] .confirmBtnActive{border-color:var(--gold) !important;background:#fff0c8 !important;color:var(--gold) !important}html[data-theme="light"] .sentToken:hover{background:rgba(0,0,0,.08)}html[data-theme="light"] .sentTokenActive{background:#c8dff8;outline-color:var(--accent)}html[data-theme="light"] th{background:var(--card)}html[data-theme="light"] .goldEditable:hover{background:var(--bg-focus-soft);outline-color:var(--accent)}html[data-theme="light"] tr.keyFocus>td{background:var(--bg-focus)}html[data-theme="light"] tr.keyFocus>td:first-child{border-left-color:var(--accent)}html[data-theme="light"] .srcCustom{background:#c8e0f8;color:var(--accent);border-color:#a8c8e8}html[data-theme="light"] .srcDoc{background:#b8f0d0;color:#146838;border-color:#70c890}html[data-theme="light"] .picked{background:#c8dff8}html[data-theme="light"] .pickable:hover{outline-color:#3a78c0}html[data-theme="light"] .treeHead{background:var(--bg-tree-head);border-bottom-color:var(--line)}html[data-theme="light"] .treeSection:first-child{background:linear-gradient(135deg,#fffbe8 0%,#fdf5cc 60%,#faf4d8 100%)}html[data-theme="light"] .treeSection:first-child .treeHead{background:#fef0b0;border-bottom-color:#e8d860}html[data-theme="light"] .treeSection:first-child .treeHead .title{color:#7a5000}html[data-theme="light"] .treeSection:not(:first-child) .treeHead{background:var(--bg-tree-head)}html[data-theme="light"] .treeLineClickable:hover{background:#d8eaf8}html[data-theme="light"] .treeSubtreeBtn{color:#4a2800;border-color:#a07000;background:#ffe066}html[data-theme="light"] .treeSubtreeBtn:hover{background:#ffd030;border-color:#c09000}html[data-theme="light"] .textWarnBanner{background:#fff3e0;border-color:#e8a030;color:#7a4800}html[data-theme="light"] .fileItem{background:#fafcff}html[data-theme="light"] .fileList.dragOver{background:#d8eeff}html[data-theme="light"] .dropOverlay{background:rgba(200,220,245,.88)}html[data-theme="light"] .dropOverlayInner{background:rgba(255,255,255,.96);border-color:var(--accent)}html[data-theme="light"] .goldPopup{box-shadow:0 8px 40px var(--shadow)}html[data-theme="light"] .colVisible{background:#ddeef8;border-color:#a8c8e8;color:var(--accent)}html[data-theme="light"] .colHidden{background:#eff4f8;border-color:#c8d8e8;color:#6a8898}html[data-theme="light"] .helpModal{background:rgba(180,210,240,.88)}html[data-theme="light"] .helpContent .helpCode{background:#f2f6fc;border-color:var(--line)}html[data-theme="light"] .helpContent .helpInlineCode{background:#e0eaf8}html[data-theme="light"] .helpContent .helpTable th{background:#e4eef8}html[data-theme="light"] .helpContent .helpTable tr:nth-child(even) td{background:#f4f8fc}html[data-theme="light"] .posCustom{color:var(--accent)}@keyframes highlightPulseLt{0%{background:#b0d0f0}50%{background:#c8e4fc}100%{background:transparent}}html[data-theme="light"] .highlightRow td{animation:highlightPulseLt 1.6s ease-out}*{box-sizing:border-box}body{margin:0;font-family:var(--sans);background:var(--bg);color:var(--text);font-size:13px}.bar{padding:14px 20px;border-bottom:1px solid var(--line);background:linear-gradient(135deg,#0a1118 0%,#0f1928 100%);display:flex;gap:16px;align-items:center;flex-wrap:wrap}.bar h1{margin:0;font-size:17px;font-weight:800;letter-spacing:-.3px}.bar p{margin:0;font-size:12px;color:var(--muted)}.langBar{display:flex;gap:4px;margin-left:auto}.langBtn{width:28px;height:28px;padding:0;border-radius:6px;font-size:16px;border-color:transparent;background:transparent;opacity:.55;transition:opacity .15s,border-color .15s}.langBtn:hover:not(:disabled){opacity:1;border-color:var(--line2);background:#0f1a2a}.langBtnActive{opacity:1 !important;border-color:var(--accent) !important;background:#0d1e33 !important}kbd{display:inline-block;padding:1px 5px;border-radius:4px;border:1px solid var(--line2);background:#0f1a2a;font-family:var(--mono);font-size:10px;color:var(--text)}.wrap{max-width:1440px;margin:0 auto;padding:14px;display:grid;gap:10px}.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px}h2{margin:0 0 10px 0;font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}.muted{color:var(--muted)}.small{font-size:11px}.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.sentInfoRow{margin-top:4px;min-height:0}button,select,input,.btnLike{border:1px solid var(--line2);background:var(--bg-control);color:var(--text);border-radius:8px;padding:7px 12px;cursor:pointer;font-size:12px;font-family:var(--sans);transition:border-color .15s,background .15s}button:hover:not(:disabled),.btnLike:hover{border-color:var(--accent);background:var(--bg-control-hover)}button:disabled,select:disabled{opacity:.45;cursor:not-allowed}button.danger{border-color:#4a1f1f;background:#160b0b;color:#ff7e7e}button.danger:hover:not(:disabled){border-color:#ff5f5f;background:#1e0e0e}.sentText{margin-top:8px;padding:10px 14px;border:1px solid var(--line);border-radius:10px;background:var(--bg-sent);font-family:var(--mono);font-size:13px;line-height:1.5}.sentTextUnlocked{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 5%,var(--bg-sent))}.sentTokenEdit{display:inline-flex;align-items:center}.sentFormInput{background:transparent;border:none;border-bottom:1.5px dashed color-mix(in srgb,var(--accent) 60%,transparent);color:var(--text);font-family:inherit;font-size:inherit;line-height:inherit;padding:0 2px;min-width:1ch;outline:none;text-align:center;cursor:text;transition:background .12s,border-color .12s}.sentFormInput:hover{border-bottom-color:var(--accent);border-bottom-style:solid}.sentFormInput:focus{background:color-mix(in srgb,var(--accent) 15%,transparent);border-bottom-color:var(--accent);border-bottom-style:solid;border-radius:3px 3px 0 0}.sentInsertBtn{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;font-size:11px;line-height:1;padding:0;border:1px solid transparent;border-radius:50%;background:transparent;color:var(--accent);cursor:pointer;opacity:.2;vertical-align:middle;transition:opacity .15s,background .15s,border-color .15s}.sentTextUnlocked:hover .sentInsertBtn,.sentInsertBtn:hover{opacity:1;background:color-mix(in srgb,var(--accent) 18%,transparent);border-color:var(--accent)}.sentDeleteBtn{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;font-size:13px;line-height:1;padding:0;border:1px solid transparent;border-radius:50%;background:transparent;color:#ff5f5f;cursor:pointer;opacity:0;vertical-align:middle;transition:opacity .12s,background .12s,border-color .12s}.sentTokenEdit:hover .sentDeleteBtn{opacity:.8}.sentDeleteBtn:hover{opacity:1 !important;background:color-mix(in srgb,#ff5f5f 18%,transparent);border-color:#ff5f5f}.sentNoteRow{display:flex;align-items:flex-start;gap:8px;margin-top:8px}.sentNoteRow label{white-space:nowrap;padding-top:5px}.sentNote{flex:1;resize:vertical;min-height:36px;background:var(--bg-control);color:var(--text);border:1px solid var(--line2);border-radius:8px;padding:6px 10px;font-family:var(--mono);font-size:12px;line-height:1.5}.sentNote:focus{border-color:var(--accent);outline:none}.sentMap{display:flex;flex-wrap:wrap;gap:4px;margin-top:10px}.progressMeta{margin-left:auto;font-size:.75rem;opacity:.7}.sentDot{min-width:14px;height:14px;border-radius:3px;padding:0 2px;border:2px solid transparent;cursor:pointer;transition:transform .1s,border-color .1s;font-size:9px;font-weight:700;line-height:10px;display:inline-flex;align-items:center;justify-content:center;font-family:inherit;color:inherit}.sentDot:hover{transform:scale(1.3)}.sentDotOk{background:#1a4a2e;border-color:#2a7a4a;color:#c0f5db}.sentDotDiff{background:#4a1a1a;border-color:#8a3030;color:#ffb0b0}.sentDotConfirmed{background:#3a2600;border-color:#c07a10;color:#ffcc00}.sentDotCurrent{border-color:#4a9eff !important;transform:scale(1.25)}.sentDotFlagged{outline:2px solid #ff9100;outline-offset:1px;color:#ff9100}.sentDotConfirmed.sentDotFlagged{color:#ffcc00}.confirmBtn{border-color:#5a3a00;background:#1a1000;color:#cc8800}.confirmBtn:hover:not(:disabled){border-color:#ff9f43;background:#261800;color:#ffb347}.confirmBtnActive{border-color:#ff9f43 !important;background:#261800 !important;color:#ffb347 !important}.sentTextConfirmed{border-color:#c07a10 !important;background:#13100a !important}.sentToken{cursor:pointer;border-radius:3px;padding:1px 3px;transition:background .12s}.sentToken:hover{background:rgba(255,255,255,.10)}.sentTokenActive{background:#0d2040;outline:1px solid var(--accent);outline-offset:1px;border-radius:3px}.sentStatsRow{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.statBadge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;font-family:var(--mono);background:#1a2535;border:1px solid var(--line2)}.statOk{color:var(--ok);border-color:#1a4030;background:#0d2420}.statDiff{color:var(--bad);border-color:#4a1a1a;background:#200d0d}.tableWrap{overflow:auto;border:1px solid var(--line);border-radius:12px}table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12px}th,td{border-bottom:1px solid var(--line);padding:7px 10px;white-space:nowrap;vertical-align:middle}th{text-align:left;color:var(--muted);position:sticky;top:0;background:var(--card);font-size:11px;font-weight:700;letter-spacing:.3px}tr:last-child td{border-bottom:none}.same{color:var(--ok);font-weight:700}.diff{color:var(--bad);font-weight:700}.fDiff{color:var(--bad);font-weight:600}.posLine{font-size:10px;color:var(--muted);margin-top:2px;line-height:1.3}.goldPos{opacity:.8}.posDiff{outline:1px solid #ff79c6;outline-offset:-2px;border-radius:4px;position:relative}.posCell{color:var(--muted)}td.same>div:first-child::before{content:"✓\00a0";font-size:9px;font-weight:900;opacity:.7}div.fDiff::before,span.fDiff::before{content:"≠\00a0";font-size:9px;font-weight:900;opacity:.75}td.posDiff::after{content:"≠";position:absolute;top:2px;right:3px;font-size:8px;font-weight:900;line-height:1;color:#ff79c6;opacity:.85;pointer-events:none}td select.posInlineSelect,td input.posInlineInput{border:1px solid var(--line2) !important;background:var(--bg-control) !important;color:var(--text) !important;font-family:var(--mono) !important;font-size:11px !important;padding:3px 6px !important;margin:0 !important;border-radius:6px !important;width:100%;min-width:0;cursor:pointer;box-shadow:none;transition:border-color .12s,background .12s}td select.posInlineSelect:focus,td input.posInlineInput:focus{outline:none !important;border-color:var(--accent) !important;background:var(--bg-focus-soft) !important;border-radius:6px !important}td input.posInlineInput{cursor:text !important}td input.headInlineInput{width:4.5em !important;text-align:center !important}.rowDiff td:first-child{border-left:3px solid #ff5f5f44}.rowFlagged{background:rgba(255,145,0,0.06) !important}.rowFlagged td:first-child{border-left:3px solid #ff910066 !important}.flagBtn{font-size:12px;font-weight:700;padding:2px 7px;margin-left:4px;border-radius:5px;border:1px solid var(--line2);background:var(--bg-control);color:var(--muted);cursor:pointer;vertical-align:middle;opacity:.55;transition:opacity .1s,color .1s,background .1s,border-color .1s}.flagBtn:hover{opacity:1;color:#ff9100;border-color:#ff910066}.flagBtnActive{opacity:1;color:#ff9100;background:rgba(255,145,0,0.18);border-color:#ff910088;font-weight:900}.goldCell{font-weight:700;color:var(--text)}.goldEditable{cursor:pointer}.goldEditable:hover{background:var(--bg-focus-soft);outline:1px solid var(--accent);outline-offset:-2px;border-radius:4px}.goldPopup{display:none;position:fixed;z-index:5000;background:var(--card2);border:1px solid var(--line2);border-radius:12px;padding:14px 16px;min-width:230px;box-shadow:0 8px 40px var(--shadow)}.goldPopup.active{display:block}.gpTitle{font-size:11px;color:var(--muted);font-weight:700;margin-bottom:10px}.gpTitle b{color:var(--accent)}.gpRow{display:flex;align-items:center;gap:8px;margin-bottom:6px}.gpRow label{font-size:11px;color:var(--muted);width:46px;flex-shrink:0;text-align:right}.gpRow select,.gpRow input.gpTextInput{flex:1;font-size:11px;padding:3px 6px;border-radius:6px;border:1px solid var(--line2);background:var(--bg-control);color:var(--text)}.gpActions{margin-top:10px;display:flex;justify-content:flex-end}.gpActions button{font-size:11px;padding:4px 10px}.gpHint{font-size:10px;color:var(--muted);margin-top:6px;text-align:center;opacity:.7}tr.keyFocus>td{background:var(--bg-focus)}tr.keyFocus>td:first-child{border-left:2px solid var(--accent)}.srcTag{display:inline-block;padding:1px 5px;border-radius:4px;font-size:10px;font-weight:800;font-family:var(--mono);margin-right:4px;vertical-align:middle}.srcCustom{background:#1a3a5c;color:var(--accent);border:1px solid #234}.srcDoc{background:#1a2a1e;color:#6dce8a;border:1px solid #1d3825}@keyframes highlightPulse{0%{background:#1e3a5a}50%{background:#244a70}100%{background:transparent}}.highlightRow td{animation:highlightPulse 1.6s ease-out}.dropOverlay{display:none;position:fixed;inset:0;z-index:9999;background:rgba(9,13,18,.82);backdrop-filter:blur(6px);align-items:center;justify-content:center;animation:overlayIn .15s ease-out}.dropOverlay.active{display:flex}.dropOverlayInner{display:flex;flex-direction:column;align-items:center;gap:12px;padding:40px 56px;border:2px dashed var(--accent);border-radius:20px;background:#0a1622cc;animation:dropPulse .9s ease-in-out infinite}.dropOverlayIcon{font-size:56px;animation:dropBounce .7s ease-in-out infinite}.dropOverlayText{font-size:22px;font-weight:800;color:var(--accent);letter-spacing:-.3px}.dropOverlaySub{font-size:12px;color:var(--muted)}@keyframes overlayIn{from{opacity:0}to{opacity:1}}@keyframes dropBounce{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-10px) scale(1.08)}}.textWarnBanner{margin-top:8px;padding:8px 12px;border:1px solid #6b2e0a;border-radius:8px;background:#1a0c04;color:#ff9f43;font-size:11px;line-height:1.5}.fileList{display:grid;gap:6px;min-height:72px;border:2px dashed transparent;border-radius:12px;padding:4px;transition:border-color .2s,background .2s,box-shadow .2s}.fileList.dragOver{border-color:var(--accent);background:#0d1e35;animation:dropPulse .9s ease-in-out infinite}@keyframes dropPulse{0%,100%{box-shadow:0 0 0 0 #4a9eff33}50%{box-shadow:0 0 0 10px #4a9eff00}}.fileItem{display:flex;gap:10px;align-items:center;justify-content:space-between;border:1px solid var(--line);border-radius:10px;padding:8px 12px;background:var(--bg-control)}.fileItem .left{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0}.fileItem .name{font-weight:700;font-size:12px}.fileItem .meta{font-size:11px;color:var(--muted)}.fileItem .fileActions{display:flex;gap:4px;align-items:center;flex-shrink:0}.fileItem .fileActions button{padding:4px 7px;font-size:12px;line-height:1}.fileItem .fileActions .moveUpBtn,.fileItem .fileActions .moveDownBtn{min-width:26px}.moveToProjectSel{font-size:11px;padding:3px 4px;border-radius:6px;border:1px solid var(--line);background:var(--bg-control);color:var(--text);max-width:110px;cursor:pointer}.fileWarnIcon{font-size:13px;vertical-align:middle;margin-left:4px;cursor:default}.fileItemWrapper{display:flex;flex-direction:column;gap:4px}.fileLockBtn{background:transparent;border:1px solid var(--line);border-radius:5px;font-size:13px;padding:2px 5px;cursor:pointer;opacity:.55;transition:opacity .15s,border-color .15s}.fileLockBtn:hover,.fileLockOpen{opacity:1;border-color:var(--accent)}.fileEditWrap{display:flex;flex-direction:column;gap:6px;padding:8px 10px;background:var(--bg);border:1px solid var(--accent);border-radius:8px}.fileEditTa{width:100%;min-height:180px;max-height:420px;resize:vertical;font-family:var(--mono);font-size:11.5px;line-height:1.5;background:var(--card);color:var(--text);border:1px solid var(--line);border-radius:6px;padding:8px;box-sizing:border-box}.fileEditBtns{display:flex;gap:6px}.projectLockBar{display:flex;align-items:center;gap:8px;margin-top:8px}.projectLockBtn{font-size:12px;padding:4px 10px;border-radius:6px;border:1px solid var(--line);background:var(--bg-control);cursor:pointer;transition:border-color .15s,color .15s}.projectLockBtn:hover{border-color:var(--accent)}.projectLockBtnOpen{border-color:var(--accent);color:var(--accent)}.sentManageBar{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}.sentManageBtn{font-size:12px;padding:3px 9px;border-radius:6px;border:1px solid var(--line);background:var(--bg-control);cursor:pointer;transition:border-color .15s}.sentManageBtn:hover{border-color:var(--accent)}.sentEditPanel{display:flex;flex-direction:column;gap:6px;margin-top:6px;width:100%}.sentEditTa{width:100%;min-height:140px;font-family:var(--mono);font-size:11.5px;resize:vertical;background:var(--bg);color:var(--text);border:1px solid var(--accent);border-radius:6px;padding:6px 8px;box-sizing:border-box}.sentEditLabel{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase}.sentEditBtns{display:flex;gap:6px}.treeGrid{display:block}.treeBlock{border:1px solid var(--line);border-radius:12px;background:var(--card2);overflow:hidden}.treeBlockStacked{display:flex;flex-direction:column}.treeSection{border-bottom:1px solid var(--line)}.treeSection:last-child{border-bottom:none}.treeHead{padding:7px 12px;border-bottom:1px solid var(--line);display:flex;gap:8px;align-items:center;justify-content:space-between;background:var(--bg-tree-head)}.treeHead .title{font-weight:800;font-size:12px}.treeHead .sub{color:var(--muted);font-size:11px}.treeLineRoot{display:flex;align-items:center;gap:8px;white-space:pre}.treeSubtreeBtn{padding:2px 8px;font-size:10px;font-family:var(--sans);border-color:#c07a10;color:#1a0e00;background:var(--gold);border-radius:6px;flex-shrink:0;font-weight:700}.treeSubtreeBtn:hover{border-color:#ffb94e;background:#ffb94e}.treePre{margin:0;padding:10px 12px;font-family:var(--mono);font-size:12px;white-space:pre;overflow:auto;line-height:1.6}.treeLine{display:block}.treeLineClickable{display:flex;align-items:center;gap:4px;white-space:pre;cursor:pointer;border-radius:4px;transition:background .1s}.treeLineClickable:hover{background:#1a2f48}.legendOk{color:var(--ok);font-weight:700}.legendWarn{color:var(--warn);font-weight:700}.legendGold{color:var(--gold);font-weight:700}.legendFile{color:var(--file);font-weight:700}.treeLineOk{color:var(--ok)}.treeLineWarn{color:var(--warn)}.treeLineGold{color:var(--gold)}.treeLineFileOnly{color:var(--file)}.treeLineHeader{color:var(--muted);font-size:11px}.treeTokenHeader{display:flex;flex-wrap:wrap;gap:4px;align-items:center;padding:5px 12px 4px;border-bottom:1px solid var(--line);background:rgba(255,255,255,0.03)}.treeTokenSentLabel{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text);margin-right:2px;flex-shrink:0}.treeTokenChip{font-family:var(--mono);font-size:11px;padding:1px 7px;border-radius:10px;background:var(--bg-control);border:1px solid var(--line2);color:var(--text);cursor:pointer;transition:border-color .12s,background .12s}.treeTokenChip:hover{border-color:var(--accent);background:var(--bg-focus-soft)}.arcDiagramWrap{overflow-x:auto;padding:10px 14px 6px;border-bottom:1px solid var(--line);background:rgba(0,0,0,.12);touch-action:pan-x}html[data-theme="light"] .arcDiagramWrap{background:rgba(0,0,0,.03)}.treeSingleBtn{font-family:var(--sans);font-size:10px;padding:1px 6px;border-radius:4px;background:#0e2d4a;color:#7ecfff;border:1px solid #2a5a80;cursor:pointer;margin-left:6px;white-space:nowrap;flex-shrink:0;transition:background .1s}.treeSingleBtn:hover{background:#1a4a70;border-color:#4a90c0}html[data-theme="light"] .treeSingleBtn{background:#d0eaf8;color:#1a4a6a;border-color:#6aaad0}html[data-theme="light"] .treeSingleBtn:hover{background:#b8dcf0}.pickable{cursor:pointer;user-select:none}.pickable:hover{outline:2px solid #2a5080;outline-offset:-2px;border-radius:6px}.picked{outline:2px solid #4a9eff66;outline-offset:-2px;border-radius:6px;background:#0f2038}.disabledPick{opacity:.4;cursor:not-allowed}.customCell{display:flex;gap:6px;align-items:center}.customCell input,.customCell select{font-family:var(--mono);font-size:12px;padding:5px 8px;border-radius:7px}.customHead{width:72px}.customRelSelect{width:160px}.colToggleBar{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:2px}.colToggle{font-size:11px;padding:4px 10px;border-radius:20px;transition:opacity .15s,border-color .15s}.colVisible{border-color:#2a4a6a;color:var(--accent);background:#0d1f33}.colVisible:hover{border-color:var(--accent)}.colHidden{border-color:#2a2a3a;color:#556;background:#0c0f16;opacity:.6}.colHidden:hover{opacity:1;border-color:#445}.fileHidden{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}.btnLike{display:inline-block;user-select:none}.btnLike:active{transform:translateY(1px)}.treeSection:first-child{background:linear-gradient(135deg,#1a1500 0%,#1f1a00 60%,#141200 100%)}.treeSection:first-child .treeHead{background:#211900;border-bottom-color:#3a3000}.treeSection:first-child .treeHead .title{color:#f5c842}.treeSection:first-child .treePre{background:transparent}.treeSection:not(:first-child) .treeHead{background:#0f1a28}.helpBtn{width:30px;height:30px;border-radius:50%;padding:0;font-size:15px;font-weight:800;flex-shrink:0;margin-left:auto}.helpModal{display:none;position:fixed;inset:0;z-index:10000;background:rgba(9,13,18,.88);backdrop-filter:blur(5px);align-items:flex-start;justify-content:center;padding:32px 12px;animation:overlayIn .15s ease-out}.helpModal.active{display:flex}.helpModalBox{position:relative;width:calc(100% - 24px);min-width:0;max-height:calc(100vh - 64px);overflow-x:hidden;overflow-y:auto;background:var(--card);border:1px solid var(--line2);border-radius:16px;padding:28px 32px 36px;scrollbar-gutter:stable}#helpCloseBtn{position:fixed;top:16px;right:20px;z-index:10001;width:32px;height:32px;padding:0;border-radius:50%;font-size:14px;display:none}.helpModal.active #helpCloseBtn{display:flex;align-items:center;justify-content:center}.helpContent{line-height:1.6;overflow-wrap:break-word;word-break:break-word}.helpContent .helpH{margin:0 0 8px}.helpContent h1.helpH{font-size:20px;font-weight:800;color:var(--text);padding-right:40px}.helpContent h2.helpH{font-size:12px;font-weight:700;color:var(--accent);margin-top:26px;text-transform:uppercase;letter-spacing:.4px}.helpContent h3.helpH{font-size:12px;font-weight:700;color:var(--muted);margin-top:16px}.helpContent .helpHr{border:none;border-top:1px solid var(--line);margin:16px 0}.helpContent .helpP{margin:4px 0 8px}.helpContent .helpUl,.helpContent .helpOl{padding-left:20px;margin:4px 0 10px}.helpContent li{margin:3px 0}.helpContent .helpCode{margin:8px 0;padding:12px 14px;background:#060e18;border:1px solid var(--line);border-radius:8px;overflow-x:auto;font-family:var(--mono);font-size:11px;line-height:1.6;white-space:pre}.helpContent .helpInlineCode{font-family:var(--mono);font-size:11px;background:#1a2535;padding:1px 5px;border-radius:4px}.helpContent .helpTable{width:100%;table-layout:fixed;border-collapse:collapse;margin:8px 0 14px;font-size:12px}.helpContent .helpTable th{background:#0d1a2a;color:var(--muted);font-size:11px;letter-spacing:.3px}.helpContent .helpTable th,.helpContent .helpTable td{border:1px solid var(--line);padding:6px 10px;text-align:left;word-break:break-word;overflow-wrap:break-word}.helpContent .helpTable tr:nth-child(even) td{background:#0a1218}.helpContent strong{color:var(--text);font-weight:700}.sessionRow{margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}.autosaveBanner{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:9000;max-width:600px;width:calc(100% - 32px);background:var(--card);border:1px solid var(--warn);border-radius:12px;padding:10px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;box-shadow:0 4px 24px var(--shadow);font-size:13px;color:var(--text)}html[data-theme="light"] .autosaveBanner{background:#fffbe8;border-color:#c09000}.projectTabBar{display:flex;flex-wrap:wrap;gap:4px;align-items:flex-end;padding:6px 14px 0;background:var(--bg);border-bottom:2px solid var(--line)}.projectTab{display:flex;align-items:center;gap:6px;cursor:pointer;padding:6px 14px;border-radius:10px 10px 0 0;border:1px solid var(--line);border-bottom:none;background:var(--bg-control);font-size:12px;white-space:nowrap;transition:background .15s,border-color .15s}.projectTab:hover:not(.projectTabActive){background:var(--bg-control-hover,#2a3040)}.projectTabActive{background:var(--card);border-color:var(--accent);border-bottom:2px solid var(--card);margin-bottom:-2px}.projectTabName{max-width:160px;overflow:hidden;text-overflow:ellipsis}.projectTabMoveBtn,.projectTabRenameBtn,.projectTabClose{padding:0 3px;border:none;background:transparent;color:var(--muted);font-size:11px;line-height:1;cursor:pointer;flex-shrink:0}.projectTabMoveBtn:hover:not(:disabled){color:var(--text)}.projectTabMoveBtn:disabled{opacity:.25;cursor:default}.projectTabRenameBtn{font-size:13px}.projectTabRenameBtn:hover{color:var(--accent)}.projectTabClose{font-size:14px}.projectTabClose:hover{color:var(--bad,#e06c75)}.projectTabAdd{padding:5px 12px;border-radius:8px 8px 0 0;font-size:15px;align-self:flex-end;flex-shrink:0}html[data-theme="light"] .projectTabBar{background:#f0f5fb;border-color:#c5d5e8}html[data-theme="light"] .projectTab{background:#ddeaf8;border-color:#b0c8e0}html[data-theme="light"] .projectTab:hover:not(.projectTabActive){background:#cce0f4}html[data-theme="light"] .projectTabActive{background:#fff;border-color:#3a7fc1;border-bottom-color:#fff}.globalResetBtn{border-color:#8a3030 !important;color:#ff7070 !important;font-size:11px;width:auto !important;height:auto !important;padding:5px 10px !important;opacity:1 !important}.globalResetBtn:hover{background:rgba(200,50,50,0.12) !important;border-color:#c05050 !important}html[data-theme="light"] .globalResetBtn{border-color:#c05050 !important;color:#b02020 !important}html[data-theme="light"] .globalResetBtn:hover{background:rgba(200,50,50,0.1) !important}.helpHintBtn{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;font-size:10px;font-weight:800;line-height:1;padding:0;margin-left:6px;vertical-align:middle;border:1px solid var(--line2);background:var(--bg-control);color:var(--muted);cursor:pointer;opacity:.6;transition:opacity .1s,border-color .1s,color .1s}.helpHintBtn:hover{opacity:1;border-color:var(--accent);color:var(--accent)}.ttsBtn{border-color:#1a3a2a;background:#0b1e15;color:#6dce8a}.ttsBtn:hover:not(:disabled){border-color:#3de89a;background:#0f2a1a}.ttsActive{border-color:#3de89a !important;background:#0f2a1a !important;color:#3de89a !important;animation:ttsPulse 1.2s ease-in-out infinite}@keyframes ttsPulse{0%,100%{box-shadow:0 0 0 0 #3de89a33}50%{box-shadow:0 0 0 6px #3de89a00}}.autoAdvanceRow{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);cursor:pointer;user-select:none}.autoAdvanceRow input[type=checkbox]{width:14px;height:14px;accent-color:var(--accent);cursor:pointer;border-radius:3px;padding:0}.bulkRow{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:6px;padding-top:6px;border-top:1px solid var(--line)}.plainViewToggle{font-size:12px;padding:4px 8px;border-radius:6px;border:1px solid var(--line);background:transparent;color:var(--muted);cursor:pointer;transition:border-color .15s,color .15s}.plainViewToggle:hover,.plainViewToggleActive{border-color:var(--accent);color:var(--text)}.plainView{margin-top:10px}.pvWrap{display:flex;flex-direction:column;gap:10px}.pvBlock{display:flex;flex-direction:column;gap:4px}.pvTitle{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}.pvPre{margin:0;padding:8px 10px;font-family:var(--mono);font-size:11.5px;line-height:1.55;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:6px;overflow-x:auto;white-space:pre}.posEditCell{padding:4px 6px !important}.posSelect{font-family:var(--mono);font-size:11px;padding:3px 6px;border-radius:6px;border-color:var(--line2);background:var(--bg-control);color:var(--muted);width:90px;cursor:pointer}.posSelect:focus{outline:1px solid var(--accent);color:var(--text)}.posCustom{color:var(--accent);font-weight:700}.sentTokenFlagged{color:#e8832a;font-weight:700}.fileEditBtn{display:none;margin-left:5px;padding:1px 5px;font-size:11px;border:1px solid var(--line2);border-radius:4px;background:var(--bg-control);color:var(--muted);cursor:pointer;vertical-align:middle}td:hover .fileEditBtn{display:inline-block}.tableUnlocked .fileEditBtn{display:inline-block}.fileEditBtn:hover{border-color:var(--accent);color:var(--accent)}.sentListPanel{margin-top:8px;border:1px solid var(--line);border-radius:8px;overflow-y:auto;max-height:260px;background:var(--bg)}.sentListRow{display:flex;align-items:center;gap:6px;padding:4px 8px;cursor:pointer;border-bottom:1px solid var(--line);font-size:12px;transition:background .1s}.sentListRow:last-child{border-bottom:none}.sentListRow:hover{background:var(--card)}.sentListRowActive{background:color-mix(in srgb,var(--accent) 12%,transparent) !important}.sentListNum{flex-shrink:0;width:26px;font-size:10px;color:var(--muted);font-weight:700;text-align:right}.sentListText{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text)}.sentListIcons{flex-shrink:0;font-size:10px;color:var(--muted);display:flex;gap:3px}.sentListEditBtn{flex-shrink:0;font-size:11px;padding:1px 6px;border-radius:4px;border:1px solid var(--line);background:var(--bg-control);cursor:pointer;color:var(--text)}.sentListEditBtn:hover{border-color:var(--accent);color:var(--accent)}.demoMenuWrap{position:relative;display:inline-block}.demoMenuToggle{font-size:12px;padding:4px 10px;border-radius:6px;border:1px solid var(--line2);background:var(--bg-control);color:var(--text);cursor:pointer}.demoMenuToggle:hover{border-color:var(--accent)}.demoMenu{position:absolute;top:calc(100%+4px);left:0;background:var(--card);border:1px solid var(--line2);border-radius:8px;padding:4px;z-index:500;display:flex;flex-direction:column;gap:2px;min-width:220px;box-shadow:0 4px 16px var(--shadow)}.demoMenu[hidden]{display:none}.demoMenuItem{text-align:left;padding:6px 10px;border-radius:5px;border:none;background:transparent;color:var(--text);cursor:pointer;font-size:12px;white-space:nowrap}.demoMenuItem:hover{background:var(--bg-control-hover);color:var(--accent)}.demoMenuItem:first-child{font-style:italic;color:var(--muted);border-bottom:1px solid var(--line);margin-bottom:2px;padding-bottom:8px}.demoMenuItem:first-child:hover{color:var(--text);background:var(--bg-control-hover)}@keyframes devReloadIn{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:translateY(0)}}@keyframes devReloadOut{from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(-12px)}}.devReloadToast{position:fixed;top:14px;right:16px;z-index:9999;display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--ok);border-radius:10px;padding:8px 12px;box-shadow:0 4px 20px var(--shadow);font-size:13px;color:var(--text);animation:devReloadIn 0.25s ease forwards}.devReloadToastFade{animation:devReloadOut 0.5s ease forwards}.devReloadIcon{font-size:16px}.devReloadTime{color:var(--muted);font-size:11px}.devReloadClose{margin-left:4px;padding:1px 6px;border-radius:4px;border:1px solid var(--line);background:transparent;color:var(--muted);cursor:pointer;font-size:12px;line-height:1.4}.devReloadClose:hover{border-color:var(--bad);color:var(--bad)}#devVersionBadge{position:fixed;bottom:10px;right:10px;display:flex;align-items:center;gap:6px;font-size:10px;font-family:var(--mono);padding:3px 6px 3px 9px;background:rgba(30,160,90,0.88);color:#fff;border-radius:4px;z-index:9998;letter-spacing:0.04em}#devVersionBadge[hidden]{display:none}.devBadgeClose{padding:0 3px;background:transparent;border:none;color:rgba(255,255,255,0.7);font-size:10px;cursor:pointer;line-height:1}.devBadgeClose:hover{color:#fff}.devModeBar{display:flex;align-items:center;gap:10px;margin-top:10px;padding-top:8px;border-top:1px solid var(--line);font-size:12px}.devModeLabel{display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--muted)}.devModeLabel input[type="checkbox"]{cursor:pointer}.devModeStatus{font-size:11px;padding:1px 6px;border-radius:4px;background:var(--bg-control);color:var(--muted);border:1px solid var(--line)}.devModeOn{color:var(--ok);border-color:var(--ok)}</style> <script>
+<!doctype html><html lang="de"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><title>CoNLL-U Vergleich</title> <style>@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;800&display=swap');:root{--bg:#090d12;--card:#0f1620;--card2:#111a26;--line:#1e2e42;--line2:#243548;--text:#dde8f5;--muted:#7a96b5;--bad:#ff5f5f;--ok:#3de89a;--warn:#f5c842;--gold:#ff9f43;--file:#5b9fff;--accent:#4a9eff;--mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;--sans:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;--bg-control:#0c1420;--bg-control-hover:#101e2f;--bg-focus:#0d2040;--bg-focus-soft:#0e1e32;--bg-tree-head:#0f1e30;--bg-sent:#0c1420;--shadow:rgba(0,0,0,.65)}html[data-theme="light"]{--bg:#f0f5fb;--card:#ffffff;--card2:#edf3fa;--line:#ccd8ea;--line2:#a8c0d8;--text:#18283a;--muted:#4e6880;--bad:#c0282a;--ok:#176e38;--warn:#7a5500;--gold:#a86000;--file:#1448a0;--accent:#1558b0;--bg-control:#ffffff;--bg-control-hover:#ddeeff;--bg-focus:#c8dff8;--bg-focus-soft:#d8ecff;--bg-tree-head:#e8f2fc;--bg-sent:#fafcff;--shadow:rgba(0,0,0,.18)}html[data-theme="light"] .bar{background:linear-gradient(135deg,#ddeaf8 0%,#cee0f4 100%)}html[data-theme="light"] kbd{background:#eef4fb;border-color:var(--line2)}html[data-theme="light"] .langBtn:hover:not(:disabled){background:#ddeef8}html[data-theme="light"] .langBtnActive{background:#c8e0f8 !important}html[data-theme="light"] button.danger{border-color:#e0a0a0;background:#fff5f5;color:#c03030}html[data-theme="light"] button.danger:hover:not(:disabled){border-color:#c83030;background:#ffe0e0}html[data-theme="light"] .sentText{background:var(--bg-sent);border-color:var(--line)}html[data-theme="light"] .sentNote{background:var(--bg-control);border-color:var(--line2)}html[data-theme="light"] .sentTextConfirmed{background:#fffae8 !important;border-color:#c07000 !important}html[data-theme="light"] .sentDotOk{background:#a8e4c0;border-color:#28904a;color:#1a5a30}html[data-theme="light"] .sentDotDiff{background:#f0b0b0;border-color:#c04040;color:#7a1818}html[data-theme="light"] .sentDotConfirmed{background:#ffe88a;border-color:#b07800;color:#6a4000}html[data-theme="light"] .sentDotFlagged{outline-color:#c06000;color:#c06000}html[data-theme="light"] .sentDotConfirmed.sentDotFlagged{color:#6a4000}html[data-theme="light"] .treeTokenChip{background:#e8f0f8;border-color:#b0c8e0;color:#18283a}html[data-theme="light"] .treeTokenChip:hover{border-color:#3a78c0;background:#c8dff8;color:#1a3050}html[data-theme="light"] .rowFlagged{background:rgba(200,100,0,0.06) !important}html[data-theme="light"] .rowFlagged td:first-child{border-left-color:#c0700066 !important}html[data-theme="light"] .flagBtnActive{color:#c06000;background:rgba(200,100,0,0.12);border-color:#c0700055}html[data-theme="light"] .statBadge{background:#e4edf8;border-color:var(--line2)}html[data-theme="light"] .statOk{color:#0a6030;border-color:#80cca0;background:#e0f8ec}html[data-theme="light"] .statDiff{color:#c02828;border-color:#e0a0a0;background:#fce8e8}html[data-theme="light"] td.posDiff::after{color:#c030a0}html[data-theme="light"] .confirmBtn{border-color:#b07000;background:#fff8e8;color:#8a5000}html[data-theme="light"] .confirmBtn:hover:not(:disabled){border-color:var(--gold);background:#fff0c8;color:var(--gold)}html[data-theme="light"] .confirmBtnActive{border-color:var(--gold) !important;background:#fff0c8 !important;color:var(--gold) !important}html[data-theme="light"] .sentToken:hover{background:rgba(0,0,0,.08)}html[data-theme="light"] .sentTokenActive{background:#c8dff8;outline-color:var(--accent)}html[data-theme="light"] th{background:var(--card)}html[data-theme="light"] .goldEditable:hover{background:var(--bg-focus-soft);outline-color:var(--accent)}html[data-theme="light"] tr.keyFocus>td{background:var(--bg-focus)}html[data-theme="light"] tr.keyFocus>td:first-child{border-left-color:var(--accent)}html[data-theme="light"] .srcCustom{background:#c8e0f8;color:var(--accent);border-color:#a8c8e8}html[data-theme="light"] .srcDoc{background:#b8f0d0;color:#146838;border-color:#70c890}html[data-theme="light"] .picked{background:#c8dff8}html[data-theme="light"] .pickable:hover{outline-color:#3a78c0}html[data-theme="light"] .treeHead{background:var(--bg-tree-head);border-bottom-color:var(--line)}html[data-theme="light"] .treeSection:first-child{background:linear-gradient(135deg,#fffbe8 0%,#fdf5cc 60%,#faf4d8 100%)}html[data-theme="light"] .treeSection:first-child .treeHead{background:#fef0b0;border-bottom-color:#e8d860}html[data-theme="light"] .treeSection:first-child .treeHead .title{color:#7a5000}html[data-theme="light"] .treeSection:not(:first-child) .treeHead{background:var(--bg-tree-head)}html[data-theme="light"] .treeLineClickable:hover{background:#d8eaf8}html[data-theme="light"] .treeSubtreeBtn{color:#4a2800;border-color:#a07000;background:#ffe066}html[data-theme="light"] .treeSubtreeBtn:hover{background:#ffd030;border-color:#c09000}html[data-theme="light"] .textWarnBanner{background:#fff3e0;border-color:#e8a030;color:#7a4800}html[data-theme="light"] .fileItem{background:#fafcff}html[data-theme="light"] .fileList.dragOver{background:#d8eeff}html[data-theme="light"] .dropOverlay{background:rgba(200,220,245,.88)}html[data-theme="light"] .dropOverlayInner{background:rgba(255,255,255,.96);border-color:var(--accent)}html[data-theme="light"] .goldPopup{box-shadow:0 8px 40px var(--shadow)}html[data-theme="light"] .colVisible{background:#ddeef8;border-color:#a8c8e8;color:var(--accent)}html[data-theme="light"] .colHidden{background:#eff4f8;border-color:#c8d8e8;color:#6a8898}html[data-theme="light"] .helpModal{background:rgba(180,210,240,.88)}html[data-theme="light"] .helpContent .helpCode{background:#f2f6fc;border-color:var(--line)}html[data-theme="light"] .helpContent .helpInlineCode{background:#e0eaf8}html[data-theme="light"] .helpContent .helpTable th{background:#e4eef8}html[data-theme="light"] .helpContent .helpTable tr:nth-child(even) td{background:#f4f8fc}html[data-theme="light"] .posCustom{color:var(--accent)}@keyframes highlightPulseLt{0%{background:#b0d0f0}50%{background:#c8e4fc}100%{background:transparent}}html[data-theme="light"] .highlightRow td{animation:highlightPulseLt 1.6s ease-out}*{box-sizing:border-box}body{margin:0;font-family:var(--sans);background:var(--bg);color:var(--text);font-size:13px}.bar{padding:14px 20px;border-bottom:1px solid var(--line);background:linear-gradient(135deg,#0a1118 0%,#0f1928 100%);display:flex;gap:16px;align-items:center;flex-wrap:wrap}.bar h1{margin:0;font-size:17px;font-weight:800;letter-spacing:-.3px}.bar p{margin:0;font-size:12px;color:var(--muted)}.langBar{display:flex;gap:4px;margin-left:auto}.langBtn{width:28px;height:28px;padding:0;border-radius:6px;font-size:16px;border-color:transparent;background:transparent;opacity:.55;transition:opacity .15s,border-color .15s}.langBtn:hover:not(:disabled){opacity:1;border-color:var(--line2);background:#0f1a2a}.langBtnActive{opacity:1 !important;border-color:var(--accent) !important;background:#0d1e33 !important}kbd{display:inline-block;padding:1px 5px;border-radius:4px;border:1px solid var(--line2);background:#0f1a2a;font-family:var(--mono);font-size:10px;color:var(--text)}.wrap{max-width:1440px;margin:0 auto;padding:14px;display:grid;gap:10px}.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px}h2{margin:0 0 10px 0;font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}.muted{color:var(--muted)}.small{font-size:11px}.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.sentInfoRow{margin-top:4px;min-height:0}button,select,input,.btnLike{border:1px solid var(--line2);background:var(--bg-control);color:var(--text);border-radius:8px;padding:7px 12px;cursor:pointer;font-size:12px;font-family:var(--sans);transition:border-color .15s,background .15s}button:hover:not(:disabled),.btnLike:hover{border-color:var(--accent);background:var(--bg-control-hover)}button:disabled,select:disabled{opacity:.45;cursor:not-allowed}button.danger{border-color:#4a1f1f;background:#160b0b;color:#ff7e7e}button.danger:hover:not(:disabled){border-color:#ff5f5f;background:#1e0e0e}.sentText{margin-top:8px;padding:10px 14px;border:1px solid var(--line);border-radius:10px;background:var(--bg-sent);font-family:var(--mono);font-size:13px;line-height:1.5}.sentTextUnlocked{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 5%,var(--bg-sent))}.sentTokenEdit{display:inline-flex;align-items:center}.sentFormInput{background:transparent;border:none;border-bottom:1.5px dashed color-mix(in srgb,var(--accent) 60%,transparent);color:var(--text);font-family:inherit;font-size:inherit;line-height:inherit;padding:0 2px;min-width:1ch;outline:none;text-align:center;cursor:text;transition:background .12s,border-color .12s}.sentFormInput:hover{border-bottom-color:var(--accent);border-bottom-style:solid}.sentFormInput:focus{background:color-mix(in srgb,var(--accent) 15%,transparent);border-bottom-color:var(--accent);border-bottom-style:solid;border-radius:3px 3px 0 0}.sentInsertBtn{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;font-size:11px;line-height:1;padding:0;border:1px solid transparent;border-radius:50%;background:transparent;color:var(--accent);cursor:pointer;opacity:.2;vertical-align:middle;transition:opacity .15s,background .15s,border-color .15s}.sentTextUnlocked:hover .sentInsertBtn,.sentInsertBtn:hover{opacity:1;background:color-mix(in srgb,var(--accent) 18%,transparent);border-color:var(--accent)}.sentDeleteBtn{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;font-size:13px;line-height:1;padding:0;border:1px solid transparent;border-radius:50%;background:transparent;color:#ff5f5f;cursor:pointer;opacity:0;vertical-align:middle;transition:opacity .12s,background .12s,border-color .12s}.sentTokenEdit:hover .sentDeleteBtn{opacity:.8}.sentDeleteBtn:hover{opacity:1 !important;background:color-mix(in srgb,#ff5f5f 18%,transparent);border-color:#ff5f5f}.sentNoteRow{display:flex;align-items:flex-start;gap:8px;margin-top:8px}.sentNoteRow label{white-space:nowrap;padding-top:5px}.sentNote{flex:1;resize:vertical;min-height:36px;background:var(--bg-control);color:var(--text);border:1px solid var(--line2);border-radius:8px;padding:6px 10px;font-family:var(--mono);font-size:12px;line-height:1.5}.sentNote:focus{border-color:var(--accent);outline:none}.sentMap{display:flex;flex-wrap:wrap;gap:4px;margin-top:10px}.progressMeta{margin-left:auto;font-size:.75rem;opacity:.7}.sentDot{min-width:14px;height:14px;border-radius:3px;padding:0 2px;border:2px solid transparent;cursor:pointer;transition:transform .1s,border-color .1s;font-size:9px;font-weight:700;line-height:10px;display:inline-flex;align-items:center;justify-content:center;font-family:inherit;color:inherit}.sentDot:hover{transform:scale(1.3)}.sentDotOk{background:#1a4a2e;border-color:#2a7a4a;color:#c0f5db}.sentDotDiff{background:#4a1a1a;border-color:#8a3030;color:#ffb0b0}.sentDotConfirmed{background:#3a2600;border-color:#c07a10;color:#ffcc00}.sentDotCurrent{border-color:#4a9eff !important;transform:scale(1.25)}.sentDotFlagged{outline:2px solid #ff9100;outline-offset:1px;color:#ff9100}.sentDotConfirmed.sentDotFlagged{color:#ffcc00}.confirmBtn{border-color:#5a3a00;background:#1a1000;color:#cc8800}.confirmBtn:hover:not(:disabled){border-color:#ff9f43;background:#261800;color:#ffb347}.confirmBtnActive{border-color:#ff9f43 !important;background:#261800 !important;color:#ffb347 !important}.sentTextConfirmed{border-color:#c07a10 !important;background:#13100a !important}.sentToken{cursor:pointer;border-radius:3px;padding:1px 3px;transition:background .12s}.sentToken:hover{background:rgba(255,255,255,.10)}.sentTokenActive{background:#0d2040;outline:1px solid var(--accent);outline-offset:1px;border-radius:3px}.sentStatsRow{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.statBadge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;font-family:var(--mono);background:#1a2535;border:1px solid var(--line2)}.statOk{color:var(--ok);border-color:#1a4030;background:#0d2420}.statDiff{color:var(--bad);border-color:#4a1a1a;background:#200d0d}.tableWrap{overflow:auto;border:1px solid var(--line);border-radius:12px}table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12px}th,td{border-bottom:1px solid var(--line);padding:7px 10px;white-space:nowrap;vertical-align:middle}th{text-align:left;color:var(--muted);position:sticky;top:0;background:var(--card);font-size:11px;font-weight:700;letter-spacing:.3px}tr:last-child td{border-bottom:none}.same{color:var(--ok);font-weight:700}.diff{color:var(--bad);font-weight:700}.fDiff{color:var(--bad);font-weight:600}.posLine{font-size:10px;color:var(--muted);margin-top:2px;line-height:1.3}.goldPos{opacity:.8}.posDiff{outline:1px solid #ff79c6;outline-offset:-2px;border-radius:4px;position:relative}.posCell{color:var(--muted)}td.same>div:first-child::before{content:"✓\00a0";font-size:9px;font-weight:900;opacity:.7}div.fDiff::before,span.fDiff::before{content:"≠\00a0";font-size:9px;font-weight:900;opacity:.75}td.posDiff::after{content:"≠";position:absolute;top:2px;right:3px;font-size:8px;font-weight:900;line-height:1;color:#ff79c6;opacity:.85;pointer-events:none}td select.posInlineSelect,td input.posInlineInput{border:1px solid var(--line2) !important;background:var(--bg-control) !important;color:var(--text) !important;font-family:var(--mono) !important;font-size:11px !important;padding:3px 6px !important;margin:0 !important;border-radius:6px !important;width:100%;min-width:0;cursor:pointer;box-shadow:none;transition:border-color .12s,background .12s}td select.posInlineSelect:focus,td input.posInlineInput:focus{outline:none !important;border-color:var(--accent) !important;background:var(--bg-focus-soft) !important;border-radius:6px !important}td input.posInlineInput{cursor:text !important}td input.headInlineInput{width:4.5em !important;text-align:center !important}.rowDiff td:first-child{border-left:3px solid #ff5f5f44}.rowFlagged{background:rgba(255,145,0,0.06) !important}.rowFlagged td:first-child{border-left:3px solid #ff910066 !important}.flagBtn{font-size:12px;font-weight:700;padding:2px 7px;margin-left:4px;border-radius:5px;border:1px solid var(--line2);background:var(--bg-control);color:var(--muted);cursor:pointer;vertical-align:middle;opacity:.55;transition:opacity .1s,color .1s,background .1s,border-color .1s}.flagBtn:hover{opacity:1;color:#ff9100;border-color:#ff910066}.flagBtnActive{opacity:1;color:#ff9100;background:rgba(255,145,0,0.18);border-color:#ff910088;font-weight:900}.goldCell{font-weight:700;color:var(--text)}.goldEditable{cursor:pointer}.goldEditable:hover{background:var(--bg-focus-soft);outline:1px solid var(--accent);outline-offset:-2px;border-radius:4px}.goldPopup{display:none;position:fixed;z-index:5000;background:var(--card2);border:1px solid var(--line2);border-radius:12px;padding:14px 16px;min-width:230px;box-shadow:0 8px 40px var(--shadow)}.goldPopup.active{display:block}.gpTitle{font-size:11px;color:var(--muted);font-weight:700;margin-bottom:10px}.gpTitle b{color:var(--accent)}.gpRow{display:flex;align-items:center;gap:8px;margin-bottom:6px}.gpRow label{font-size:11px;color:var(--muted);width:46px;flex-shrink:0;text-align:right}.gpRow select,.gpRow input.gpTextInput{flex:1;font-size:11px;padding:3px 6px;border-radius:6px;border:1px solid var(--line2);background:var(--bg-control);color:var(--text)}.gpActions{margin-top:10px;display:flex;justify-content:flex-end}.gpActions button{font-size:11px;padding:4px 10px}.gpHint{font-size:10px;color:var(--muted);margin-top:6px;text-align:center;opacity:.7}tr.keyFocus>td{background:var(--bg-focus)}tr.keyFocus>td:first-child{border-left:2px solid var(--accent)}.srcTag{display:inline-block;padding:1px 5px;border-radius:4px;font-size:10px;font-weight:800;font-family:var(--mono);margin-right:4px;vertical-align:middle}.srcCustom{background:#1a3a5c;color:var(--accent);border:1px solid #234}.srcDoc{background:#1a2a1e;color:#6dce8a;border:1px solid #1d3825}@keyframes highlightPulse{0%{background:#1e3a5a}50%{background:#244a70}100%{background:transparent}}.highlightRow td{animation:highlightPulse 1.6s ease-out}.dropOverlay{display:none;position:fixed;inset:0;z-index:9999;background:rgba(9,13,18,.82);backdrop-filter:blur(6px);align-items:center;justify-content:center;animation:overlayIn .15s ease-out}.dropOverlay.active{display:flex}.dropOverlayInner{display:flex;flex-direction:column;align-items:center;gap:12px;padding:40px 56px;border:2px dashed var(--accent);border-radius:20px;background:#0a1622cc;animation:dropPulse .9s ease-in-out infinite}.dropOverlayIcon{font-size:56px;animation:dropBounce .7s ease-in-out infinite}.dropOverlayText{font-size:22px;font-weight:800;color:var(--accent);letter-spacing:-.3px}.dropOverlaySub{font-size:12px;color:var(--muted)}@keyframes overlayIn{from{opacity:0}to{opacity:1}}@keyframes dropBounce{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-10px) scale(1.08)}}.textWarnBanner{margin-top:8px;padding:8px 12px;border:1px solid #6b2e0a;border-radius:8px;background:#1a0c04;color:#ff9f43;font-size:11px;line-height:1.5}.fileList{display:grid;gap:6px;min-height:72px;border:2px dashed transparent;border-radius:12px;padding:4px;transition:border-color .2s,background .2s,box-shadow .2s}.fileList.dragOver{border-color:var(--accent);background:#0d1e35;animation:dropPulse .9s ease-in-out infinite}@keyframes dropPulse{0%,100%{box-shadow:0 0 0 0 #4a9eff33}50%{box-shadow:0 0 0 10px #4a9eff00}}.fileItem{display:flex;gap:10px;align-items:center;justify-content:space-between;border:1px solid var(--line);border-radius:10px;padding:8px 12px;background:var(--bg-control)}.fileItem .left{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0}.fileItem .name{font-weight:700;font-size:12px}.fileItem .meta{font-size:11px;color:var(--muted)}.fileItem .fileActions{display:flex;gap:4px;align-items:center;flex-shrink:0}.fileItem .fileActions button{padding:4px 7px;font-size:12px;line-height:1}.fileItem .fileActions .moveUpBtn,.fileItem .fileActions .moveDownBtn{min-width:26px}.moveToProjectSel{font-size:11px;padding:3px 4px;border-radius:6px;border:1px solid var(--line);background:var(--bg-control);color:var(--text);max-width:110px;cursor:pointer}.fileWarnIcon{font-size:13px;vertical-align:middle;margin-left:4px;cursor:default}.fileItemWrapper{display:flex;flex-direction:column;gap:4px}.fileLockBtn{background:transparent;border:1px solid var(--line);border-radius:5px;font-size:13px;padding:2px 5px;cursor:pointer;opacity:.55;transition:opacity .15s,border-color .15s}.fileLockBtn:hover,.fileLockOpen{opacity:1;border-color:var(--accent)}.fileEditWrap{display:flex;flex-direction:column;gap:6px;padding:8px 10px;background:var(--bg);border:1px solid var(--accent);border-radius:8px}.fileEditTa{width:100%;min-height:180px;max-height:420px;resize:vertical;font-family:var(--mono);font-size:11.5px;line-height:1.5;background:var(--card);color:var(--text);border:1px solid var(--line);border-radius:6px;padding:8px;box-sizing:border-box}.fileEditBtns{display:flex;gap:6px}.projectLockBar{display:flex;align-items:center;gap:8px;margin-top:8px}.projectModeStatus{font-size:12px;padding:3px 9px;border-radius:6px;border:1px solid var(--line2);font-weight:600}.projectModeView{color:var(--muted)}.projectModeEdit{border-color:var(--accent);color:var(--accent)}.projectLockBtn{font-size:12px;padding:4px 10px;border-radius:6px;border:1px solid var(--line);background:var(--bg-control);cursor:pointer;transition:border-color .15s,color .15s}.projectLockBtn:hover{border-color:var(--accent)}.sentManageBar{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}.sentManageBtn{font-size:12px;padding:3px 9px;border-radius:6px;border:1px solid var(--line);background:var(--bg-control);cursor:pointer;transition:border-color .15s}.sentManageBtn:hover{border-color:var(--accent)}.sentEditPanel{display:flex;flex-direction:column;gap:6px;margin-top:6px;width:100%}.sentEditTa{width:100%;min-height:140px;font-family:var(--mono);font-size:11.5px;resize:vertical;background:var(--bg);color:var(--text);border:1px solid var(--accent);border-radius:6px;padding:6px 8px;box-sizing:border-box}.sentEditLabel{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase}.sentEditBtns{display:flex;gap:6px}.treeGrid{display:block}.treeBlock{border:1px solid var(--line);border-radius:12px;background:var(--card2);overflow:hidden}.treeBlockStacked{display:flex;flex-direction:column}.treeSection{border-bottom:1px solid var(--line)}.treeSection:last-child{border-bottom:none}.treeHead{padding:7px 12px;border-bottom:1px solid var(--line);display:flex;gap:8px;align-items:center;justify-content:space-between;background:var(--bg-tree-head)}.treeHead .title{font-weight:800;font-size:12px}.treeHead .sub{color:var(--muted);font-size:11px}.treeLineRoot{display:flex;align-items:center;gap:8px;white-space:pre}.treeSubtreeBtn{padding:2px 8px;font-size:10px;font-family:var(--sans);border-color:#c07a10;color:#1a0e00;background:var(--gold);border-radius:6px;flex-shrink:0;font-weight:700}.treeSubtreeBtn:hover{border-color:#ffb94e;background:#ffb94e}.treePre{margin:0;padding:10px 12px;font-family:var(--mono);font-size:12px;white-space:pre;overflow:auto;line-height:1.6}.treeLine{display:block}.treeLineClickable{display:flex;align-items:center;gap:4px;white-space:pre;cursor:pointer;border-radius:4px;transition:background .1s}.treeLineClickable:hover{background:#1a2f48}.legendOk{color:var(--ok);font-weight:700}.legendWarn{color:var(--warn);font-weight:700}.legendGold{color:var(--gold);font-weight:700}.legendFile{color:var(--file);font-weight:700}.treeLineOk{color:var(--ok)}.treeLineWarn{color:var(--warn)}.treeLineGold{color:var(--gold)}.treeLineFileOnly{color:var(--file)}.treeLineHeader{color:var(--muted);font-size:11px}.treeTokenHeader{display:flex;flex-wrap:wrap;gap:4px;align-items:center;padding:5px 12px 4px;border-bottom:1px solid var(--line);background:rgba(255,255,255,0.03)}.treeTokenSentLabel{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text);margin-right:2px;flex-shrink:0}.treeTokenChip{font-family:var(--mono);font-size:11px;padding:1px 7px;border-radius:10px;background:var(--bg-control);border:1px solid var(--line2);color:var(--text);cursor:pointer;transition:border-color .12s,background .12s}.treeTokenChip:hover{border-color:var(--accent);background:var(--bg-focus-soft)}.arcDiagramWrap{overflow-x:auto;padding:10px 14px 6px;border-bottom:1px solid var(--line);background:rgba(0,0,0,.12);touch-action:pan-x}html[data-theme="light"] .arcDiagramWrap{background:rgba(0,0,0,.03)}.treeSingleBtn{font-family:var(--sans);font-size:10px;padding:1px 6px;border-radius:4px;background:#0e2d4a;color:#7ecfff;border:1px solid #2a5a80;cursor:pointer;margin-left:6px;white-space:nowrap;flex-shrink:0;transition:background .1s}.treeSingleBtn:hover{background:#1a4a70;border-color:#4a90c0}html[data-theme="light"] .treeSingleBtn{background:#d0eaf8;color:#1a4a6a;border-color:#6aaad0}html[data-theme="light"] .treeSingleBtn:hover{background:#b8dcf0}.pickable{cursor:pointer;user-select:none}.pickable:hover{outline:2px solid #2a5080;outline-offset:-2px;border-radius:6px}.picked{outline:2px solid #4a9eff66;outline-offset:-2px;border-radius:6px;background:#0f2038}.disabledPick{opacity:.4;cursor:not-allowed}.customCell{display:flex;gap:6px;align-items:center}.customCell input,.customCell select{font-family:var(--mono);font-size:12px;padding:5px 8px;border-radius:7px}.customHead{width:72px}.customRelSelect{width:160px}.colToggleBar{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:2px}.colToggle{font-size:11px;padding:4px 10px;border-radius:20px;transition:opacity .15s,border-color .15s}.colVisible{border-color:#2a4a6a;color:var(--accent);background:#0d1f33}.colVisible:hover{border-color:var(--accent)}.colHidden{border-color:#2a2a3a;color:#556;background:#0c0f16;opacity:.6}.colHidden:hover{opacity:1;border-color:#445}.fileHidden{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}.btnLike{display:inline-block;user-select:none}.btnLike:active{transform:translateY(1px)}.treeSection:first-child{background:linear-gradient(135deg,#1a1500 0%,#1f1a00 60%,#141200 100%)}.treeSection:first-child .treeHead{background:#211900;border-bottom-color:#3a3000}.treeSection:first-child .treeHead .title{color:#f5c842}.treeSection:first-child .treePre{background:transparent}.treeSection:not(:first-child) .treeHead{background:#0f1a28}.helpBtn{width:30px;height:30px;border-radius:50%;padding:0;font-size:15px;font-weight:800;flex-shrink:0;margin-left:auto}.helpModal{display:none;position:fixed;inset:0;z-index:10000;background:rgba(9,13,18,.88);backdrop-filter:blur(5px);align-items:flex-start;justify-content:center;padding:32px 12px;animation:overlayIn .15s ease-out}.helpModal.active{display:flex}.helpModalBox{position:relative;width:calc(100% - 24px);min-width:0;max-height:calc(100vh - 64px);overflow-x:hidden;overflow-y:auto;background:var(--card);border:1px solid var(--line2);border-radius:16px;padding:28px 32px 36px;scrollbar-gutter:stable}#helpCloseBtn{position:fixed;top:16px;right:20px;z-index:10001;width:32px;height:32px;padding:0;border-radius:50%;font-size:14px;display:none}.helpModal.active #helpCloseBtn{display:flex;align-items:center;justify-content:center}.helpContent{line-height:1.6;overflow-wrap:break-word;word-break:break-word}.helpContent .helpH{margin:0 0 8px}.helpContent h1.helpH{font-size:20px;font-weight:800;color:var(--text);padding-right:40px}.helpContent h2.helpH{font-size:12px;font-weight:700;color:var(--accent);margin-top:26px;text-transform:uppercase;letter-spacing:.4px}.helpContent h3.helpH{font-size:12px;font-weight:700;color:var(--muted);margin-top:16px}.helpContent .helpHr{border:none;border-top:1px solid var(--line);margin:16px 0}.helpContent .helpP{margin:4px 0 8px}.helpContent .helpUl,.helpContent .helpOl{padding-left:20px;margin:4px 0 10px}.helpContent li{margin:3px 0}.helpContent .helpCode{margin:8px 0;padding:12px 14px;background:#060e18;border:1px solid var(--line);border-radius:8px;overflow-x:auto;font-family:var(--mono);font-size:11px;line-height:1.6;white-space:pre}.helpContent .helpInlineCode{font-family:var(--mono);font-size:11px;background:#1a2535;padding:1px 5px;border-radius:4px}.helpContent .helpTable{width:100%;table-layout:fixed;border-collapse:collapse;margin:8px 0 14px;font-size:12px}.helpContent .helpTable th{background:#0d1a2a;color:var(--muted);font-size:11px;letter-spacing:.3px}.helpContent .helpTable th,.helpContent .helpTable td{border:1px solid var(--line);padding:6px 10px;text-align:left;word-break:break-word;overflow-wrap:break-word}.helpContent .helpTable tr:nth-child(even) td{background:#0a1218}.helpContent strong{color:var(--text);font-weight:700}.sessionRow{margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}.autosaveBanner{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:9000;max-width:600px;width:calc(100% - 32px);background:var(--card);border:1px solid var(--warn);border-radius:12px;padding:10px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;box-shadow:0 4px 24px var(--shadow);font-size:13px;color:var(--text)}html[data-theme="light"] .autosaveBanner{background:#fffbe8;border-color:#c09000}.projectTabBar{display:flex;flex-wrap:wrap;gap:4px;align-items:flex-end;padding:6px 14px 0;background:var(--bg);border-bottom:2px solid var(--line)}.projectTab{display:flex;align-items:center;gap:6px;cursor:pointer;padding:6px 14px;border-radius:10px 10px 0 0;border:1px solid var(--line);border-bottom:none;background:var(--bg-control);font-size:12px;white-space:nowrap;transition:background .15s,border-color .15s}.projectTab:hover:not(.projectTabActive){background:var(--bg-control-hover,#2a3040)}.projectTabActive{background:var(--card);border-color:var(--accent);border-bottom:2px solid var(--card);margin-bottom:-2px}.projectTabName{max-width:160px;overflow:hidden;text-overflow:ellipsis}.projectTabMoveBtn,.projectTabRenameBtn,.projectTabClose{padding:0 3px;border:none;background:transparent;color:var(--muted);font-size:11px;line-height:1;cursor:pointer;flex-shrink:0}.projectTabMoveBtn:hover:not(:disabled){color:var(--text)}.projectTabMoveBtn:disabled{opacity:.25;cursor:default}.projectTabRenameBtn{font-size:13px}.projectTabRenameBtn:hover{color:var(--accent)}.projectTabClose{font-size:14px}.projectTabClose:hover{color:var(--bad,#e06c75)}.projectTabAdd{padding:5px 12px;border-radius:8px 8px 0 0;font-size:15px;align-self:flex-end;flex-shrink:0}html[data-theme="light"] .projectTabBar{background:#f0f5fb;border-color:#c5d5e8}html[data-theme="light"] .projectTab{background:#ddeaf8;border-color:#b0c8e0}html[data-theme="light"] .projectTab:hover:not(.projectTabActive){background:#cce0f4}html[data-theme="light"] .projectTabActive{background:#fff;border-color:#3a7fc1;border-bottom-color:#fff}.globalResetBtn{border-color:#8a3030 !important;color:#ff7070 !important;font-size:11px;width:auto !important;height:auto !important;padding:5px 10px !important;opacity:1 !important}.globalResetBtn:hover{background:rgba(200,50,50,0.12) !important;border-color:#c05050 !important}html[data-theme="light"] .globalResetBtn{border-color:#c05050 !important;color:#b02020 !important}html[data-theme="light"] .globalResetBtn:hover{background:rgba(200,50,50,0.1) !important}.helpHintBtn{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;font-size:10px;font-weight:800;line-height:1;padding:0;margin-left:6px;vertical-align:middle;border:1px solid var(--line2);background:var(--bg-control);color:var(--muted);cursor:pointer;opacity:.6;transition:opacity .1s,border-color .1s,color .1s}.helpHintBtn:hover{opacity:1;border-color:var(--accent);color:var(--accent)}.ttsBtn{border-color:#1a3a2a;background:#0b1e15;color:#6dce8a}.ttsBtn:hover:not(:disabled){border-color:#3de89a;background:#0f2a1a}.ttsActive{border-color:#3de89a !important;background:#0f2a1a !important;color:#3de89a !important;animation:ttsPulse 1.2s ease-in-out infinite}@keyframes ttsPulse{0%,100%{box-shadow:0 0 0 0 #3de89a33}50%{box-shadow:0 0 0 6px #3de89a00}}.autoAdvanceRow{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);cursor:pointer;user-select:none}.autoAdvanceRow input[type=checkbox]{width:14px;height:14px;accent-color:var(--accent);cursor:pointer;border-radius:3px;padding:0}.bulkRow{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:6px;padding-top:6px;border-top:1px solid var(--line)}.plainViewToggle{font-size:12px;padding:4px 8px;border-radius:6px;border:1px solid var(--line);background:transparent;color:var(--muted);cursor:pointer;transition:border-color .15s,color .15s}.plainViewToggle:hover,.plainViewToggleActive{border-color:var(--accent);color:var(--text)}.plainView{margin-top:10px}.pvWrap{display:flex;flex-direction:column;gap:10px}.pvBlock{display:flex;flex-direction:column;gap:4px}.pvTitle{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}.pvPre{margin:0;padding:8px 10px;font-family:var(--mono);font-size:11.5px;line-height:1.55;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:6px;overflow-x:auto;white-space:pre}.posEditCell{padding:4px 6px !important}.posSelect{font-family:var(--mono);font-size:11px;padding:3px 6px;border-radius:6px;border-color:var(--line2);background:var(--bg-control);color:var(--muted);width:90px;cursor:pointer}.posSelect:focus{outline:1px solid var(--accent);color:var(--text)}.posCustom{color:var(--accent);font-weight:700}.sentTokenFlagged{color:#e8832a;font-weight:700}.fileEditBtn{display:none;margin-left:5px;padding:1px 5px;font-size:11px;border:1px solid var(--line2);border-radius:4px;background:var(--bg-control);color:var(--muted);cursor:pointer;vertical-align:middle}td:hover .fileEditBtn{display:inline-block}.tableUnlocked .fileEditBtn{display:inline-block}.fileEditBtn:hover{border-color:var(--accent);color:var(--accent)}.sentListPanel{margin-top:8px;border:1px solid var(--line);border-radius:8px;overflow-y:auto;max-height:260px;background:var(--bg)}.sentListRow{display:flex;align-items:center;gap:6px;padding:4px 8px;cursor:pointer;border-bottom:1px solid var(--line);font-size:12px;transition:background .1s}.sentListRow:last-child{border-bottom:none}.sentListRow:hover{background:var(--card)}.sentListRowActive{background:color-mix(in srgb,var(--accent) 16%,transparent) !important;border-left:3px solid var(--accent);padding-left:5px}.sentListRowActive .sentListNum{color:var(--accent);font-weight:800}.sentListNum{flex-shrink:0;width:26px;font-size:10px;color:var(--muted);font-weight:700;text-align:right}.sentListText{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text)}.sentListIcons{flex-shrink:0;font-size:10px;color:var(--muted);display:flex;gap:3px}.sentListEditBtn{flex-shrink:0;font-size:11px;padding:1px 6px;border-radius:4px;border:1px solid var(--line);background:var(--bg-control);cursor:pointer;color:var(--text)}.sentListEditBtn:hover{border-color:var(--accent);color:var(--accent)}.demoMenuWrap{position:relative;display:inline-block}.demoMenuToggle{font-size:12px;padding:4px 10px;border-radius:6px;border:1px solid var(--line2);background:var(--bg-control);color:var(--text);cursor:pointer}.demoMenuToggle:hover{border-color:var(--accent)}.demoMenu{position:absolute;top:calc(100%+4px);left:0;background:var(--card);border:1px solid var(--line2);border-radius:8px;padding:4px;z-index:500;display:flex;flex-direction:column;gap:2px;min-width:220px;box-shadow:0 4px 16px var(--shadow)}.demoMenu[hidden]{display:none}.demoMenuItem{text-align:left;padding:6px 10px;border-radius:5px;border:none;background:transparent;color:var(--text);cursor:pointer;font-size:12px;white-space:nowrap}.demoMenuItem:hover{background:var(--bg-control-hover);color:var(--accent)}.demoMenuItem:first-child{font-style:italic;color:var(--muted);border-bottom:1px solid var(--line);margin-bottom:2px;padding-bottom:8px}.demoMenuItem:first-child:hover{color:var(--text);background:var(--bg-control-hover)}@keyframes devReloadIn{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:translateY(0)}}@keyframes devReloadOut{from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(-12px)}}.devReloadToast{position:fixed;top:14px;right:16px;z-index:9999;display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--ok);border-radius:10px;padding:8px 12px;box-shadow:0 4px 20px var(--shadow);font-size:13px;color:var(--text);animation:devReloadIn 0.25s ease forwards}.devReloadToastFade{animation:devReloadOut 0.5s ease forwards}.devReloadIcon{font-size:16px}.devReloadTime{color:var(--muted);font-size:11px}.devReloadClose{margin-left:4px;padding:1px 6px;border-radius:4px;border:1px solid var(--line);background:transparent;color:var(--muted);cursor:pointer;font-size:12px;line-height:1.4}.devReloadClose:hover{border-color:var(--bad);color:var(--bad)}#devVersionBadge{position:fixed;bottom:10px;right:10px;display:flex;align-items:center;gap:6px;font-size:10px;font-family:var(--mono);padding:3px 6px 3px 9px;background:rgba(30,160,90,0.88);color:#fff;border-radius:4px;z-index:9998;letter-spacing:0.04em}#devVersionBadge[hidden]{display:none}.devBadgeClose{padding:0 3px;background:transparent;border:none;color:rgba(255,255,255,0.7);font-size:10px;cursor:pointer;line-height:1}.devBadgeClose:hover{color:#fff}.devModeBar{display:flex;align-items:center;gap:10px;margin-top:10px;padding-top:8px;border-top:1px solid var(--line);font-size:12px}.devModeLabel{display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--muted)}.devModeLabel input[type="checkbox"]{cursor:pointer}.devModeStatus{font-size:11px;padding:1px 6px;border-radius:4px;background:var(--bg-control);color:var(--muted);border:1px solid var(--line)}.devModeOn{color:var(--ok);border-color:var(--ok)}</style> <script>
 (function(){
 const saved = localStorage.getItem('theme') || 'dark';
 document.documentElement.dataset.theme = saved;
@@ -176,9 +176,11 @@ window.LANG_DE = {
 'sent.unflagAll': '⚑ Markierungen löschen',
 'plain.toggle': '📄 Rohdaten',
 'plain.toggleOff': '📄 Rohdaten ausblenden',
-'project.lock': '🔒 Projekt sperren',
-'project.unlock': '🔓 Projekt entsperren',
-'sent.editSentBtn': '✎ Satz bearbeiten',
+'project.statusView': '📄 Datei-Bearbeitung aus',
+'project.statusEdit': '✏ Datei-Bearbeitung ein',
+'project.btnEdit': 'Datei-Bearbeitung einschalten',
+'project.btnView': 'Datei-Bearbeitung ausschalten',
+'sent.editSentBtn': '✎ CoNLL-U bearbeiten',
 'sent.editSentSave': '✓ Übernehmen',
 'sent.editSentCancel': '✕ Abbrechen',
 'sent.addSentBtn': '➕ Satz einfügen',
@@ -351,9 +353,11 @@ window.LANG_EN = {
 'sent.unflagAll': '⚑ Clear flags',
 'plain.toggle': '📄 Raw data',
 'plain.toggleOff': '📄 Hide raw data',
-'project.lock': '🔒 Lock project',
-'project.unlock': '🔓 Unlock project',
-'sent.editSentBtn': '✎ Edit sentence',
+'project.statusView': '📄 File editing off',
+'project.statusEdit': '✏ File editing on',
+'project.btnEdit': 'Enable file editing',
+'project.btnView': 'Disable file editing',
+'sent.editSentBtn': '✎ Edit CoNLL-U',
 'sent.editSentSave': '✓ Apply',
 'sent.editSentCancel': '✕ Cancel',
 'sent.addSentBtn': '➕ Insert sentence',
@@ -1428,11 +1432,11 @@ _lastIdList = idList;
 _lastDocMaps = docMaps;
 const stats = computeStats(sentIndex, idList, docMaps, goldMap);
 sentStats.innerHTML = `
-<span class="statBadge">${t(stats.totalTokens !== 1 ? 'stats.tokens' : 'stats.token', { n: stats.totalTokens })}</span>
-<span class="statBadge ${stats.diffCount > 0 ? 'statDiff' : 'statOk'}">
-${t(stats.diffCount !== 1 ? 'stats.diffs' : 'stats.diff', { n: stats.diffCount })}
-</span>
-`;
+    <span class="statBadge">${t(stats.totalTokens !== 1 ? 'stats.tokens' : 'stats.token', { n: stats.totalTokens })}</span>
+    <span class="statBadge ${stats.diffCount > 0 ? 'statDiff' : 'statOk'}">
+      ${t(stats.diffCount !== 1 ? 'stats.diffs' : 'stats.diff', { n: stats.diffCount })}
+    </span>
+  `;
 const anyUnlocked = state.unlocked;
 const showFileCols = state.docs.length >= 2 || anyUnlocked;
 let html = "<thead><tr>";
@@ -2041,22 +2045,17 @@ cur = idToHead.get(cur) ?? null;
 }
 return false;
 }
-function _arcShowDeprelPopup(screenX, screenY, depId, currentDeprel, onSetDeprel) {
+function _arcShowDeprelPopup(anchorX, anchorY, depId, currentDeprel, onSetDeprel) {
 document.getElementById('arcDeprelPopup')?.remove();
 const popup = document.createElement('div');
 popup.id = 'arcDeprelPopup';
 popup.style.cssText = [
 'position:fixed', 'z-index:9999',
-`left:${screenX + 10}px`, `top:${screenY - 10}px`,
-'background:var(--card)', 'border:1px solid var(--line)',
-'border-radius:8px', 'padding:10px', 'box-shadow:0 4px 20px rgba(0,0,0,.5)',
-'display:flex', 'flex-direction:column', 'gap:7px', 'min-width:160px',
+`left:${anchorX}px`, `top:${anchorY}px`,
+'background:var(--card)', 'border:1px solid var(--accent)',
+'border-radius:6px', 'padding:3px',
+'box-shadow:0 4px 16px rgba(0,0,0,.4)',
 ].join(';');
-const lbl = document.createElement('div');
-lbl.style.cssText = 'font-size:11px; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:.05em;';
-lbl.textContent = 'Relation type';
-popup.appendChild(lbl);
-const sel = document.createElement('select');
 const optsHtml = (typeof DEPREL_OPTIONS_HTML !== 'undefined' && DEPREL_OPTIONS_HTML)
 ? DEPREL_OPTIONS_HTML
 : ['_','nsubj','obj','iobj','csubj','ccomp','xcomp','obl','vocative','expl',
@@ -2064,37 +2063,30 @@ const optsHtml = (typeof DEPREL_OPTIONS_HTML !== 'undefined' && DEPREL_OPTIONS_H
 'nummod','acl','amod','det','clf','case','conj','cc','fixed','flat','compound',
 'list','parataxis','orphan','goeswith','reparandum','punct','root','dep']
 .map(d => `<option value="${d}">${d}</option>`).join('');
+const sel = document.createElement('select');
+sel.size = 12;
 sel.innerHTML = optsHtml;
 sel.value = currentDeprel;
-sel.style.cssText = 'width:100%; padding:5px 6px; background:var(--bg); color:var(--text); border:1px solid var(--line); border-radius:5px; font-size:12px;';
-popup.appendChild(sel);
-const btnRow = document.createElement('div');
-btnRow.style.cssText = 'display:flex; gap:6px; justify-content:flex-end;';
-const applyBtn = document.createElement('button');
-applyBtn.textContent = '✓ OK';
-applyBtn.style.cssText = 'padding:4px 12px; font-size:12px; cursor:pointer; background:var(--ok); color:#fff; border:none; border-radius:5px; font-weight:600;';
-applyBtn.addEventListener('click', () => { onSetDeprel(depId, sel.value); popup.remove(); });
-const closeBtn = document.createElement('button');
-closeBtn.textContent = '✕';
-closeBtn.style.cssText = 'padding:4px 9px; font-size:13px; cursor:pointer; background:var(--bg-control,#333); color:var(--text); border:1px solid var(--line); border-radius:5px;';
-closeBtn.addEventListener('click', () => popup.remove());
-btnRow.appendChild(applyBtn);
-btnRow.appendChild(closeBtn);
-popup.appendChild(btnRow);
-document.body.appendChild(popup);
+sel.style.cssText = 'display:block; border:none; outline:none; background:var(--bg); color:var(--text); font-size:12px; font-family:inherit; cursor:pointer; min-width:110px;';
+const close = () => popup.remove();
+sel.addEventListener('change', () => { onSetDeprel(depId, sel.value); close(); });
 sel.addEventListener('keydown', ev => {
-if (ev.key === 'Enter') { onSetDeprel(depId, sel.value); popup.remove(); }
-if (ev.key === 'Escape') { popup.remove(); }
+if (ev.key === 'Escape') close();
+if (ev.key === 'Enter') { onSetDeprel(depId, sel.value); close(); }
 });
+popup.appendChild(sel);
+document.body.appendChild(popup);
 requestAnimationFrame(() => {
 const r = popup.getBoundingClientRect();
-if (r.right > window.innerWidth) popup.style.left = `${screenX - r.width - 10}px`;
-if (r.bottom > window.innerHeight) popup.style.top = `${screenY - r.height}px`;
-});
+if (r.right > window.innerWidth) popup.style.left = `${anchorX - r.width}px`;
+if (r.bottom > window.innerHeight) popup.style.top = `${anchorY - r.height}px`;
+const curOpt = sel.querySelector('option:checked');
+if (curOpt) curOpt.scrollIntoView({ block: 'nearest' });
 sel.focus();
+});
 setTimeout(() => {
 function outside(ev) {
-if (!popup.contains(ev.target)) { popup.remove(); document.removeEventListener('pointerdown', outside); }
+if (!popup.contains(ev.target)) { close(); document.removeEventListener('pointerdown', outside); }
 }
 document.addEventListener('pointerdown', outside);
 }, 120);
@@ -2146,6 +2138,7 @@ return el;
 const svg = mk('svg', { width:svgW, height:svgH });
 svg.style.cssText = 'display:block; overflow:visible; cursor:default; touch-action:none;';
 mc.font = '10px sans-serif';
+const edgeLabelGroups = [];
 for (const e of edges) {
 const g = mk('g');
 const depId = toks[e.dep].id;
@@ -2159,6 +2152,7 @@ stroke:rootColor, 'stroke-width':1.8 }));
 g.appendChild(mk('polygon', {
 points:`${dx-5},${wordY-14} ${dx+5},${wordY-14} ${dx},${wordY-3}`,
 fill:rootColor }));
+svg.appendChild(g);
 const lw = mc.measureText(e.label).width;
 const labelG = mk('g');
 if (editable && onSetDeprel) labelG.style.cssText = 'cursor:pointer;';
@@ -2173,7 +2167,7 @@ const svgR = svg.getBoundingClientRect();
 _arcShowDeprelPopup(svgR.left + dx + 14 + lw, svgR.top + ty + 2, depId, e.label, onSetDeprel);
 });
 }
-g.appendChild(labelG);
+edgeLabelGroups.push(labelG);
 } else {
 const x1 = centers[e.dep];
 const x2 = centers[e.head];
@@ -2196,6 +2190,7 @@ stroke:arcColor, 'stroke-width':1.8, fill:'none',
 g.appendChild(mk('polygon', {
 points:`${x2-4},${wordY-10} ${x2+4},${wordY-10} ${x2},${wordY-2}`,
 fill:arcColor, 'pointer-events':'none' }));
+svg.appendChild(g);
 const labelG = mk('g');
 if (editable && onSetDeprel) labelG.style.cssText = 'cursor:pointer;';
 labelG.appendChild(mk('rect', {
@@ -2209,13 +2204,13 @@ if (editable && onSetDeprel) {
 labelG.addEventListener('click', ev => {
 ev.stopPropagation();
 const svgR = svg.getBoundingClientRect();
-_arcShowDeprelPopup(svgR.left + mid + lw/2 + 5, svgR.top + apex - 14, depId, e.label, onSetDeprel);
+_arcShowDeprelPopup(svgR.left + mid, svgR.top + apex - 14, depId, e.label, onSetDeprel);
 });
 }
-g.appendChild(labelG);
+let btnG = null;
 if (editable && onDeleteArc) {
-const btnG = mk('g');
-btnG.style.cssText = 'cursor:pointer; opacity:0; transition:opacity .12s;';
+btnG = mk('g');
+btnG.style.cssText = 'cursor:pointer; opacity:0; pointer-events:none; transition:opacity .12s;';
 const bx = mid + lw/2 + 14;
 const by = apex - 7;
 btnG.appendChild(mk('circle', { cx:bx, cy:by, r:7, fill:'var(--bad)', opacity:0.9 }));
@@ -2224,14 +2219,30 @@ const xt = mk('text', { x:bx, y:by+4, 'text-anchor':'middle',
 xt.textContent = '×';
 btnG.appendChild(xt);
 btnG.addEventListener('click', ev => { ev.stopPropagation(); onDeleteArc(depId); });
-g.appendChild(btnG);
+}
+if (btnG) {
 let hideTimer = null;
-g.addEventListener('pointerenter', () => { clearTimeout(hideTimer); btnG.style.opacity = '1'; });
-g.addEventListener('pointerleave', () => { hideTimer = setTimeout(() => { btnG.style.opacity = '0'; }, 300); });
+const show = () => {
+clearTimeout(hideTimer);
+btnG.style.opacity = '1';
+btnG.style.pointerEvents = '';
+};
+const hide = () => {
+hideTimer = setTimeout(() => {
+btnG.style.opacity = '0';
+btnG.style.pointerEvents = 'none';
+}, 300);
+};
+g.addEventListener('pointerenter', show);
+g.addEventListener('pointerleave', hide);
+labelG.addEventListener('pointerenter', show);
+labelG.addEventListener('pointerleave', hide);
 btnG.addEventListener('pointerenter', () => clearTimeout(hideTimer));
+btnG.addEventListener('pointerleave', hide);
 }
+edgeLabelGroups.push(labelG);
+if (btnG) edgeLabelGroups.push(btnG);
 }
-svg.appendChild(g);
 }
 for (let i = 0; i < toks.length; i++) {
 const t = toks[i];
@@ -2276,6 +2287,7 @@ overlay.addEventListener('pointerleave', () => { overlay.style.fill = 'transpare
 }
 svg.appendChild(overlay);
 }
+for (const lg of edgeLabelGroups) svg.appendChild(lg);
 const wrap = document.createElement('div');
 wrap.className = 'arcDiagramWrap';
 wrap.appendChild(svg);
@@ -2446,11 +2458,11 @@ section.className = "treeSection";
 const head = document.createElement("div");
 head.className = "treeHead";
 head.innerHTML = `
-<div style="display:flex;gap:8px;align-items:center">
-<div class="title">${escapeHtml(title)}</div>
-${sub ? `<div class="sub">${escapeHtml(sub)}</div>` : ""}
-</div>
-`;
+    <div style="display:flex;gap:8px;align-items:center">
+      <div class="title">${escapeHtml(title)}</div>
+      ${sub ? `<div class="sub">${escapeHtml(sub)}</div>` : ""}
+    </div>
+  `;
 section.appendChild(head);
 if(arcMap && typeof buildArcDiagram === "function"){
 const arcWrap = buildArcDiagram(arcMap, {
@@ -2772,17 +2784,17 @@ else delete state.notes[state.currentSent];
 }
 sentSelect.addEventListener("change", () => {
 state.currentSent = parseInt(sentSelect.value, 10) || 0;
-_sentEditOpen = false; _sentListOpen = false;
+_sentEditOpen = false;
 renderSentence();
 });
 prevBtn.addEventListener("click", () => {
 state.currentSent = Math.max(0, state.currentSent - 1);
-_sentEditOpen = false; _sentListOpen = false;
+_sentEditOpen = false;
 renderSentence();
 });
 nextBtn.addEventListener("click", () => {
 state.currentSent = Math.min(state.maxSents - 1, state.currentSent + 1);
-_sentEditOpen = false; _sentListOpen = false;
+_sentEditOpen = false;
 renderSentence();
 });
 customClearBtn.addEventListener("click", clearCustomForSentence);
@@ -3046,7 +3058,7 @@ const diffPart = hasDiff
 ? ` ${t(stats.diffCount !== 1 ? 'sent.optDiffs' : 'sent.optDiff', { n: stats.diffCount })}`
 : ` ${t('sent.optOk')}`;
 const flagPart = hasFlags ? t('flag.sentOpt') : '';
-opt.textContent = `${t('sent.optLabel', { n: i+1 })}${confirmed ? ' ★' : ''}${flagPart} (${stats.totalTokens} Tok${diffPart})`;
+opt.textContent = `${t('sent.optLabel', { n: i+1 })}${confirmed ? ' ★' : ''}${flagPart}  (${stats.totalTokens} Tok${diffPart})`;
 if(confirmed && hasFlags){
 opt.style.background = '#1a0c00';
 opt.style.color = '#ffcc44';
@@ -3167,9 +3179,12 @@ const bar = document.getElementById("projectLockBar");
 if(!bar) return;
 bar.innerHTML = "";
 if(state.docs.length === 0) return;
+const status = document.createElement("span");
+status.className = "projectModeStatus" + (state.unlocked ? " projectModeEdit" : " projectModeView");
+status.textContent = state.unlocked ? t('project.statusEdit') : t('project.statusView');
 const btn = document.createElement("button");
-btn.className = "projectLockBtn" + (state.unlocked ? " projectLockBtnOpen" : "");
-btn.textContent = state.unlocked ? t('project.unlock') : t('project.lock');
+btn.className = "projectLockBtn";
+btn.textContent = state.unlocked ? t('project.btnView') : t('project.btnEdit');
 btn.addEventListener("click", () => {
 state.unlocked = !state.unlocked;
 _saveActiveProject();
@@ -3177,6 +3192,7 @@ renderProjectLock();
 renderFiles();
 renderSentence();
 });
+bar.appendChild(status);
 bar.appendChild(btn);
 }
 function _renumberTokens(sent){
@@ -3252,7 +3268,6 @@ if(d === state.docs[0]) _remapAnnotations(si, map);
 renderSentence();
 }
 let _sentEditOpen = false;
-let _sentListOpen = false;
 function renderSentManage(){
 const bar = document.getElementById("sentManageBar");
 if(!bar) return;
@@ -3340,15 +3355,6 @@ btnRow.appendChild(cancelBtn);
 panel.appendChild(btnRow);
 bar.appendChild(panel);
 }
-const listToggleBtn = document.createElement("button");
-listToggleBtn.className = "sentManageBtn" + (_sentListOpen ? " sentManageBtnActive" : "");
-listToggleBtn.textContent = "📋 Alle Sätze";
-listToggleBtn.addEventListener("click", () => {
-_sentListOpen = !_sentListOpen;
-renderSentManage();
-});
-bar.appendChild(listToggleBtn);
-if(_sentListOpen){
 const listPanel = document.createElement("div");
 listPanel.className = "sentListPanel";
 for(let si = 0; si < state.maxSents; si++){
@@ -3361,10 +3367,7 @@ row.appendChild(numSpan);
 let preview = "";
 for(const d of state.docs){
 const s = d.sentences[si];
-if(s){
-preview = s.text || s.tokens.map(t => t.form).join(" ");
-break;
-}
+if(s){ preview = s.text || s.tokens.map(t => t.form).join(" "); break; }
 }
 const textSpan = document.createElement("span");
 textSpan.className = "sentListText";
@@ -3373,8 +3376,7 @@ row.appendChild(textSpan);
 const iconsSpan = document.createElement("span");
 iconsSpan.className = "sentListIcons";
 if(state.confirmed.has(si)) iconsSpan.appendChild(Object.assign(document.createElement("span"), { textContent: "✓", title: t('sent.confirmed') }));
-const hasFlagsForSent = state.flags[si] && state.flags[si].size > 0;
-if(hasFlagsForSent) iconsSpan.appendChild(Object.assign(document.createElement("span"), { textContent: "⚑" }));
+if(state.flags[si]?.size > 0) iconsSpan.appendChild(Object.assign(document.createElement("span"), { textContent: "⚑" }));
 row.appendChild(iconsSpan);
 const editBtn2 = document.createElement("button");
 editBtn2.className = "sentListEditBtn";
@@ -3384,7 +3386,6 @@ editBtn2.addEventListener("click", (e) => {
 e.stopPropagation();
 state.currentSent = si;
 _sentEditOpen = true;
-_sentListOpen = false;
 renderSentSelect();
 renderSentence();
 });
@@ -3398,8 +3399,7 @@ listPanel.appendChild(row);
 }
 bar.appendChild(listPanel);
 const activeRow = listPanel.querySelector(".sentListRowActive");
-if(activeRow) activeRow.scrollIntoView({ block: "nearest" });
-}
+if(activeRow) requestAnimationFrame(() => activeRow.scrollIntoView({ block: "nearest" }));
 }
 function initCustomFromDoc(docIdx){
 const s = state.docs[docIdx]?.sentences?.[state.currentSent];
@@ -3506,9 +3506,9 @@ for(const doc of state.docs){
 const sent = doc.sentences[sentIndex];
 const raw = sent ? _sentToConlluLines(sent).join("\n") : t('sent.missing');
 html += `<div class="pvBlock">
-<div class="pvTitle">${escapeHtml(doc.name)}</div>
-<pre class="pvPre">${escapeHtml(raw)}</pre>
-</div>`;
+      <div class="pvTitle">${escapeHtml(doc.name)}</div>
+      <pre class="pvPre">${escapeHtml(raw)}</pre>
+    </div>`;
 }
 html += `</div>`;
 pv.innerHTML = html;
@@ -3746,12 +3746,12 @@ if(!bar) return;
 const on = localStorage.getItem(_DEV_MODE_KEY) === '1';
 bar.innerHTML =
 `<label class="devModeLabel">
-<input type="checkbox" id="devModeCb"${on ? ' checked' : ''}>
-<span data-i18n="devMode.label">${t('devMode.label')}</span>
-</label>
-<span class="devModeStatus ${on ? 'devModeOn' : ''}">
-${on ? t('devMode.on') : t('devMode.off')}
-</span>`;
+      <input type="checkbox" id="devModeCb"${on ? ' checked' : ''}>
+      <span data-i18n="devMode.label">${t('devMode.label')}</span>
+    </label>
+    <span class="devModeStatus ${on ? 'devModeOn' : ''}">
+      ${on ? t('devMode.on') : t('devMode.off')}
+    </span>`;
 document.getElementById('devModeCb').addEventListener('change', (e) => {
 const enabled = e.target.checked;
 localStorage.setItem(_DEV_MODE_KEY, enabled ? '1' : '0');
@@ -4348,42 +4348,62 @@ break;
 });
 </script> <script>
 window.README_CONTENT_DE = `# CoNLL-U Vergleich
+
 Browserbasiertes Tool zum Vergleichen und Annotieren mehrerer CoNLL-U-Dateien.
 Läuft vollständig lokal ohne Server — einfach \`index.html\` im Browser öffnen.
+
 ---
+
 ## Schnellstart
+
 1. \`index.html\` im Browser öffnen
 2. Mindestens zwei \`.conllu\`-Dateien laden — oder **„Demo laden"** klicken
 3. Satz auswählen → Baumansicht und Vergleichstabelle erscheinen automatisch
 4. Gold-Zellen klicken oder Tastaturkürzel nutzen, um Annotationen zu bearbeiten
 5. Fertigen Satz mit **„✓ Bestätigen"** markieren (oder \`Space\`)
 6. **💾 Session speichern** — Fortschritt jederzeit als JSON sichern und später fortsetzen
+
 ---
+
 ## Projekte
+
 Das Tool unterstützt mehrere **Projekte** gleichzeitig — jedes mit eigenen Dateien, Annotationen und Undo-Verlauf.
+
 ### Projekt-Tab-Leiste
+
 Die Tab-Leiste erscheint direkt unterhalb des Headers. Jeder Tab hat:
+
 | Schaltfläche | Funktion |
 |---|---|
 | **◀ / ▶** | Projekt in der Reihenfolge verschieben |
 | **✎** | Projekt umbenennen |
 | **×** | Projekt löschen (nur wenn mehr als 1 Projekt vorhanden) |
 | **+** (rechts außen) | Neues leeres Projekt anlegen |
+
 Klick auf einen Tab → wechselt zum Projekt. Der Zustand (Dateien, Satzposition, Undo-Stack) wird beim Wechsel automatisch gespeichert und wiederhergestellt.
+
 ### Tastaturkürzel für Projekte
+
 | Taste | Funktion |
 |---|---|
 | \`[\` | Vorheriges Projekt |
 | \`]\` | Nächstes Projekt |
+
 ### Automatische Zuweisung beim Laden
+
 Werden Dateien mit **unterschiedlichen Satzzahlen** geladen, ordnet das Tool sie automatisch den passenden Projekten zu:
+
 1. **Eigenes Projekt** (aktiv) — wenn leer oder passende Satzzahl
 2. **Anderes bestehendes Projekt** — mit übereinstimmender Satzzahl
 3. **Anderes leeres Projekt** — als letzter Ausweg
 4. **Neues Projekt anlegen** — nur wenn kein passendes gefunden
+
 Wenn ein neues Projekt automatisch angelegt wurde, erscheint kurz eine Hinweismeldung.
+
 ---
+
 ## 1) Dateien laden
+
 | Aktion | Beschreibung |
 |--------|-------------|
 | **„Dateien hinzufügen"** | Öffnet den Datei-Dialog; \`.conllu\`, \`.conll\`, \`.txt\` und \`.json\` wählbar |
@@ -4392,64 +4412,95 @@ Wenn ein neues Projekt automatisch angelegt wurde, erscheint kurz eine Hinweisme
 | **Drag & Drop** | Dateien direkt auf die Seite ziehen — alle Typen werden erkannt |
 | **„Demo laden"** | Drei vorgefertigte Beispieldateien, die alle Vergleichsfälle abdecken |
 | **„Reset"** | Alle Dateien und Annotationen zurücksetzen |
+
 Alle Upload-Wege (Buttons und Drag & Drop) erkennen den Dateityp automatisch:
+
 | Dateiendung | Erkannter Typ | Aktion |
 |-------------|---------------|--------|
 | \`.conllu\`, \`.conll\`, \`.txt\` | CoNLL-U-Datei | Als Annotator-Datei laden |
 | \`.json\` mit \`version\` + \`docs\`/\`projects\` | Session | Session importieren |
 | \`.json\` (alles andere) | Tagset | Als neues Tagset laden |
+
 ### Datei-Aktionen pro Zeile
+
 Jede geladene Datei hat folgende Schaltflächen:
+
 | Schaltfläche | Funktion |
 |---|---|
 | **⬇ Download** | Datei als CoNLL-U herunterladen (Original-Inhalt) |
 | **Projekt-Dropdown** | Datei in ein anderes Projekt verschieben; **＋ Neues Projekt …** legt ein neues an und verschiebt sofort |
 | **▲ / ▼** | Reihenfolge innerhalb des Projekts tauschen |
 | **Löschen** | Datei aus dem Projekt entfernen |
+
 ### Textkonsistenzwarnung
+
 Haben zwei Dateien bei gleicher Satznummer unterschiedliche Tokens:
 - **⚠️-Badge** neben dem Dateinamen
 - Oranges **Warnbanner** unterhalb der Dateiliste
+
 ---
+
 ## 2) Satz wählen
+
 ### Dropdown
+
 Jede Option zeigt:
 - Satznummer und Stern \`★\` wenn bestätigt
 - Tokenanzahl
 - Anzahl der Abweichungen (\`· N Diffs\`) oder Haken (\`· ✓\`) bei vollständiger Übereinstimmung
+
 **Farben im Dropdown:**
+
 | Farbe | Bedeutung |
 |-------|-----------|
 | Grün | Keine Abweichungen |
 | Rot | Mindestens eine Abweichung |
 | Gold | Satz wurde bestätigt (\`★\`) |
+
 Der **Rahmen des Dropdowns** spiegelt den Status des aktuellen Satzes wider (grün / rot / gold).
+
 ### Satztext
+
 Der Satztext erscheint als klickbare Tokens. Ein Klick auf ein Wort:
 - Springt zur entsprechenden Zeile in der Vergleichstabelle
 - Hebt das Token im Satztext hervor (blauer Rahmen)
 - Funktioniert auch andersrum: Tastaturnavigation (↑/↓) hebt das aktive Wort im Satztext hervor
+
 ### Satz-Map
+
 Unterhalb des Satztextes erscheint eine Reihe kleiner **farbiger Punkte** — einer pro Satz:
+
 | Farbe | Bedeutung |
 |-------|-----------|
 | Dunkelgrün | Kein Diff |
 | Dunkelrot | Hat Diffs |
 | Gold | Bestätigt |
 | Blauer Rahmen | Aktuell ausgewählter Satz |
+
 Klick auf einen Punkt springt direkt zu diesem Satz.
+
 ### Gold bestätigen
+
 Über **„✓ Bestätigen"** (oder \`Space\`) wird der aktuelle Satz als abgeschlossen markiert.
 Bestätigte Sätze werden gold eingefärbt (Dropdown, Satz-Map, Satztext-Rahmen, Button).
 Erneutes Drücken hebt die Bestätigung wieder auf.
+
 ### Notiz pro Satz
+
 Unterhalb des Satztextes gibt es ein **Notizfeld** — freier Text, der pro Satz gespeichert und mit der Session exportiert wird.
+
 ### CoNLL-U kopieren
+
 Der **„Copy CoNLL-U"-Button** (oder Taste \`c\`) kopiert die Gold-Annotation des aktuellen Satzes als CoNLL-U in die Zwischenablage.
+
 ---
+
 ## 3) Baumansicht
+
 Zeigt den aktuellen Satz als Abhängigkeitsbäume. Für jede geladene Datei gibt es einen Diff-Baum gegen die Gold-Annotation.
+
 ### Legende
+
 | Symbol/Farbe | Bedeutung |
 |---|---|
 | ✅ grün | Kante identisch mit Gold |
@@ -4457,23 +4508,35 @@ Zeigt den aktuellen Satz als Abhängigkeitsbäume. Für jede geladene Datei gibt
 | 🅶 gold | Kante nur in Gold vorhanden |
 | 🅵 blau | Kante nur in dieser Datei vorhanden |
 | 🌱 | Wurzel eines Teilbaums |
+
 Unterschiede in Label-Spalten (z. B. UPOS/XPOS) werden als \`[SPALTE:🅶X\\|🅵Y]\` annotiert.
+
 ### Interaktion
+
 - **Klick auf eine Zeile** → springt zur zugehörigen Zeile in der Vergleichstabelle
 - **„→ Gold"-Button** an jeder 🌱-Zeile → übernimmt den gesamten Teilbaum als Gold-Annotation
+
 ### Interaktives Arc-Diagramm (Gold-Ansicht)
+
 Das Gold-Arc-Diagramm ist direkt bearbeitbar:
+
 | Aktion | Funktion |
 |--------|---------|
 | **Token ziehen** (Drag & Drop) | Zieht einen neuen Pfeil von Token zu Token → setzt neuen HEAD |
 | **Deprel-Popup** | Erscheint automatisch nach dem Ziehen — oder per Klick auf ein Arc-Label |
 | **× Button** (Hover über Arc) | Löscht die Kante (setzt auf Root zurück) |
 | **Klick auf Token** (ohne Ziehen) | Springt zur zugehörigen Tabellenzeile |
+
 **Zyklus-Erkennung:** Würde ein neuer Pfeil einen Zyklus erzeugen, wird das Ziel rot aufgeleuchtet und die Zuweisung abgelehnt.
+
 **Pfeilfarben** entsprechen der Legende (grün = Gold-übereinstimmend, gelb = DEPREL-Diff, gold = nur Gold, blau = nur Datei).
+
 ---
+
 ## 4) Vergleichstabelle
+
 ### Spalten
+
 | Spalte | Inhalt |
 |--------|--------|
 | **ID** | Token-ID |
@@ -4481,61 +4544,96 @@ Das Gold-Arc-Diagramm ist direkt bearbeitbar:
 | **Label-Spalten** | Eine Spalte pro konfigurierter Label-Kategorie (Standard: UPOS, XPOS); gelber Rahmen wenn Dateien abweichen |
 | **GOLD** | Aktuelle Gold-Annotation (\`HEAD / DEPREL\`); Badge \`C\` = Custom, \`D1\`/\`D2\`/… = Datei; darunter alle Label-Werte |
 | **Datei-Spalten** | Annotation jeder Datei; grün = identisch mit Gold, rot = abweichend |
+
 In den Datei-Spalten werden HEAD/DEPREL und alle Label-Spalten einzeln hervorgehoben — abweichende Felder erscheinen **rot** (\`.fDiff\`).
+
 ### Gold-Auswahl
+
 - **Klick auf eine Datei-Zelle** → wählt diese Datei als Gold-Quelle für diesen Token (Badge \`D1\`, \`D2\`, …)
 - Ist ein Custom-Wert gesetzt, haben Custom-Werte immer Vorrang; Datei-Zellen sind dann ausgegraut
+
 ### Gold-Popup (Bearbeiten)
+
 **Klick auf eine Gold-Zelle** öffnet ein Popup zum direkten Bearbeiten:
+
 | Feld | Eingabe |
 |------|---------|
 | HEAD | Dropdown aller Tokens des aktuellen Satzes |
 | DEPREL (+ weitere Dep-Layer) | Dropdown(s) aus der Tagset-Konfiguration |
 | Label-Spalten | Je ein Dropdown oder Freitextfeld pro konfigurierter Label-Kategorie |
+
 Die Anzahl der Felder passt sich automatisch an die geladene Tagset-Konfiguration an (beliebig viele Label-Spalten und Dependency-Layer möglich).
+
 Änderungen werden sofort als Custom-Eintrag gespeichert. **„Zurücksetzen"** löscht den Custom-Eintrag für diesen Token.
+
 **Tastatur im Popup:** \`Tab\`/\`Shift+Tab\` wechselt Felder · \`Enter\` schließt · \`r\` zurücksetzen · \`Esc\` schließen
+
 ### Custom-Annotation
+
 - **„Custom aus [Datei]"-Buttons** kopieren alle Werte der gewählten Datei als Custom-Ausgangsbasis
 - **„Custom Satz löschen"** entfernt alle Custom-Einträge für den aktuellen Satz (mit Bestätigung)
 - Sobald ein Custom-Wert gesetzt ist, gilt dieser Token als Gold (\`C\`-Badge)
+
 ### Spalten ein-/ausblenden
+
 Über die **Spalten-Toggle-Leiste** lassen sich Datei-Spalten ein- und ausblenden.
+
 ---
+
 ## 5) Export
+
 ### Einzelne Datei
+
 Der **⬇-Button** neben jeder Datei lädt den Original-Inhalt der Datei als \`.conllu\` herunter.
+
 ### Alle Sätze (Gold-Annotation)
+
 | Button | Inhalt |
 |--------|--------|
 | **Gold CoNLL-U herunterladen** | Alle Sätze mit aktuellen Gold-Annotationen (HEAD, DEPREL, UPOS, XPOS); LEMMA/FEATS/DEPS/MISC aus Quelldatei |
 | **Baumansicht herunterladen** | Alle Sätze als Text-Bäume mit Gold-Baum und Diff-Bäumen pro Datei |
+
 Tastaturkürzel: \`e\` → CoNLL-U · \`E\` → Baumansicht · \`c\` → aktuellen Satz in Zwischenablage
+
 ### Session Export / Import
+
 Der **Session-Mechanismus** sichert den vollständigen Arbeitsstand aller Projekte:
+
 - Alle Projekte mit Namen, Dateien und Annotationen
 - Custom-Annotationen und Gold-Auswahl
 - Bestätigte Sätze und Notizen
 - Vollständiger Undo-/Redo-Verlauf pro Projekt
 - Labelkonfiguration (\`labels.js\`)
+
 | Aktion | Beschreibung |
 |--------|-------------|
 | **💾 Session speichern** | Exportiert alles als \`.json\`-Datei |
 | **📂 Session laden** | Importiert eine gespeicherte Session-Datei |
 | **Drag & Drop** | \`.json\`-Datei auf die Seite ziehen → wird automatisch als Session erkannt |
+
 Das Session-Format ist versioniert (\`version: 2\`) und als JSON lesbar. Ältere Sessions (\`version: 1\`) werden automatisch als einzelnes Projekt importiert.
+
 ### Autosave
+
 Der Arbeitsstand wird alle **30 Sekunden** automatisch im Browser-LocalStorage gesichert. Beim nächsten Öffnen der Seite erscheint ein Banner mit der Option, den Stand wiederherzustellen oder zu verwerfen.
+
 ---
+
 ## 6) Undo / Redo
+
 Alle Annotationsänderungen (Datei-Auswahl, Custom-Popup, Bestätigen, Teilbaum-Übernahme) sind rückgängig machbar. Jedes Projekt hat seinen eigenen Undo-Stack.
+
 | Aktion | Beschreibung |
 |--------|-------------|
 | **↩ Undo** / \`Ctrl+Z\` | Letzte Änderung rückgängig |
 | **↪ Redo** / \`Ctrl+Y\` | Rückgängige Änderung wiederherstellen |
+
 Der Verlauf wird in der Session mitgespeichert (bis zu 80 Schritte pro Projekt).
+
 ---
+
 ## Tastaturkürzel
+
 | Taste | Funktion |
 |-------|----------|
 | \`←\` / \`→\` | Vorheriger / nächster Satz |
@@ -4555,44 +4653,62 @@ Der Verlauf wird in der Session mitgespeichert (bis zu 80 Schritte pro Projekt).
 | \`E\` (Shift+e) | Baumansicht exportieren |
 | \`?\` | Hilfe öffnen / schließen |
 | \`Esc\` | Fokus / Popup / Hilfe schließen |
+
 ---
+
 ## Mehrsprachigkeit
+
 Die Oberfläche unterstützt **Deutsch** und **Englisch** — umschaltbar über die Flaggen-Buttons oben rechts. Die gewählte Sprache wird im Browser gespeichert (\`localStorage\`).
+
 ### Weitere Sprachen hinzufügen
+
 1. Neue Datei \`lang/xx.js\` anlegen (nach dem Schema von \`lang/de.js\`):
+
 \`\`\`javascript
 window.LANG_XX = {
-'sec.files': '...',
-// alle Schlüssel aus lang/de.js übersetzen
+  'sec.files':   '...',
+  // alle Schlüssel aus lang/de.js übersetzen
 };
 \`\`\`
+
 2. In \`index.html\` einbinden (vor \`js/i18n.js\`):
+
 \`\`\`html
 <script src="lang/xx.js"><\/script>
 \`\`\`
+
 3. Flaggen-Button hinzufügen:
+
 \`\`\`html
 <button class="langBtn" data-lang="xx" onclick="setLang('xx')" title="...">🏳️</button>
 \`\`\`
+
 Oder dynamisch zur Laufzeit:
+
 \`\`\`javascript
 registerLang('xx', window.LANG_XX);
 \`\`\`
+
 ---
+
 ## labels.js
+
 Im gleichen Ordner wie \`index.html\` liegt \`labels.js\`, die Dropdown-Inhalte definiert.
+
 ### Klassisches Format (Rückwärtskompatibel)
+
 \`\`\`javascript
 const LABELS = {
-"Core arguments": ["nsubj", "obj", "iobj", ...],
-"Non-core dependents": ["obl", "advmod", ...],
-// ...
-"__upos__": ["ADJ", "ADP", "ADV", "AUX", ...],
-"__xpos__": ["ADJA", "ADJD", "NN", "NE", ...],
-"__upos_name__": "UPOS", // optionaler Anzeigename
-"__xpos_name__": "XPOS",
+  "Core arguments": ["nsubj", "obj", "iobj", ...],
+  "Non-core dependents": ["obl", "advmod", ...],
+  // ...
+  "__upos__": ["ADJ", "ADP", "ADV", "AUX", ...],
+  "__xpos__": ["ADJA", "ADJD", "NN", "NE", ...],
+  "__upos_name__": "UPOS",   // optionaler Anzeigename
+  "__xpos_name__": "XPOS",
 };
 \`\`\`
+
 | Schlüssel | Beschreibung |
 |-----------|-------------|
 | Beliebige Strings | Gruppierter Abschnitt im DEPREL-Dropdown |
@@ -4600,130 +4716,155 @@ const LABELS = {
 | \`__xpos__\` | Optionen für das XPOS-Feld (leer → Freitextfeld) |
 | \`__upos_name__\` | Anzeigename der UPOS-Spalte |
 | \`__xpos_name__\` | Anzeigename der XPOS-Spalte |
+
 ### Erweitertes Format — beliebig viele Label- und Dependency-Spalten
+
 Über \`__cols__\` und \`__dep_cols__\` lassen sich beliebig viele Spalten definieren:
+
 \`\`\`json
 {
-"__cols__": [
-{ "key": "upos", "name": "UPOS", "values": ["ADJ", "NOUN", "VERB"] },
-{ "key": "xpos", "name": "XPOS", "values": ["ADJA", "NN", "VVFIN"] },
-{ "key": "entity", "name": "Entity", "values": ["PER", "ORG", "LOC", "O"] },
-{ "key": "animacy", "name": "Animacy", "values": ["Anim", "Inan"] }
-],
-"__dep_cols__": [
-{
-"key": "ud",
-"name": "UD DepRel",
-"groups": {
-"Core arguments": ["nsubj", "obj", "iobj"],
-"Other": ["punct", "root", "dep"]
-}
-},
-{
-"key": "srl",
-"name": "SRL",
-"groups": {
-"Arguments": ["ARG0", "ARG1", "ARG2", "ARGM"]
-}
-}
-]
+  "__cols__": [
+    { "key": "upos",    "name": "UPOS",       "values": ["ADJ", "NOUN", "VERB"] },
+    { "key": "xpos",    "name": "XPOS",       "values": ["ADJA", "NN", "VVFIN"] },
+    { "key": "entity",  "name": "Entity",     "values": ["PER", "ORG", "LOC", "O"] },
+    { "key": "animacy", "name": "Animacy",    "values": ["Anim", "Inan"] }
+  ],
+  "__dep_cols__": [
+    {
+      "key": "ud",
+      "name": "UD DepRel",
+      "groups": {
+        "Core arguments": ["nsubj", "obj", "iobj"],
+        "Other":          ["punct", "root", "dep"]
+      }
+    },
+    {
+      "key": "srl",
+      "name": "SRL",
+      "groups": {
+        "Arguments": ["ARG0", "ARG1", "ARG2", "ARGM"]
+      }
+    }
+  ]
 }
 \`\`\`
+
 | Schlüssel | Beschreibung |
 |-----------|-------------|
 | \`__cols__\` | Array von Label-Spalten; \`key\` = internes Feldname, \`name\` = Anzeigename, \`values\` = Dropdown-Optionen |
 | \`__dep_cols__\` | Array von Dependency-Annotationslagen; erste Lage = primäre HEAD/DEPREL-Felder; weitere Lagen erhalten eigene HEAD- und DEPREL-Dropdowns im Popup |
+
 **CoNLL-U-Export:** \`__cols__[0]\` → UPOS-Spalte, \`__cols__[1]\` → XPOS-Spalte, weitere → MISC als \`key=value\`.
+
 Labels werden mit der Session gespeichert und beim Laden wiederhergestellt.
+
 ---
+
 ## Tagset hochladen / herunterladen
+
 Das Tagset (Label- und Dependency-Konfiguration) kann zur Laufzeit ausgetauscht werden — ohne Neustart.
+
 ### Hochladen
+
 1. Schaltfläche **„📤 Tagset hochladen"** klicken
 2. JSON-Datei wählen (klassisches oder erweitertes Format)
 3. Tabelle, Popups und Dropdowns aktualisieren sich sofort
+
 ### Herunterladen
+
 Schaltfläche **„📥 Tagset herunterladen"** exportiert die aktuelle Konfiguration als \`tagset.json\` — inklusive aller manuell geladenen Anpassungen.
+
 Das heruntergeladene JSON kann direkt bearbeitet und wieder hochgeladen werden.
+
 ---
+
 ## Hilfe-Modal
+
 Der **\`?\`-Button** oben rechts (oder Taste \`?\`) öffnet diese Dokumentation direkt im Browser.
+
 Die Hilfe wird aus \`generated/readme_content.js\` geladen — einem vorgefertigten JS-Bundle:
+
 \`\`\`bash
 python make_readme_js.py
 \`\`\`
+
 Das Skript liest \`README.md\` und schreibt \`generated/readme_content.js\`. Nach Änderungen an der README einmal ausführen und die Seite neu laden.
+
 ---
+
 ## Projektstruktur
+
 \`\`\`
 HTML_Editor/
-├── index.html ← Einstiegspunkt; lädt alle Skripte
-├── labels.js ← Standard-Tagset (DEPREL-Gruppen, UPOS, XPOS)
-├── examples.js ← Eingebettete Demo-Daten (drei Annotator-Dateien)
-├── start.bat ← Windows-Startskript (öffnet Browser lokal)
-├── bundler.py ← Baut dist/index.html (alles inline, kein Server nötig)
-├── make_readme_js.py ← Generiert generated/readme_content.js aus README.md
+├── index.html                 ← Einstiegspunkt; lädt alle Skripte
+├── labels.js                  ← Standard-Tagset (DEPREL-Gruppen, UPOS, XPOS)
+├── examples.js                ← Eingebettete Demo-Daten (drei Annotator-Dateien)
+├── start.bat                  ← Windows-Startskript (öffnet Browser lokal)
+├── bundler.py                 ← Baut dist/index.html (alles inline, kein Server nötig)
+├── make_readme_js.py          ← Generiert generated/readme_content.js aus README.md
 ├── LICENSE
 │
 ├── css/
-│ └── style.css ← Gesamtes CSS (Dark/Light-Mode, Tabellen, Arcs, Tabs)
+│   └── style.css              ← Gesamtes CSS (Dark/Light-Mode, Tabellen, Arcs, Tabs)
 │
-├── js/ ← Anwendungslogik (Ladereihenfolge: state → undo → projects → … → main)
-│ ├── state.js ← Globaler Zustand, LABEL_COLS, DEP_COLS, buildDeprelOptionsCache()
-│ ├── undo.js ← Undo/Redo-Stack (getUndoState / loadUndoState)
-│ ├── projects.js ← Projekt-Tabs, Snapshot-Swap, autoAssignToProjects()
-│ ├── parser.js ← CoNLL-U-Parser, processFiles(), recomputeMaxSents()
-│ ├── table.js ← Vergleichstabelle, Gold-Popup, renderCompareTable()
-│ ├── tree.js ← Text-Baumansicht, Diff-Bäume, renderSentence()
-│ ├── arcview.js ← SVG-Arc-Diagramm, Drag & Drop, Zyklus-Erkennung
-│ ├── export.js ← CoNLL-U-Export, Session-Import/-Export
-│ ├── keyboard.js ← Alle Tastaturkürzel
-│ ├── i18n.js ← Übersetzungs-Engine (t(), setLang(), registerLang())
-│ ├── theme.js ← Dark/Light-Mode-Umschalter
-│ ├── help.js ← Hilfe-Modal (lädt readme_content.js)
-│ └── main.js ← Initialisierung, Event-Listener, UI-Rendering
+├── js/                        ← Anwendungslogik (Ladereihenfolge: state → undo → projects → … → main)
+│   ├── state.js               ← Globaler Zustand, LABEL_COLS, DEP_COLS, buildDeprelOptionsCache()
+│   ├── undo.js                ← Undo/Redo-Stack (getUndoState / loadUndoState)
+│   ├── projects.js            ← Projekt-Tabs, Snapshot-Swap, autoAssignToProjects()
+│   ├── parser.js              ← CoNLL-U-Parser, processFiles(), recomputeMaxSents()
+│   ├── table.js               ← Vergleichstabelle, Gold-Popup, renderCompareTable()
+│   ├── tree.js                ← Text-Baumansicht, Diff-Bäume, renderSentence()
+│   ├── arcview.js             ← SVG-Arc-Diagramm, Drag & Drop, Zyklus-Erkennung
+│   ├── export.js              ← CoNLL-U-Export, Session-Import/-Export
+│   ├── keyboard.js            ← Alle Tastaturkürzel
+│   ├── i18n.js                ← Übersetzungs-Engine (t(), setLang(), registerLang())
+│   ├── theme.js               ← Dark/Light-Mode-Umschalter
+│   ├── help.js                ← Hilfe-Modal (lädt readme_content.js)
+│   └── main.js                ← Initialisierung, Event-Listener, UI-Rendering
 │
 ├── lang/
-│ ├── de.js ← Deutsche UI-Texte (window.LANG_DE)
-│ └── en.js ← Englische UI-Texte (window.LANG_EN)
+│   ├── de.js                  ← Deutsche UI-Texte (window.LANG_DE)
+│   └── en.js                  ← Englische UI-Texte (window.LANG_EN)
 │
 ├── generated/
-│ └── readme_content.js ← Auto-generiert von make_readme_js.py; enthält README-HTML
+│   └── readme_content.js      ← Auto-generiert von make_readme_js.py; enthält README-HTML
 │
 ├── dist/
-│ └── index.html ← Minifiziertes All-in-one-Bundle (erzeugt von bundler.py)
+│   └── index.html             ← Minifiziertes All-in-one-Bundle (erzeugt von bundler.py)
 │
-└── testdata/ ← Beispieldaten zum Ausprobieren
-├── template.json ← Leere Tagset-Vorlage (Formatreferenz)
-├── vamos_ma_ruban.conllu ← Standard-Demo: Annotatorvergleich (UD-Schema)
-├── ai_ma_konopka.conllu ← Standard-Demo: zweiter Annotator
-├── ner/ ← Beispiel: Named Entity Recognition
-│ ├── tagset.json ← NER-Tagset (UPOS + XPOS + BIO-Entity-Spalte)
-│ ├── annotator_A.conllu
-│ └── annotator_B.conllu
-├── srl/ ← Beispiel: Semantic Role Labeling
-│ ├── tagset.json ← SRL-Tagset (UD DepRel + SRL-Dep-Schicht)
-│ ├── annotator_A.conllu
-│ └── annotator_B.conllu
-├── custom/ ← Beispiel: Eigenes vereinfachtes Schema
-│ ├── tagset.json ← Custom-Tagset (Wortart, Belebtheit, Sentiment, Vereinfachte Syntax)
-│ ├── annotator_A.conllu
-│ └── annotator_B.conllu
-├── morph/ ← Beispiel: Morphologie + Topologische Felder
-│ ├── tagset.json ← Genus / Kasus als Label-Spalten; Topologisches Feld als Dep-Layer
-│ ├── annotator_A.conllu
-│ └── annotator_B.conllu
-├── de_ud/ ← Beispiel: Deutsches Universal Dependencies + Multi-Word-Token
-│ ├── tagset.json ← UPOS + STTS XPOS + UD DepRel (__dep_cols__)
-│ ├── annotator_A.conllu ← Referenz (3 Sätze, MWT: „im" = in+dem)
-│ ├── annotator_B.conllu ← iobj↔obl, xcomp↔advmod, acl:relcl↔advcl
-│ └── annotator_C.conllu ← nmod-statt-obj, Park-Kopf, ccomp-statt-acl:relcl
-└── en_ud/ ← Beispiel: Englisches Universal Dependencies + Empty Node
-├── tagset.json ← UPOS + PTB POS + UD DepRel (__dep_cols__)
-├── annotator_A.conllu ← Referenz (3 Sätze, Empty Node für VP-Ellipse)
-└── annotator_B.conllu ← advmod-statt-amod, obj-statt-conj, advcl-statt-acl:relcl
+└── testdata/                  ← Beispieldaten zum Ausprobieren
+    ├── template.json          ← Leere Tagset-Vorlage (Formatreferenz)
+    ├── vamos_ma_ruban.conllu  ← Standard-Demo: Annotatorvergleich (UD-Schema)
+    ├── ai_ma_konopka.conllu   ← Standard-Demo: zweiter Annotator
+    ├── ner/                   ← Beispiel: Named Entity Recognition
+    │   ├── tagset.json        ← NER-Tagset (UPOS + XPOS + BIO-Entity-Spalte)
+    │   ├── annotator_A.conllu
+    │   └── annotator_B.conllu
+    ├── srl/                   ← Beispiel: Semantic Role Labeling
+    │   ├── tagset.json        ← SRL-Tagset (UD DepRel + SRL-Dep-Schicht)
+    │   ├── annotator_A.conllu
+    │   └── annotator_B.conllu
+    ├── custom/                ← Beispiel: Eigenes vereinfachtes Schema
+    │   ├── tagset.json        ← Custom-Tagset (Wortart, Belebtheit, Sentiment, Vereinfachte Syntax)
+    │   ├── annotator_A.conllu
+    │   └── annotator_B.conllu
+    ├── morph/                 ← Beispiel: Morphologie + Topologische Felder
+    │   ├── tagset.json        ← Genus / Kasus als Label-Spalten; Topologisches Feld als Dep-Layer
+    │   ├── annotator_A.conllu
+    │   └── annotator_B.conllu
+    ├── de_ud/                 ← Beispiel: Deutsches Universal Dependencies + Multi-Word-Token
+    │   ├── tagset.json        ← UPOS + STTS XPOS + UD DepRel (__dep_cols__)
+    │   ├── annotator_A.conllu ← Referenz (3 Sätze, MWT: „im" = in+dem)
+    │   ├── annotator_B.conllu ← iobj↔obl, xcomp↔advmod, acl:relcl↔advcl
+    │   └── annotator_C.conllu ← nmod-statt-obj, Park-Kopf, ccomp-statt-acl:relcl
+    └── en_ud/                 ← Beispiel: Englisches Universal Dependencies + Empty Node
+        ├── tagset.json        ← UPOS + PTB POS + UD DepRel (__dep_cols__)
+        ├── annotator_A.conllu ← Referenz (3 Sätze, Empty Node für VP-Ellipse)
+        └── annotator_B.conllu ← advmod-statt-amod, obj-statt-conj, advcl-statt-acl:relcl
 \`\`\`
+
 ### Wichtige Dateien im Überblick
+
 | Datei | Zweck |
 |-------|-------|
 | \`index.html\` | Einstiegspunkt; definiert HTML-Struktur und Lade-Reihenfolge der Skripte |
@@ -4735,9 +4876,13 @@ HTML_Editor/
 | \`js/export.js\` | Session-Format v2 (multi-project); abwärtskompatibel zu v1 |
 | \`bundler.py\` | Bündelt alle Ressourcen in \`dist/index.html\` für offline/eingebetteten Einsatz |
 | \`make_readme_js.py\` | Wandelt \`README.md\` → \`generated/readme_content.js\` (für Hilfe-Modal) |
+
 ---
+
 ## Demo-Daten (\`testdata/\`)
+
 Die sechs Beispielverzeichnisse decken gemeinsam alle Funktionen des Tools ab:
+
 | Verzeichnis | Sprache | Annotatorinnen | Besondere Features |
 |---|---|---|---|
 | *(Wurzel)* \`vamos_ma_ruban.conllu\` + \`ai_ma_konopka.conllu\` | Deutsch | 2 | Schnellstart ohne Tagset; Standard UD-Felder |
@@ -4747,7 +4892,9 @@ Die sechs Beispielverzeichnisse decken gemeinsam alle Funktionen des Tools ab:
 | \`morph/\` | Deutsch | 2 | **Morphologie**: Genus/Kasus als Label-Spalten; Topologisches Feld als Dep-Schicht |
 | \`de_ud/\` | Deutsch | **3** | **Multi-Word-Token** (\`im\` = \`in\` + \`dem\`); UPOS + STTS; 3 Annotatorinnen mit typischen Uneinigkeiten |
 | \`en_ud/\` | Englisch | 2 | **Empty Node** (VP-Ellipse / Gapping); UPOS + PTB POS; englischsprachige Sätze |
+
 ### Features-Übersicht
+
 | Feature | wo demonstriert |
 |---|---|
 | Mehrere Annotatorinnen (≥ 3) | \`de_ud/\` |
@@ -4758,53 +4905,78 @@ Die sechs Beispielverzeichnisse decken gemeinsam alle Funktionen des Tools ab:
 | \`__dep_cols__\` (N Dep-Schichten) | \`srl/\`, \`morph/\`, \`de_ud/\`, \`en_ud/\` |
 | Projekt-spezifisches Tagset | alle Verzeichnisse mit \`tagset.json\` |
 | Auto-Projekt-Zuweisung (unterschiedl. Satzzahlen) | Dateien aus verschiedenen Verzeichnissen mischen |
+
 ### Laden der Demos
+
 1. **Tagset zuerst**: \`tagset.json\` aus einem Verzeichnis per „📤 Tagset hochladen" oder Drag & Drop laden
 2. **Dann die CoNLL-U-Dateien**: alle \`annotator_*.conllu\` aus dem gleichen Verzeichnis per „Dateien hinzufügen"
 3. Alternativ: **alle Dateien gleichzeitig** per Drag & Drop — das Tool erkennt Typ und Reihenfolge automatisch
+
 ---
+
 ## Einschränkungen
+
 - **Multi-Word-Token** (IDs \`N-M\`) und **Empty Nodes** (IDs \`N.M\`) werden beim Laden gespeichert und beim CoNLL-U-Export vollständig rekonstruiert; in der Vergleichstabelle und Baumansicht erscheinen nur die regulären Token
 - Mindestens **zwei Dateien** nötig für Vergleich und Baumansicht
 - Daten liegen nur im **Browser-Speicher** — Session-Export verwenden, um den Stand dauerhaft zu sichern
 `;
 window.README_CONTENT_EN = `# CoNLL-U Comparison
+
 Browser-based tool for comparing and annotating multiple CoNLL-U files.
 Runs entirely locally without a server — simply open \`index.html\` in your browser.
+
 ---
+
 ## Quick Start
+
 1. Open \`index.html\` in your browser
 2. Load at least two \`.conllu\` files — or click **"Load demo"**
 3. Select a sentence → tree view and comparison table appear automatically
 4. Click Gold cells or use keyboard shortcuts to edit annotations
 5. Mark a finished sentence with **"✓ Confirm"** (or \`Space\`)
 6. **💾 Save session** — save your progress as JSON at any time and resume later
+
 ---
+
 ## Projects
+
 The tool supports multiple **projects** simultaneously — each with its own files, annotations, and undo history.
+
 ### Project Tab Bar
+
 The tab bar appears directly below the header. Each tab has:
+
 | Button | Function |
 |---|---|
 | **◀ / ▶** | Reorder projects |
 | **✎** | Rename project |
 | **×** | Delete project (only when more than one project exists) |
 | **+** (far right) | Create a new empty project |
+
 Click a tab to switch to that project. State (files, sentence position, undo stack) is automatically saved and restored on switch.
+
 ### Keyboard Shortcuts for Projects
+
 | Key | Function |
 |---|---|
 | \`[\` | Previous project |
 | \`]\` | Next project |
+
 ### Automatic Assignment on Load
+
 When files with **different sentence counts** are loaded, the tool assigns them to projects automatically:
+
 1. **Own project** (active) — if empty or matching sentence count
 2. **Other existing project** — with matching sentence count
 3. **Other empty project** — as a last resort
 4. **Create new project** — only if no match found
+
 A brief notification appears when a new project is created automatically.
+
 ---
+
 ## 1) Load Files
+
 | Action | Description |
 |--------|-------------|
 | **"Add files"** | Opens the file dialog; \`.conllu\`, \`.conll\`, \`.txt\` and \`.json\` files selectable |
@@ -4813,64 +4985,95 @@ A brief notification appears when a new project is created automatically.
 | **Drag & Drop** | Drop files directly onto the page — all types are recognised |
 | **"Load demo"** | Three pre-built example files covering all comparison cases |
 | **"Reset"** | Reset all files and annotations |
+
 All upload paths (buttons and drag & drop) detect the file type automatically:
+
 | Extension | Detected type | Action |
 |-----------|---------------|--------|
 | \`.conllu\`, \`.conll\`, \`.txt\` | CoNLL-U file | Load as annotator file |
 | \`.json\` with \`version\` + \`docs\`/\`projects\` | Session | Import session |
 | \`.json\` (everything else) | Tagset | Load as new tagset |
+
 ### Per-File Actions
+
 Each loaded file has the following buttons:
+
 | Button | Function |
 |---|---|
 | **⬇ Download** | Download file as CoNLL-U (original content) |
 | **Project dropdown** | Move file to another project; **＋ New project …** creates one and moves the file immediately |
 | **▲ / ▼** | Change order within the project |
 | **Remove** | Remove file from the project |
+
 ### Text Consistency Warning
+
 If two files have different tokens at the same sentence index:
 - **⚠️ badge** next to the filename
 - Orange **warning banner** below the file list
+
 ---
+
 ## 2) Select Sentence
+
 ### Dropdown
+
 Each option shows:
 - Sentence number and star \`★\` if confirmed
 - Token count
 - Number of differences (\`· N diffs\`) or a checkmark (\`· ✓\`) if fully matching
+
 **Colours in the dropdown:**
+
 | Colour | Meaning |
 |--------|---------|
 | Green | No differences |
 | Red | At least one difference |
 | Gold | Sentence confirmed (\`★\`) |
+
 The **dropdown border** reflects the status of the current sentence (green / red / gold).
+
 ### Sentence Text
+
 The sentence text is rendered as clickable tokens. Clicking a word:
 - Jumps to the corresponding row in the comparison table
 - Highlights the token in the sentence text (blue outline)
 - Works in reverse too: keyboard navigation (↑/↓) highlights the active word in the sentence text
+
 ### Sentence Map
+
 Below the sentence text, a row of small **coloured dots** appears — one per sentence:
+
 | Colour | Meaning |
 |--------|---------|
 | Dark green | No diff |
 | Dark red | Has diffs |
 | Gold | Confirmed |
 | Blue outline | Currently selected sentence |
+
 Click a dot to jump directly to that sentence.
+
 ### Confirm Gold
+
 Use **"✓ Confirm"** (or \`Space\`) to mark the current sentence as finished.
 Confirmed sentences are coloured gold (dropdown, sentence map, sentence text border, button).
 Pressing again removes the confirmation.
+
 ### Note per Sentence
+
 Below the sentence text there is a **note field** — free text, saved per sentence and exported with the session.
+
 ### Copy CoNLL-U
+
 The **"Copy CoNLL-U" button** (or key \`c\`) copies the Gold annotation of the current sentence as CoNLL-U to the clipboard.
+
 ---
+
 ## 3) Tree View
+
 Shows the current sentence as dependency trees. For each loaded file a diff tree against the Gold annotation is displayed.
+
 ### Legend
+
 | Symbol/Colour | Meaning |
 |---|---|
 | ✅ green | Edge identical to Gold |
@@ -4878,23 +5081,35 @@ Shows the current sentence as dependency trees. For each loaded file a diff tree
 | 🅶 gold | Edge only in Gold |
 | 🅵 blue | Edge only in this file |
 | 🌱 | Subtree root |
+
 Differences in label columns (e.g. UPOS/XPOS) are annotated as \`[COLUMN:🅶X\\|🅵Y]\`.
+
 ### Interaction
+
 - **Click a line** → jumps to the corresponding row in the comparison table
 - **"→ Gold" button** at each 🌱 line → adopts the entire subtree as the Gold annotation
+
 ### Interactive Arc Diagram (Gold view)
+
 The Gold arc diagram is directly editable:
+
 | Action | Function |
 |--------|---------|
 | **Drag a token** (drag & drop) | Draw a new arc from token to token → sets new HEAD |
 | **Deprel popup** | Appears automatically after dragging — or by clicking an arc label |
 | **× button** (hover over arc) | Deletes the arc (resets to root) |
 | **Click a token** (no drag) | Jumps to the corresponding table row |
+
 **Cycle detection:** If a new arc would create a cycle, the target flashes red and the assignment is rejected.
+
 **Arc colours** match the legend (green = matches Gold, yellow = DEPREL diff, gold = Gold only, blue = file only).
+
 ---
+
 ## 4) Comparison Table
+
 ### Columns
+
 | Column | Content |
 |--------|---------|
 | **ID** | Token ID |
@@ -4902,61 +5117,96 @@ The Gold arc diagram is directly editable:
 | **Label columns** | One column per configured label category (default: UPOS, XPOS); yellow border when files differ |
 | **GOLD** | Current Gold annotation (\`HEAD / DEPREL\`); badge \`C\` = custom, \`D1\`/\`D2\`/… = file; label values shown below |
 | **File columns** | Each file's annotation; green = matches Gold, red = differs |
+
 In file columns, HEAD/DEPREL and all label columns are highlighted individually — differing fields appear **red** (\`.fDiff\`).
+
 ### Gold Selection
+
 - **Click a file cell** → selects that file as the Gold source for this token (badge \`D1\`, \`D2\`, …)
 - If a custom value is set, custom values always take precedence; file cells are then greyed out
+
 ### Gold Popup (Edit)
+
 **Click a Gold cell** to open an edit popup:
+
 | Field | Input |
 |-------|-------|
 | HEAD | Dropdown of all tokens in the current sentence |
 | DEPREL (+ further dep layers) | Dropdown(s) from the tagset configuration |
 | Label columns | One dropdown or free-text field per configured label category |
+
 The number of fields adapts automatically to the loaded tagset configuration (any number of label columns and dependency layers supported).
+
 Changes are saved immediately as a custom entry. **"Reset"** removes the custom entry for this token.
+
 **Keyboard in popup:** \`Tab\`/\`Shift+Tab\` switch fields · \`Enter\` closes · \`r\` reset · \`Esc\` close
+
 ### Custom Annotation
+
 - **"Custom from [file]" buttons** copy all values of the chosen file as a custom starting point
 - **"Clear custom sentence"** removes all custom entries for the current sentence (with confirmation)
 - Once a custom value is set, that token is treated as Gold (\`C\` badge)
+
 ### Show/Hide Columns
+
 Use the **column toggle bar** to show or hide individual file columns.
+
 ---
+
 ## 5) Export
+
 ### Individual File
+
 The **⬇ button** next to each file downloads the original file content as \`.conllu\`.
+
 ### All Sentences (Gold Annotation)
+
 | Button | Content |
 |--------|---------|
 | **Download Gold CoNLL-U** | All sentences with current Gold annotations (HEAD, DEPREL, UPOS, XPOS); LEMMA/FEATS/DEPS/MISC from source file |
 | **Download tree view** | All sentences as plain-text trees with Gold tree and diff trees per file |
+
 Keyboard shortcuts: \`e\` → CoNLL-U · \`E\` → tree view · \`c\` → copy current sentence to clipboard
+
 ### Session Export / Import
+
 The **session mechanism** saves the complete working state of all projects:
+
 - All projects with names, files, and annotations
 - Custom annotations and Gold selection
 - Confirmed sentences and notes
 - Full undo/redo history per project
 - Label configuration (\`labels.js\`)
+
 | Action | Description |
 |--------|-------------|
 | **💾 Save session** | Exports everything as a \`.json\` file |
 | **📂 Load session** | Imports a saved session file |
 | **Drag & Drop** | Drop a \`.json\` file onto the page → automatically recognised as a session |
+
 The session format is versioned (\`version: 2\`) and human-readable JSON. Older sessions (\`version: 1\`) are automatically imported as a single project.
+
 ### Autosave
+
 The working state is automatically saved to the browser's LocalStorage every **30 seconds**. On the next page load, a banner offers the option to restore or dismiss the saved state.
+
 ---
+
 ## 6) Undo / Redo
+
 All annotation changes (file selection, custom popup, confirm, subtree adoption) can be undone. Each project has its own undo stack.
+
 | Action | Description |
 |--------|-------------|
 | **↩ Undo** / \`Ctrl+Z\` | Undo last change |
 | **↪ Redo** / \`Ctrl+Y\` | Redo undone change |
+
 The history is saved with the session (up to 80 steps per project).
+
 ---
+
 ## Keyboard Shortcuts
+
 | Key | Function |
 |-----|----------|
 | \`←\` / \`→\` | Previous / next sentence |
@@ -4976,44 +5226,62 @@ The history is saved with the session (up to 80 steps per project).
 | \`E\` (Shift+e) | Export tree view |
 | \`?\` | Open / close help |
 | \`Esc\` | Clear focus / close popup / close help |
+
 ---
+
 ## Multiple Languages
+
 The interface supports **German** and **English** — switchable via the flag buttons in the top right. The chosen language is stored in the browser (\`localStorage\`).
+
 ### Adding More Languages
+
 1. Create a new file \`lang/xx.js\` (following the pattern of \`lang/en.js\`):
+
 \`\`\`javascript
 window.LANG_XX = {
-'sec.files': '...',
-// translate all keys from lang/en.js
+  'sec.files':   '...',
+  // translate all keys from lang/en.js
 };
 \`\`\`
+
 2. Include it in \`index.html\` (before \`js/i18n.js\`):
+
 \`\`\`html
 <script src="lang/xx.js"><\/script>
 \`\`\`
+
 3. Add a flag button:
+
 \`\`\`html
 <button class="langBtn" data-lang="xx" onclick="setLang('xx')" title="...">🏳️</button>
 \`\`\`
+
 Or register dynamically at runtime:
+
 \`\`\`javascript
 registerLang('xx', window.LANG_XX);
 \`\`\`
+
 ---
+
 ## labels.js
+
 \`labels.js\` in the same folder as \`index.html\` defines the dropdown contents.
+
 ### Classic format (backward compatible)
+
 \`\`\`javascript
 const LABELS = {
-"Core arguments": ["nsubj", "obj", "iobj", ...],
-"Non-core dependents": ["obl", "advmod", ...],
-// ...
-"__upos__": ["ADJ", "ADP", "ADV", "AUX", ...],
-"__xpos__": ["ADJA", "ADJD", "NN", "NE", ...],
-"__upos_name__": "UPOS", // optional display name
-"__xpos_name__": "XPOS",
+  "Core arguments": ["nsubj", "obj", "iobj", ...],
+  "Non-core dependents": ["obl", "advmod", ...],
+  // ...
+  "__upos__": ["ADJ", "ADP", "ADV", "AUX", ...],
+  "__xpos__": ["ADJA", "ADJD", "NN", "NE", ...],
+  "__upos_name__": "UPOS",   // optional display name
+  "__xpos_name__": "XPOS",
 };
 \`\`\`
+
 | Key | Description |
 |-----|-------------|
 | Any string | Grouped section in the DEPREL dropdown |
@@ -5021,130 +5289,155 @@ const LABELS = {
 | \`__xpos__\` | Options for the XPOS field (empty → free-text input) |
 | \`__upos_name__\` | Display name for the UPOS column |
 | \`__xpos_name__\` | Display name for the XPOS column |
+
 ### Extended format — arbitrary number of label and dependency columns
+
 Use \`__cols__\` and \`__dep_cols__\` to define any number of columns:
+
 \`\`\`json
 {
-"__cols__": [
-{ "key": "upos", "name": "UPOS", "values": ["ADJ", "NOUN", "VERB"] },
-{ "key": "xpos", "name": "XPOS", "values": ["ADJA", "NN", "VVFIN"] },
-{ "key": "entity", "name": "Entity", "values": ["PER", "ORG", "LOC", "O"] },
-{ "key": "animacy", "name": "Animacy", "values": ["Anim", "Inan"] }
-],
-"__dep_cols__": [
-{
-"key": "ud",
-"name": "UD DepRel",
-"groups": {
-"Core arguments": ["nsubj", "obj", "iobj"],
-"Other": ["punct", "root", "dep"]
-}
-},
-{
-"key": "srl",
-"name": "SRL",
-"groups": {
-"Arguments": ["ARG0", "ARG1", "ARG2", "ARGM"]
-}
-}
-]
+  "__cols__": [
+    { "key": "upos",    "name": "UPOS",       "values": ["ADJ", "NOUN", "VERB"] },
+    { "key": "xpos",    "name": "XPOS",       "values": ["ADJA", "NN", "VVFIN"] },
+    { "key": "entity",  "name": "Entity",     "values": ["PER", "ORG", "LOC", "O"] },
+    { "key": "animacy", "name": "Animacy",    "values": ["Anim", "Inan"] }
+  ],
+  "__dep_cols__": [
+    {
+      "key": "ud",
+      "name": "UD DepRel",
+      "groups": {
+        "Core arguments": ["nsubj", "obj", "iobj"],
+        "Other":          ["punct", "root", "dep"]
+      }
+    },
+    {
+      "key": "srl",
+      "name": "SRL",
+      "groups": {
+        "Arguments": ["ARG0", "ARG1", "ARG2", "ARGM"]
+      }
+    }
+  ]
 }
 \`\`\`
+
 | Key | Description |
 |-----|-------------|
 | \`__cols__\` | Array of label columns; \`key\` = internal field name, \`name\` = display name, \`values\` = dropdown options |
 | \`__dep_cols__\` | Array of dependency annotation layers; first layer = primary HEAD/DEPREL fields; additional layers get their own HEAD and DEPREL dropdowns in the popup |
+
 **CoNLL-U export:** \`__cols__[0]\` → UPOS column, \`__cols__[1]\` → XPOS column, further columns → MISC as \`key=value\`.
+
 Labels are saved with the session and restored on load.
+
 ---
+
 ## Upload / Download Tagset
+
 The tagset (label and dependency configuration) can be swapped at runtime — without restarting.
+
 ### Upload
+
 1. Click **"📤 Upload tagset"**
 2. Select a JSON file (classic or extended format)
 3. The table, popups, and dropdowns update immediately
+
 ### Download
+
 Click **"📥 Download tagset"** to export the current configuration as \`tagset.json\` — including any manually loaded customisations.
+
 The downloaded JSON can be edited directly and re-uploaded.
+
 ---
+
 ## Help Modal
+
 The **\`?\` button** in the top right (or press \`?\`) opens this documentation directly in the browser.
+
 The help is loaded from \`generated/readme_content.js\` — a pre-built JS bundle:
+
 \`\`\`bash
 python make_readme_js.py
 \`\`\`
+
 This script reads \`README.md\` and \`README.en.md\` and writes \`generated/readme_content.js\`. Run it once after editing either README, then reload the page.
+
 ---
+
 ## Project Structure
+
 \`\`\`
 HTML_Editor/
-├── index.html ← Entry point; loads all scripts
-├── labels.js ← Default tagset (DEPREL groups, UPOS, XPOS)
-├── examples.js ← Embedded demo data (three annotator files)
-├── start.bat ← Windows startup script (opens browser locally)
-├── bundler.py ← Builds dist/index.html (everything inline, no server needed)
-├── make_readme_js.py ← Generates generated/readme_content.js from READMEs
+├── index.html                 ← Entry point; loads all scripts
+├── labels.js                  ← Default tagset (DEPREL groups, UPOS, XPOS)
+├── examples.js                ← Embedded demo data (three annotator files)
+├── start.bat                  ← Windows startup script (opens browser locally)
+├── bundler.py                 ← Builds dist/index.html (everything inline, no server needed)
+├── make_readme_js.py          ← Generates generated/readme_content.js from READMEs
 ├── LICENSE
 │
 ├── css/
-│ └── style.css ← All CSS (dark/light mode, tables, arcs, tabs)
+│   └── style.css              ← All CSS (dark/light mode, tables, arcs, tabs)
 │
-├── js/ ← Application logic (load order: state → undo → projects → … → main)
-│ ├── state.js ← Global state, LABEL_COLS, DEP_COLS, buildDeprelOptionsCache()
-│ ├── undo.js ← Undo/redo stack (getUndoState / loadUndoState)
-│ ├── projects.js ← Project tabs, snapshot-swap, autoAssignToProjects()
-│ ├── parser.js ← CoNLL-U parser, processFiles(), recomputeMaxSents()
-│ ├── table.js ← Comparison table, Gold popup, renderCompareTable()
-│ ├── tree.js ← Text tree view, diff trees, renderSentence()
-│ ├── arcview.js ← SVG arc diagram, drag & drop, cycle detection
-│ ├── export.js ← CoNLL-U export, session import/export
-│ ├── keyboard.js ← All keyboard shortcuts
-│ ├── i18n.js ← Translation engine (t(), setLang(), registerLang())
-│ ├── theme.js ← Dark/light mode toggle
-│ ├── help.js ← Help modal (loads readme_content.js)
-│ └── main.js ← Initialisation, event listeners, UI rendering
+├── js/                        ← Application logic (load order: state → undo → projects → … → main)
+│   ├── state.js               ← Global state, LABEL_COLS, DEP_COLS, buildDeprelOptionsCache()
+│   ├── undo.js                ← Undo/redo stack (getUndoState / loadUndoState)
+│   ├── projects.js            ← Project tabs, snapshot-swap, autoAssignToProjects()
+│   ├── parser.js              ← CoNLL-U parser, processFiles(), recomputeMaxSents()
+│   ├── table.js               ← Comparison table, Gold popup, renderCompareTable()
+│   ├── tree.js                ← Text tree view, diff trees, renderSentence()
+│   ├── arcview.js             ← SVG arc diagram, drag & drop, cycle detection
+│   ├── export.js              ← CoNLL-U export, session import/export
+│   ├── keyboard.js            ← All keyboard shortcuts
+│   ├── i18n.js                ← Translation engine (t(), setLang(), registerLang())
+│   ├── theme.js               ← Dark/light mode toggle
+│   ├── help.js                ← Help modal (loads readme_content.js)
+│   └── main.js                ← Initialisation, event listeners, UI rendering
 │
 ├── lang/
-│ ├── de.js ← German UI strings (window.LANG_DE)
-│ └── en.js ← English UI strings (window.LANG_EN)
+│   ├── de.js                  ← German UI strings (window.LANG_DE)
+│   └── en.js                  ← English UI strings (window.LANG_EN)
 │
 ├── generated/
-│ └── readme_content.js ← Auto-generated by make_readme_js.py; contains README HTML
+│   └── readme_content.js      ← Auto-generated by make_readme_js.py; contains README HTML
 │
 ├── dist/
-│ └── index.html ← Minified all-in-one bundle (built by bundler.py)
+│   └── index.html             ← Minified all-in-one bundle (built by bundler.py)
 │
-└── testdata/ ← Example data for exploration
-├── template.json ← Blank tagset template (format reference)
-├── vamos_ma_ruban.conllu ← Standard demo: annotator comparison (UD schema)
-├── ai_ma_konopka.conllu ← Standard demo: second annotator
-├── ner/ ← Example: Named Entity Recognition
-│ ├── tagset.json ← NER tagset (UPOS + XPOS + BIO entity column)
-│ ├── annotator_A.conllu
-│ └── annotator_B.conllu
-├── srl/ ← Example: Semantic Role Labeling
-│ ├── tagset.json ← SRL tagset (UD DepRel + SRL dependency layer)
-│ ├── annotator_A.conllu
-│ └── annotator_B.conllu
-├── custom/ ← Example: Custom simplified schema
-│ ├── tagset.json ← Custom tagset (word class, animacy, sentiment, simplified syntax)
-│ ├── annotator_A.conllu
-│ └── annotator_B.conllu
-├── morph/ ← Example: Morphology + Topological Fields
-│ ├── tagset.json ← Genus / Kasus as label columns; topological field as dep layer
-│ ├── annotator_A.conllu
-│ └── annotator_B.conllu
-├── de_ud/ ← Example: German Universal Dependencies + Multi-Word Token
-│ ├── tagset.json ← UPOS + STTS XPOS + UD DepRel (__dep_cols__)
-│ ├── annotator_A.conllu ← Reference (3 sentences, MWT: "im" = in+dem)
-│ ├── annotator_B.conllu ← iobj↔obl, xcomp↔advmod, acl:relcl↔advcl
-│ └── annotator_C.conllu ← nmod-instead-of-obj, Park head, ccomp-instead-of-acl:relcl
-└── en_ud/ ← Example: English Universal Dependencies + Empty Node
-├── tagset.json ← UPOS + PTB POS + UD DepRel (__dep_cols__)
-├── annotator_A.conllu ← Reference (3 sentences, Empty Node for VP-ellipsis)
-└── annotator_B.conllu ← advmod-instead-of-amod, obj-instead-of-conj, advcl-instead-of-acl:relcl
+└── testdata/                  ← Example data for exploration
+    ├── template.json          ← Blank tagset template (format reference)
+    ├── vamos_ma_ruban.conllu  ← Standard demo: annotator comparison (UD schema)
+    ├── ai_ma_konopka.conllu   ← Standard demo: second annotator
+    ├── ner/                   ← Example: Named Entity Recognition
+    │   ├── tagset.json        ← NER tagset (UPOS + XPOS + BIO entity column)
+    │   ├── annotator_A.conllu
+    │   └── annotator_B.conllu
+    ├── srl/                   ← Example: Semantic Role Labeling
+    │   ├── tagset.json        ← SRL tagset (UD DepRel + SRL dependency layer)
+    │   ├── annotator_A.conllu
+    │   └── annotator_B.conllu
+    ├── custom/                ← Example: Custom simplified schema
+    │   ├── tagset.json        ← Custom tagset (word class, animacy, sentiment, simplified syntax)
+    │   ├── annotator_A.conllu
+    │   └── annotator_B.conllu
+    ├── morph/                 ← Example: Morphology + Topological Fields
+    │   ├── tagset.json        ← Genus / Kasus as label columns; topological field as dep layer
+    │   ├── annotator_A.conllu
+    │   └── annotator_B.conllu
+    ├── de_ud/                 ← Example: German Universal Dependencies + Multi-Word Token
+    │   ├── tagset.json        ← UPOS + STTS XPOS + UD DepRel (__dep_cols__)
+    │   ├── annotator_A.conllu ← Reference (3 sentences, MWT: "im" = in+dem)
+    │   ├── annotator_B.conllu ← iobj↔obl, xcomp↔advmod, acl:relcl↔advcl
+    │   └── annotator_C.conllu ← nmod-instead-of-obj, Park head, ccomp-instead-of-acl:relcl
+    └── en_ud/                 ← Example: English Universal Dependencies + Empty Node
+        ├── tagset.json        ← UPOS + PTB POS + UD DepRel (__dep_cols__)
+        ├── annotator_A.conllu ← Reference (3 sentences, Empty Node for VP-ellipsis)
+        └── annotator_B.conllu ← advmod-instead-of-amod, obj-instead-of-conj, advcl-instead-of-acl:relcl
 \`\`\`
+
 ### Key Files at a Glance
+
 | File | Purpose |
 |------|---------|
 | \`index.html\` | Entry point; defines HTML structure and script load order |
@@ -5156,9 +5449,13 @@ HTML_Editor/
 | \`js/export.js\` | Session format v2 (multi-project); backward-compatible with v1 |
 | \`bundler.py\` | Bundles all resources into \`dist/index.html\` for offline/embedded use |
 | \`make_readme_js.py\` | Converts \`README.md\` + \`README.en.md\` → \`generated/readme_content.js\` (for help modal) |
+
 ---
+
 ## Demo Data (\`testdata/\`)
+
 The six example directories together cover all tool features:
+
 | Directory | Language | Annotators | Notable Features |
 |---|---|---|---|
 | *(root)* \`vamos_ma_ruban.conllu\` + \`ai_ma_konopka.conllu\` | German | 2 | Quick start without a tagset; standard UD fields |
@@ -5168,7 +5465,9 @@ The six example directories together cover all tool features:
 | \`morph/\` | German | 2 | **Morphology**: Genus/Kasus as label columns; topological field as dep layer |
 | \`de_ud/\` | German | **3** | **Multi-Word Token** (\`im\` = \`in\` + \`dem\`); UPOS + STTS; 3 annotators with typical disagreements |
 | \`en_ud/\` | English | 2 | **Empty Node** (VP-ellipsis / gapping); UPOS + PTB POS; English sentences |
+
 ### Feature Overview
+
 | Feature | Where demonstrated |
 |---|---|
 | Multiple annotators (≥ 3) | \`de_ud/\` |
@@ -5179,12 +5478,17 @@ The six example directories together cover all tool features:
 | \`__dep_cols__\` (N dependency layers) | \`srl/\`, \`morph/\`, \`de_ud/\`, \`en_ud/\` |
 | Per-project tagset | all directories with \`tagset.json\` |
 | Auto-project assignment (different sentence counts) | mix files from different directories |
+
 ### Loading the Demos
+
 1. **Tagset first**: load \`tagset.json\` from a directory via "📤 Upload tagset" or drag & drop
 2. **Then the CoNLL-U files**: all \`annotator_*.conllu\` from the same directory via "Add files"
 3. Alternatively: **all files at once** via drag & drop — the tool detects type and order automatically
+
 ---
+
 ## Limitations
+
 - **Multi-word tokens** (IDs \`N-M\`) and **empty nodes** (IDs \`N.M\`) are stored on load and fully reconstructed on CoNLL-U export; only regular tokens appear in the comparison table and tree view
 - At least **two files** are required for comparison and tree view
 - Data lives only in **browser memory** — use session export to save your progress permanently
@@ -5223,8 +5527,8 @@ _helpLoadedLang = lang;
 } else {
 helpContent.innerHTML =
 `<p class="muted">${escapeHtml(t('help.unavailable'))}<br>
-<code>python make_readme_js.py</code><br>
-${escapeHtml(t('help.runScript'))}</p>`;
+       <code>python make_readme_js.py</code><br>
+       ${escapeHtml(t('help.runScript'))}</p>`;
 }
 }
 function closeHelp(){
@@ -5333,6 +5637,5 @@ return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 function inlineMd(s){
 return esc(s)
 .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-.replace(/`([^`]+)`/g, '<code class="helpInlineCode">$1</code>');
-}
+.replace(/`([^`]+)
 </script> </body></html>

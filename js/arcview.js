@@ -2,10 +2,10 @@
 //
 // Interaction (editable / gold view):
 //   • Drag FROM any token box → drop on another token → assigns new head
-//     → deprel popup appears immediately after to set relation type
+//     → deprel listbox appears immediately after to set relation type
 //   • Single click on token box (no drag) → scrolls to table row
 //   • Hover over arc → red ✕ button appears → click to reset head
-//   • Click on arc label → deprel popup (change relation type)
+//   • Click on arc label → deprel listbox (change relation type, one click to apply)
 //
 // Read-only (file views): click on token box scrolls to table row only.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -77,7 +77,7 @@ window.addEventListener('pointerup', e => {
       return;
     }
     drag.onSetHead(drag.depId, newHeadId);
-    // Show deprel popup immediately after assigning new head
+    // Show deprel listbox immediately after assigning new head
     if (drag.onSetDeprel) {
       const currentDeprel = drag.toks[drag.tokIdx].deprel ?? '_';
       _arcShowDeprelPopup(e.clientX, e.clientY, drag.depId, currentDeprel, drag.onSetDeprel);
@@ -158,29 +158,22 @@ function _arcWouldCycle(depId, newHeadId, toks) {
   return false;
 }
 
-// ── Deprel popup ──────────────────────────────────────────────────────────────
-// Show a small floating popup at (screenX, screenY) to pick a dependency relation.
-// onSetDeprel(depId, deprel) is called when the user confirms the selection.
-function _arcShowDeprelPopup(screenX, screenY, depId, currentDeprel, onSetDeprel) {
+// ── Deprel listbox ────────────────────────────────────────────────────────────
+// Show a compact listbox near (anchorX, anchorY). Clicking an option immediately
+// calls onSetDeprel(depId, deprel) — no OK button needed.
+function _arcShowDeprelPopup(anchorX, anchorY, depId, currentDeprel, onSetDeprel) {
   document.getElementById('arcDeprelPopup')?.remove();
 
   const popup = document.createElement('div');
   popup.id = 'arcDeprelPopup';
   popup.style.cssText = [
     'position:fixed', 'z-index:9999',
-    `left:${screenX + 10}px`, `top:${screenY - 10}px`,
-    'background:var(--card)', 'border:1px solid var(--line)',
-    'border-radius:8px', 'padding:10px', 'box-shadow:0 4px 20px rgba(0,0,0,.5)',
-    'display:flex', 'flex-direction:column', 'gap:7px', 'min-width:160px',
+    `left:${anchorX}px`, `top:${anchorY}px`,
+    'background:var(--card)', 'border:1px solid var(--accent)',
+    'border-radius:6px', 'padding:3px',
+    'box-shadow:0 4px 16px rgba(0,0,0,.4)',
   ].join(';');
 
-  const lbl = document.createElement('div');
-  lbl.style.cssText = 'font-size:11px; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:.05em;';
-  lbl.textContent = 'Relation type';
-  popup.appendChild(lbl);
-
-  // Build select — use global DEPREL_OPTIONS_HTML if available, otherwise fall back to UD list
-  const sel = document.createElement('select');
   const optsHtml = (typeof DEPREL_OPTIONS_HTML !== 'undefined' && DEPREL_OPTIONS_HTML)
     ? DEPREL_OPTIONS_HTML
     : ['_','nsubj','obj','iobj','csubj','ccomp','xcomp','obl','vocative','expl',
@@ -188,48 +181,35 @@ function _arcShowDeprelPopup(screenX, screenY, depId, currentDeprel, onSetDeprel
        'nummod','acl','amod','det','clf','case','conj','cc','fixed','flat','compound',
        'list','parataxis','orphan','goeswith','reparandum','punct','root','dep']
       .map(d => `<option value="${d}">${d}</option>`).join('');
+
+  const sel = document.createElement('select');
+  sel.size = 12;
   sel.innerHTML = optsHtml;
   sel.value = currentDeprel;
-  sel.style.cssText = 'width:100%; padding:5px 6px; background:var(--bg); color:var(--text); border:1px solid var(--line); border-radius:5px; font-size:12px;';
+  sel.style.cssText = 'display:block; border:none; outline:none; background:var(--bg); color:var(--text); font-size:12px; font-family:inherit; cursor:pointer; min-width:110px;';
+
+  const close = () => popup.remove();
+  sel.addEventListener('change', () => { onSetDeprel(depId, sel.value); close(); });
+  sel.addEventListener('keydown', ev => {
+    if (ev.key === 'Escape') close();
+    if (ev.key === 'Enter')  { onSetDeprel(depId, sel.value); close(); }
+  });
+
   popup.appendChild(sel);
-
-  const btnRow = document.createElement('div');
-  btnRow.style.cssText = 'display:flex; gap:6px; justify-content:flex-end;';
-
-  const applyBtn = document.createElement('button');
-  applyBtn.textContent = '✓ OK';
-  applyBtn.style.cssText = 'padding:4px 12px; font-size:12px; cursor:pointer; background:var(--ok); color:#fff; border:none; border-radius:5px; font-weight:600;';
-  applyBtn.addEventListener('click', () => { onSetDeprel(depId, sel.value); popup.remove(); });
-
-  const closeBtn = document.createElement('button');
-  closeBtn.textContent = '✕';
-  closeBtn.style.cssText = 'padding:4px 9px; font-size:13px; cursor:pointer; background:var(--bg-control,#333); color:var(--text); border:1px solid var(--line); border-radius:5px;';
-  closeBtn.addEventListener('click', () => popup.remove());
-
-  btnRow.appendChild(applyBtn);
-  btnRow.appendChild(closeBtn);
-  popup.appendChild(btnRow);
   document.body.appendChild(popup);
 
-  // Keyboard shortcuts: Enter = apply, Escape = close
-  sel.addEventListener('keydown', ev => {
-    if (ev.key === 'Enter')  { onSetDeprel(depId, sel.value); popup.remove(); }
-    if (ev.key === 'Escape') { popup.remove(); }
-  });
-
-  // Adjust position so popup stays inside the viewport
   requestAnimationFrame(() => {
     const r = popup.getBoundingClientRect();
-    if (r.right  > window.innerWidth)  popup.style.left = `${screenX - r.width - 10}px`;
-    if (r.bottom > window.innerHeight) popup.style.top  = `${screenY - r.height}px`;
+    if (r.right  > window.innerWidth)  popup.style.left = `${anchorX - r.width}px`;
+    if (r.bottom > window.innerHeight) popup.style.top  = `${anchorY - r.height}px`;
+    const curOpt = sel.querySelector('option:checked');
+    if (curOpt) curOpt.scrollIntoView({ block: 'nearest' });
+    sel.focus();
   });
 
-  sel.focus();
-
-  // Close on outside tap/click (delay avoids closing on the same event that opened it)
   setTimeout(() => {
     function outside(ev) {
-      if (!popup.contains(ev.target)) { popup.remove(); document.removeEventListener('pointerdown', outside); }
+      if (!popup.contains(ev.target)) { close(); document.removeEventListener('pointerdown', outside); }
     }
     document.addEventListener('pointerdown', outside);
   }, 120);
@@ -301,10 +281,15 @@ function buildArcDiagram(tokMap, { onSetHead = null, onDeleteArc = null, onSetDe
 
   mc.font = '10px sans-serif';
 
-  // ── Draw edges ────────────────────────────────────────────────────────────
+  // ── Draw edges — two passes ───────────────────────────────────────────────
+  // Pass 1: arc path curves appended in sorted order (short arcs behind long arcs).
+  // Pass 2: arc labels + ✕ buttons collected here; appended last so they always
+  //         render on top of all arc paths regardless of arc length ordering.
+  const edgeLabelGroups = [];
+
   for (const e of edges) {
-    const g     = mk('g');
-    const depId = toks[e.dep].id;
+    const g      = mk('g');
+    const depId  = toks[e.dep].id;
     const arcColor = edgeColors?.get(depId) ?? 'var(--ok)';
 
     if (e.isRoot) {
@@ -317,8 +302,9 @@ function buildArcDiagram(tokMap, { onSetHead = null, onDeleteArc = null, onSetDe
       g.appendChild(mk('polygon', {
         points:`${dx-5},${wordY-14} ${dx+5},${wordY-14} ${dx},${wordY-3}`,
         fill:rootColor }));
+      svg.appendChild(g);
 
-      // Root label — clickable when editable
+      // Root label — separate group for top-layer rendering
       const lw = mc.measureText(e.label).width;
       const labelG = mk('g');
       if (editable && onSetDeprel) labelG.style.cssText = 'cursor:pointer;';
@@ -333,24 +319,22 @@ function buildArcDiagram(tokMap, { onSetHead = null, onDeleteArc = null, onSetDe
           _arcShowDeprelPopup(svgR.left + dx + 14 + lw, svgR.top + ty + 2, depId, e.label, onSetDeprel);
         });
       }
-      g.appendChild(labelG);
+      edgeLabelGroups.push(labelG);
 
     } else {
       const x1   = centers[e.dep];
       const x2   = centers[e.head];
       const apex = wordY - e.h;
       const mid  = (x1 + x2) / 2;
+      const lw   = mc.measureText(e.label).width;
 
-      const lw = mc.measureText(e.label).width;
-
-      // Fat invisible stroke along the arc curve — used for hover detection without
-      // creating a large rectangle that would block clicks on labels of other arcs.
+      // Fat invisible stroke along the arc curve — for hover detection
       g.appendChild(mk('path', {
         d:`M ${x1} ${wordY} C ${x1} ${apex} ${x2} ${apex} ${x2} ${wordY}`,
         stroke:'rgba(128,128,128,0.01)', 'stroke-width':14, fill:'none',
         'pointer-events':'stroke' }));
 
-      // Small hit rect around the label + delete button only (no overlap with arc body)
+      // Invisible hit rect covering the label + button area (gap above arc apex)
       const lblHx = mid - lw/2 - 8;
       const lblHw = lw + 10 + (editable ? 30 : 8);
       g.appendChild(mk('rect', {
@@ -368,7 +352,9 @@ function buildArcDiagram(tokMap, { onSetHead = null, onDeleteArc = null, onSetDe
         points:`${x2-4},${wordY-10} ${x2+4},${wordY-10} ${x2},${wordY-2}`,
         fill:arcColor, 'pointer-events':'none' }));
 
-      // Arc label — clickable when editable
+      svg.appendChild(g);
+
+      // Arc label group — rendered in top layer
       const labelG = mk('g');
       if (editable && onSetDeprel) labelG.style.cssText = 'cursor:pointer;';
       labelG.appendChild(mk('rect', {
@@ -382,16 +368,15 @@ function buildArcDiagram(tokMap, { onSetHead = null, onDeleteArc = null, onSetDe
         labelG.addEventListener('click', ev => {
           ev.stopPropagation();
           const svgR = svg.getBoundingClientRect();
-          _arcShowDeprelPopup(svgR.left + mid + lw/2 + 5, svgR.top + apex - 14, depId, e.label, onSetDeprel);
+          _arcShowDeprelPopup(svgR.left + mid, svgR.top + apex - 14, depId, e.label, onSetDeprel);
         });
       }
-      g.appendChild(labelG);
 
-      // ✕ delete button (editable only) — fades in on arc group hover
+      // ✕ delete button — rendered in top layer, initially hidden
+      let btnG = null;
       if (editable && onDeleteArc) {
-        const btnG = mk('g');
-        btnG.style.cssText = 'cursor:pointer; opacity:0; transition:opacity .12s;';
-
+        btnG = mk('g');
+        btnG.style.cssText = 'cursor:pointer; opacity:0; pointer-events:none; transition:opacity .12s;';
         const bx = mid + lw/2 + 14;
         const by = apex - 7;
         btnG.appendChild(mk('circle', { cx:bx, cy:by, r:7, fill:'var(--bad)', opacity:0.9 }));
@@ -399,18 +384,35 @@ function buildArcDiagram(tokMap, { onSetHead = null, onDeleteArc = null, onSetDe
           'font-size':11, 'font-weight':900, fill:'#fff', 'pointer-events':'none' });
         xt.textContent = '×';
         btnG.appendChild(xt);
-
         btnG.addEventListener('click', ev => { ev.stopPropagation(); onDeleteArc(depId); });
-        g.appendChild(btnG);
-
-        // Small delay before hiding to prevent button vanishing during pointer travel
-        let hideTimer = null;
-        g.addEventListener('pointerenter', () => { clearTimeout(hideTimer); btnG.style.opacity = '1'; });
-        g.addEventListener('pointerleave', () => { hideTimer = setTimeout(() => { btnG.style.opacity = '0'; }, 300); });
-        btnG.addEventListener('pointerenter', () => clearTimeout(hideTimer));
       }
+
+      // Hover on path group OR label → show ✕ button; pointer-events toggled to avoid
+      // invisible button accidentally blocking clicks when hidden.
+      if (btnG) {
+        let hideTimer = null;
+        const show = () => {
+          clearTimeout(hideTimer);
+          btnG.style.opacity = '1';
+          btnG.style.pointerEvents = '';
+        };
+        const hide = () => {
+          hideTimer = setTimeout(() => {
+            btnG.style.opacity = '0';
+            btnG.style.pointerEvents = 'none';
+          }, 300);
+        };
+        g.addEventListener('pointerenter', show);
+        g.addEventListener('pointerleave', hide);
+        labelG.addEventListener('pointerenter', show);
+        labelG.addEventListener('pointerleave', hide);
+        btnG.addEventListener('pointerenter', () => clearTimeout(hideTimer));
+        btnG.addEventListener('pointerleave', hide);
+      }
+
+      edgeLabelGroups.push(labelG);
+      if (btnG) edgeLabelGroups.push(btnG);
     }
-    svg.appendChild(g);
   }
 
   // ── Draw token boxes ───────────────────────────────────────────────────────
@@ -466,6 +468,10 @@ function buildArcDiagram(tokMap, { onSetHead = null, onDeleteArc = null, onSetDe
     }
     svg.appendChild(overlay);
   }
+
+  // ── Render arc labels + buttons on top of all arc paths ───────────────────
+  // Appended after token boxes so they are always visible above overlapping paths.
+  for (const lg of edgeLabelGroups) svg.appendChild(lg);
 
   const wrap = document.createElement('div');
   wrap.className = 'arcDiagramWrap';

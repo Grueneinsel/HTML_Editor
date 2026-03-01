@@ -214,12 +214,14 @@ window.LANG_EN = {
   'plain.toggle':     '📄 Raw data',
   'plain.toggleOff':  '📄 Hide raw data',
 
-  // Project lock
-  'project.lock':   '🔒 Lock project',
-  'project.unlock': '🔓 Unlock project',
+  // Project mode
+  'project.statusView': '📄 File editing off',
+  'project.statusEdit': '✏ File editing on',
+  'project.btnEdit':    'Enable file editing',
+  'project.btnView':    'Disable file editing',
 
   // Sentence management
-  'sent.editSentBtn':    '✎ Edit sentence',
+  'sent.editSentBtn':    '✎ Edit CoNLL-U',
   'sent.editSentSave':   '✓ Apply',
   'sent.editSentCancel': '✕ Cancel',
   'sent.addSentBtn':     '➕ Insert sentence',

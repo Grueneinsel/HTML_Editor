@@ -47,8 +47,14 @@ def minify_css(css: str) -> str:
     return css.strip()
 
 def minify_js(js: str) -> str:
-    """Strip // and /* */ comments (respecting strings), then collapse whitespace."""
-    out   = []
+    """Strip // and /* */ comments (respecting strings), then collapse whitespace.
+
+    Template literals (backtick strings) are extracted before whitespace collapsing
+    and restored afterwards, so significant indentation (e.g. JSON in README) is kept.
+    """
+    protected: list[str] = []   # template-literal content, indexed by position
+    out  : list[str] = []
+    bt_buf: list[str] = []
     i     = 0
     n     = len(js)
     state = "code"   # code | lc | bc | sq | dq | bt
@@ -65,7 +71,9 @@ def minify_js(js: str) -> str:
                 i += 2; state = "bc"; continue
             if c == "'": out.append(c); i += 1; state = "sq"; esc = False; continue
             if c == '"': out.append(c); i += 1; state = "dq"; esc = False; continue
-            if c == "`": out.append(c); i += 1; state = "bt"; esc = False; continue
+            if c == "`":
+                # Begin template literal — buffer it separately
+                bt_buf = [c]; i += 1; state = "bt"; esc = False; continue
             out.append(c); i += 1
 
         elif state == "lc":
@@ -77,18 +85,30 @@ def minify_js(js: str) -> str:
                 out.append(" "); i += 2; state = "code"; continue
             i += 1
 
-        else:  # sq | dq | bt
+        elif state in ("sq", "dq"):
             out.append(c); i += 1
             if esc:   esc = False; continue
             if c == "\\": esc = True; continue
             if state == "sq" and c == "'": state = "code"
             elif state == "dq" and c == '"': state = "code"
-            elif state == "bt" and c == "`": state = "code"
+
+        else:  # bt — accumulate verbatim, emit placeholder when closed
+            bt_buf.append(c); i += 1
+            if esc:   esc = False; continue
+            if c == "\\": esc = True; continue
+            if c == "`":
+                protected.append("".join(bt_buf))
+                out.append(f"\x00{len(protected)-1}\x00")
+                bt_buf = []; state = "code"
 
     result = "".join(out)
-    result = re.sub(r"[ \t]+", " ", result)        # collapse horizontal whitespace
-    result = re.sub(r" *\n *", "\n", result)        # trim spaces around newlines
-    result = re.sub(r"\n{2,}", "\n", result)        # collapse blank lines
+    # Collapse whitespace only in code sections (template literals already extracted)
+    result = re.sub(r"[ \t]+", " ", result)
+    result = re.sub(r" *\n *", "\n", result)
+    result = re.sub(r"\n{2,}", "\n", result)
+    # Restore template literals verbatim
+    for idx, block in enumerate(protected):
+        result = result.replace(f"\x00{idx}\x00", block)
     return result.strip()
 
 def minify_html(html: str) -> str:

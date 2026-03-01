@@ -550,15 +550,20 @@ tr.keyFocus > td:first-child{ border-left:2px solid var(--accent) }
 }
 .fileEditBtns{ display:flex; gap:6px; }
 
-/* Project lock bar */
+/* Project mode bar */
 .projectLockBar{ display:flex; align-items:center; gap:8px; margin-top:8px; }
+.projectModeStatus{
+  font-size:12px; padding:3px 9px; border-radius:6px;
+  border:1px solid var(--line2); font-weight:600;
+}
+.projectModeView{ color:var(--muted); }
+.projectModeEdit{ border-color:var(--accent); color:var(--accent); }
 .projectLockBtn{
   font-size:12px; padding:4px 10px; border-radius:6px;
   border:1px solid var(--line); background:var(--bg-control);
   cursor:pointer; transition:border-color .15s, color .15s;
 }
 .projectLockBtn:hover{ border-color:var(--accent); }
-.projectLockBtnOpen{ border-color:var(--accent); color:var(--accent); }
 
 /* Sentence management bar */
 .sentManageBar{ display:flex; gap:6px; flex-wrap:wrap; margin-top:6px; }
@@ -1008,7 +1013,12 @@ td:hover .fileEditBtn { display: inline-block; }
 }
 .sentListRow:last-child { border-bottom: none; }
 .sentListRow:hover { background: var(--card); }
-.sentListRowActive { background: color-mix(in srgb, var(--accent) 12%, transparent) !important; }
+.sentListRowActive {
+  background: color-mix(in srgb, var(--accent) 16%, transparent) !important;
+  border-left: 3px solid var(--accent);
+  padding-left: 5px; /* compensate for the 3px border */
+}
+.sentListRowActive .sentListNum { color: var(--accent); font-weight: 800; }
 .sentListNum {
   flex-shrink: 0;
   width: 26px;
