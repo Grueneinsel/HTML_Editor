@@ -92,3 +92,20 @@ async function _dispatchFiles(files){
     });
   }
 }
+
+// ── Template download ──────────────────────────────────────────────────────────
+// Source: testdata/template.json → window.TAGSET_TEMPLATE (via make_readme_js.py)
+{
+  const _tagsetTemplateBtnEl = document.getElementById("tagsetTemplateBtn");
+  if(_tagsetTemplateBtnEl){
+    _tagsetTemplateBtnEl.addEventListener("click", () => {
+      const content = (typeof TAGSET_TEMPLATE !== 'undefined') ? TAGSET_TEMPLATE : '{}';
+      const blob = new Blob([content], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "tagset_template.json";
+      a.click();
+      URL.revokeObjectURL(a.href);
+    });
+  }
+}

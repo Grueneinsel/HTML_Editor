@@ -104,6 +104,7 @@ window.LANG_EN = {
   // Tagset
   'tagset.upload':    '📤 Upload tagset',
   'tagset.download':  '📥 Download tagset',
+  'tagset.template':  '📋 Download template',
   'tagset.loaded':    '{deprel} deprels · {upos} UPOS · {xpos} XPOS loaded',
   'tagset.errJson':   'Invalid JSON file.',
   'tagset.errFormat': 'Tagset must be a JSON object.',

@@ -531,8 +531,6 @@ HTML_Editor/
 │
 └── testdata/                  ← Beispieldaten zum Ausprobieren
     ├── template.json          ← Leere Tagset-Vorlage (Formatreferenz)
-    ├── vamos_ma_ruban.conllu  ← Standard-Demo: Annotatorvergleich (UD-Schema)
-    ├── ai_ma_konopka.conllu   ← Standard-Demo: zweiter Annotator
     ├── ner/                   ← Beispiel: Named Entity Recognition
     │   ├── tagset.json        ← NER-Tagset (UPOS + XPOS + BIO-Entity-Spalte)
     │   ├── annotator_A.conllu
@@ -582,7 +580,6 @@ Die sechs Beispielverzeichnisse decken gemeinsam alle Funktionen des Tools ab:
 
 | Verzeichnis | Sprache | Annotatorinnen | Besondere Features |
 |---|---|---|---|
-| *(Wurzel)* `vamos_ma_ruban.conllu` + `ai_ma_konopka.conllu` | Deutsch | 2 | Schnellstart ohne Tagset; Standard UD-Felder |
 | `ner/` | Deutsch | 2 | **Drei Label-Spalten** (UPOS + XPOS + NER-BIO); `__cols__` mit 3 Einträgen |
 | `srl/` | Deutsch | 2 | **Zwei Dep-Schichten** (UD DepRel + Semantic Role); `__dep_cols__` mit 2 Einträgen |
 | `custom/` | Deutsch | 2 | **Vollständig eigenes Schema**: 3 Label-Spalten (Wortart / Belebtheit / Sentiment) + vereinfachte Syntax |

@@ -130,6 +130,7 @@ window.LANG_DE = {
   // Tagset
   'tagset.upload':    '📤 Tagset hochladen',
   'tagset.download':  '📥 Tagset herunterladen',
+  'tagset.template':  '📋 Vorlage herunterladen',
   'tagset.loaded':    '{deprel} Deprel · {upos} UPOS · {xpos} XPOS geladen',
   'tagset.errJson':   'Ungültige JSON-Datei.',
   'tagset.errFormat': 'Tagset muss ein JSON-Objekt sein.',

@@ -24,8 +24,9 @@ OUT_DIR = ROOT / "generated"
 OUT     = OUT_DIR / "readme_content.js"
 
 SOURCES = [
-    ("README.md",    "README_CONTENT_DE"),
-    ("README.en.md", "README_CONTENT_EN"),
+    ("README.md",               "README_CONTENT_DE"),
+    ("README.en.md",            "README_CONTENT_EN"),
+    ("testdata/template.json",  "TAGSET_TEMPLATE"),
 ]
 
 

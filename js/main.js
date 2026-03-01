@@ -774,7 +774,11 @@ if(unflagAllBtn)  unflagAllBtn.addEventListener('click',  unflagAll);
 // Show only section 1 (Files) when no files are loaded; show all sections otherwise.
 function _updateSectionVisibility(){
   const wrap = document.querySelector('main.wrap');
-  if(wrap) wrap.classList.toggle('noFiles', state.docs.length === 0);
+  if(!wrap) return;
+  const noFiles = state.docs.length === 0;
+  wrap.classList.toggle('noFiles', noFiles);
+  const sections = wrap.querySelectorAll('section.card');
+  sections.forEach((sec, i) => { sec.hidden = noFiles && i > 0; });
 }
 
 // Called on page load: auto-load the last saved session if no files are loaded.

@@ -1266,7 +1266,7 @@ td:hover .fileEditBtn { display: inline-block; }
 }
 
 /* ── Show only section 1 when no files loaded ── */
-.wrap.noFiles section.card:not(.card:first-child) {
+.wrap.noFiles section.card:not(:first-child) {
   display: none;
 }
 

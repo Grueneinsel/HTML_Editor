@@ -534,8 +534,6 @@ HTML_Editor/
 │
 └── testdata/                  ← Beispieldaten zum Ausprobieren
     ├── template.json          ← Leere Tagset-Vorlage (Formatreferenz)
-    ├── vamos_ma_ruban.conllu  ← Standard-Demo: Annotatorvergleich (UD-Schema)
-    ├── ai_ma_konopka.conllu   ← Standard-Demo: zweiter Annotator
     ├── ner/                   ← Beispiel: Named Entity Recognition
     │   ├── tagset.json        ← NER-Tagset (UPOS + XPOS + BIO-Entity-Spalte)
     │   ├── annotator_A.conllu
@@ -585,7 +583,6 @@ Die sechs Beispielverzeichnisse decken gemeinsam alle Funktionen des Tools ab:
 
 | Verzeichnis | Sprache | Annotatorinnen | Besondere Features |
 |---|---|---|---|
-| *(Wurzel)* \`vamos_ma_ruban.conllu\` + \`ai_ma_konopka.conllu\` | Deutsch | 2 | Schnellstart ohne Tagset; Standard UD-Felder |
 | \`ner/\` | Deutsch | 2 | **Drei Label-Spalten** (UPOS + XPOS + NER-BIO); \`__cols__\` mit 3 Einträgen |
 | \`srl/\` | Deutsch | 2 | **Zwei Dep-Schichten** (UD DepRel + Semantic Role); \`__dep_cols__\` mit 2 Einträgen |
 | \`custom/\` | Deutsch | 2 | **Vollständig eigenes Schema**: 3 Label-Spalten (Wortart / Belebtheit / Sentiment) + vereinfachte Syntax |
@@ -1154,8 +1151,6 @@ HTML_Editor/
 │
 └── testdata/                  ← Example data for exploration
     ├── template.json          ← Blank tagset template (format reference)
-    ├── vamos_ma_ruban.conllu  ← Standard demo: annotator comparison (UD schema)
-    ├── ai_ma_konopka.conllu   ← Standard demo: second annotator
     ├── ner/                   ← Example: Named Entity Recognition
     │   ├── tagset.json        ← NER tagset (UPOS + XPOS + BIO entity column)
     │   ├── annotator_A.conllu
@@ -1205,7 +1200,6 @@ The six example directories together cover all tool features:
 
 | Directory | Language | Annotators | Notable Features |
 |---|---|---|---|
-| *(root)* \`vamos_ma_ruban.conllu\` + \`ai_ma_konopka.conllu\` | German | 2 | Quick start without a tagset; standard UD fields |
 | \`ner/\` | German | 2 | **Three label columns** (UPOS + XPOS + NER-BIO); \`__cols__\` with 3 entries |
 | \`srl/\` | German | 2 | **Two dep layers** (UD DepRel + Semantic Role); \`__dep_cols__\` with 2 entries |
 | \`custom/\` | German | 2 | **Fully custom schema**: 3 label columns (word class / animacy / sentiment) + simplified syntax |
@@ -1239,4 +1233,28 @@ The six example directories together cover all tool features:
 - **Multi-word tokens** (IDs \`N-M\`) and **empty nodes** (IDs \`N.M\`) are stored on load and fully reconstructed on CoNLL-U export; only regular tokens appear in the comparison table and tree view
 - At least **two files** are required for comparison and tree view
 - Data lives only in **browser memory** — use session export to save your progress permanently
+`;
+
+window.TAGSET_TEMPLATE = `{
+  "_comment": "Leere Formatvorlage für den Tagset-Upload. Alle Felder sind optional.",
+
+  "__cols__": [
+    {
+      "key":    "FELDNAME",
+      "name":   "Anzeigename in der Spaltenüberschrift",
+      "values": ["Option1", "Option2", "Option3"]
+    }
+  ],
+
+  "__dep_cols__": [
+    {
+      "key":  "SCHEMANAME",
+      "name": "Anzeigename des Dependency-Schemas",
+      "groups": {
+        "Gruppe 1": ["label1", "label2", "label3"],
+        "Gruppe 2": ["label4", "label5"]
+      }
+    }
+  ]
+}
 `;

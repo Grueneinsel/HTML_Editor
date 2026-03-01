@@ -531,8 +531,6 @@ HTML_Editor/
 │
 └── testdata/                  ← Example data for exploration
     ├── template.json          ← Blank tagset template (format reference)
-    ├── vamos_ma_ruban.conllu  ← Standard demo: annotator comparison (UD schema)
-    ├── ai_ma_konopka.conllu   ← Standard demo: second annotator
     ├── ner/                   ← Example: Named Entity Recognition
     │   ├── tagset.json        ← NER tagset (UPOS + XPOS + BIO entity column)
     │   ├── annotator_A.conllu
@@ -582,7 +580,6 @@ The six example directories together cover all tool features:
 
 | Directory | Language | Annotators | Notable Features |
 |---|---|---|---|
-| *(root)* `vamos_ma_ruban.conllu` + `ai_ma_konopka.conllu` | German | 2 | Quick start without a tagset; standard UD fields |
 | `ner/` | German | 2 | **Three label columns** (UPOS + XPOS + NER-BIO); `__cols__` with 3 entries |
 | `srl/` | German | 2 | **Two dep layers** (UD DepRel + Semantic Role); `__dep_cols__` with 2 entries |
 | `custom/` | German | 2 | **Fully custom schema**: 3 label columns (word class / animacy / sentiment) + simplified syntax |
