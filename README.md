@@ -5,9 +5,30 @@ Läuft vollständig lokal ohne Server — einfach `index.html` im Browser öffne
 
 ---
 
+## Feature-Übersicht
+
+| Feature | Beschreibung |
+|---------|-------------|
+| **Mehrprojekt-Verwaltung** | Beliebig viele Projekte mit eigenen Dateien, Annotationen und Undo-Stack |
+| **CoNLL-U-Vergleich** | Token-für-Token-Diff mehrerer Dateien gegen eine Gold-Annotation |
+| **Interaktiver Baum** | Abhängigkeitsbäume mit Drag-&-Drop-Pfeilen, Relation-Auswahl, ROOT-Zone |
+| **Gold-Annotation** | Per Klick, Popup oder Tastaturkürzel — Custom-Werte überschreiben Datei-Werte |
+| **CoNLL-U-Editor** | Direkte Bearbeitung aller Sätze je Datei als plain Text (Abschnitt 5) |
+| **Satzverwaltung** | Sätze einfügen, löschen, sortieren — Satzliste immer sichtbar |
+| **Undo/Redo** | Bis zu 80 Schritte pro Projekt; wird mit Session gespeichert |
+| **Session-Export** | Vollständigen Arbeitsstand als JSON sichern und laden |
+| **Autosave** | Arbeitsstand wird alle 30 Sekunden lokal gesichert und beim Start automatisch geladen |
+| **Tagset-Konfiguration** | Eigene DEPREL-Listen, UPOS/XPOS-Werte und Dependency-Layer per `labels.js` oder JSON |
+| **Export** | Gold CoNLL-U und Baumansicht (alle Sätze) herunterladen |
+| **Tastaturkürzel** | Vollständige Bedienung ohne Maus |
+| **Mehrsprachig** | Deutsch / Englisch; weitere Sprachen per `lang/xx.js` |
+| **Tablet-Unterstützung** | Touch-optimiert; Pfeile ziehbar, Scrollen funktioniert |
+
+---
+
 ## Schnellstart
 
-1. `index.html` im Browser öffnen
+1. `index.html` im Browser öffnen — letzte Session wird automatisch geladen
 2. Mindestens zwei `.conllu`-Dateien laden — oder **„Demo laden"** klicken
 3. Satz auswählen → Baumansicht und Vergleichstabelle erscheinen automatisch
 4. Gold-Zellen klicken oder Tastaturkürzel nutzen, um Annotationen zu bearbeiten
@@ -39,6 +60,17 @@ Klick auf einen Tab → wechselt zum Projekt. Der Zustand (Dateien, Satzposition
 |---|---|
 | `[` | Vorheriges Projekt |
 | `]` | Nächstes Projekt |
+
+### Projektschloss
+
+Jedes Projekt kann **gesperrt** oder **entsperrt** werden (Schaltfläche in Abschnitt 1 unterhalb der Dateiliste):
+
+| Zustand | Symbol | Verhalten |
+|---------|--------|-----------|
+| Gesperrt | 🔒 | Nur lesend: keine Bearbeitung per Tabelle, Popup oder Baum |
+| Entsperrt | 🔓 | Alle Bearbeitungsfunktionen aktiv; HEAD/DEPREL-Spalten erscheinen |
+
+Der Zustand wird mit der Session gespeichert und wiederhergestellt.
 
 ### Automatische Zuweisung beim Laden
 
@@ -231,7 +263,19 @@ Die Anzahl der Felder passt sich automatisch an die geladene Tagset-Konfiguratio
 
 ---
 
-## 5) Export
+## 5) CoNLL-U bearbeiten
+
+Abschnitt 5 enthält einen ausklappbaren **Texteditor** für die rohen CoNLL-U-Daten.
+
+- **„▾ Öffnen"** klappt den Editor aus; **„▴ Schließen"** klappt ihn wieder ein
+- Für jede geladene Datei gibt es eine eigene Textarea mit dem vollständigen CoNLL-U-Text aller Sätze
+- Die Felder wachsen automatisch mit dem Inhalt — kein Scrollen in der Textarea nötig
+- Änderungen direkt am Text eingeben → **„✓ Übernehmen"** übernimmt sie in alle anderen Ansichten
+- **„✕ Zurücksetzen"** verwirft alle Änderungen und stellt den zuletzt gespeicherten Stand wieder her
+
+---
+
+## 6) Export
 
 ### Einzelne Datei
 
@@ -266,7 +310,7 @@ Das Session-Format ist versioniert (`version: 2`) und als JSON lesbar. Ältere S
 
 ### Autosave
 
-Der Arbeitsstand wird alle **30 Sekunden** automatisch im Browser-LocalStorage gesichert. Beim nächsten Öffnen der Seite erscheint ein Banner mit der Option, den Stand wiederherzustellen oder zu verwerfen.
+Der Arbeitsstand wird alle **30 Sekunden** automatisch im Browser-LocalStorage gesichert. Beim nächsten Öffnen der Seite wird der letzte Stand **automatisch und lautlos wiederhergestellt** — ohne Rückfrage.
 
 ---
 
@@ -290,6 +334,7 @@ Der Verlauf wird in der Session mitgespeichert (bis zu 80 Schritte pro Projekt).
 | `←` / `→` | Vorheriger / nächster Satz |
 | `Ctrl+←` / `Ctrl+→` | Erster / letzter Satz |
 | `n` / `N` | Nächster / vorheriger Satz mit Diffs |
+| `f` / `F` | Nächste / vorherige markierte Stelle (`⚑`) |
 | `[` / `]` | Vorheriges / nächstes Projekt |
 | `↑` / `↓` | Tabellenzeile navigieren |
 | `Enter` | Gold-Popup für fokussierte Zeile öffnen |
@@ -302,6 +347,7 @@ Der Verlauf wird in der Session mitgespeichert (bis zu 80 Schritte pro Projekt).
 | `c` | Aktuellen Satz als CoNLL-U in Zwischenablage kopieren |
 | `e` | Gold CoNLL-U exportieren |
 | `E` (Shift+e) | Baumansicht exportieren |
+| `r` | Aktuellen Satz vorlesen (TTS) |
 | `?` | Hilfe öffnen / schließen |
 | `Esc` | Fokus / Popup / Hilfe schließen |
 

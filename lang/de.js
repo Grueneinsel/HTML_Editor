@@ -4,7 +4,11 @@ window.LANG_DE = {
   'sec.select':  '2) Satz wählen',
   'sec.tree':    '3) Baumansicht',
   'sec.compare': '4) Vergleich',
-  'sec.export':  '5) Export',
+  'sec.conllu':    '5) CoNLL-U bearbeiten',
+  'footer.author': 'Entwickelt von Frederik Konopka',
+  'conllu.open':  '▾ Öffnen',
+  'conllu.close': '▴ Schließen',
+  'sec.export':  '6) Export',
 
   // Datei-Bereich
   'files.add':          'Dateien hinzufügen',
@@ -189,6 +193,7 @@ window.LANG_DE = {
   'flag.sentDot':    'Satz {n}: hat Markierungen',
   'flag.sentOpt':    ' ⚑',
   'kbd.flagNext':    'Nächste Markierung',
+  'kbd.project':     'Projekt wechseln',
   'kbd.flagPrev':    'Vorherige Markierung',
 
   // Hilfe
@@ -221,9 +226,8 @@ window.LANG_DE = {
   'project.btnView':    'Datei-Bearbeitung ausschalten',
 
   // Satzverwaltung
-  'sent.editSentBtn':    '✎ CoNLL-U bearbeiten',
   'sent.editSentSave':   '✓ Übernehmen',
-  'sent.editSentCancel': '✕ Abbrechen',
+  'sent.editSentCancel': '✕ Zurücksetzen',
   'sent.addSentBtn':     '➕ Satz einfügen',
   'sent.addSentPrompt':  'Satztext (optional):',
   'sent.delSentBtn':     '🗑 Satz löschen',

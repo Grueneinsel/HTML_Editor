@@ -4,7 +4,11 @@ window.LANG_EN = {
   'sec.select':  '2) Select Sentence',
   'sec.tree':    '3) Tree View',
   'sec.compare': '4) Comparison',
-  'sec.export':  '5) Export',
+  'sec.conllu':    '5) Edit CoNLL-U',
+  'footer.author': 'Developed by Frederik Konopka',
+  'conllu.open':  '▾ Open',
+  'conllu.close': '▴ Close',
+  'sec.export':  '6) Export',
 
   // File section
   'files.add':          'Add files',
@@ -189,6 +193,7 @@ window.LANG_EN = {
   'flag.sentDot':    'Sentence {n}: has flags',
   'flag.sentOpt':    ' ⚑',
   'kbd.flagNext':    'Next flag',
+  'kbd.project':     'Switch project',
   'kbd.flagPrev':    'Previous flag',
 
   // Help
@@ -221,9 +226,8 @@ window.LANG_EN = {
   'project.btnView':    'Disable file editing',
 
   // Sentence management
-  'sent.editSentBtn':    '✎ Edit CoNLL-U',
   'sent.editSentSave':   '✓ Apply',
-  'sent.editSentCancel': '✕ Cancel',
+  'sent.editSentCancel': '✕ Reset',
   'sent.addSentBtn':     '➕ Insert sentence',
   'sent.addSentPrompt':  'Sentence text (optional):',
   'sent.delSentBtn':     '🗑 Delete sentence',

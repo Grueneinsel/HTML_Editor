@@ -143,17 +143,14 @@ if(sentNote){
 
 sentSelect.addEventListener("change", () => {
   state.currentSent = parseInt(sentSelect.value, 10) || 0;
-  _sentEditOpen = false;
   renderSentence();
 });
 prevBtn.addEventListener("click", () => {
   state.currentSent = Math.max(0, state.currentSent - 1);
-  _sentEditOpen = false;
   renderSentence();
 });
 nextBtn.addEventListener("click", () => {
   state.currentSent = Math.min(state.maxSents - 1, state.currentSent + 1);
-  _sentEditOpen = false;
   renderSentence();
 });
 
@@ -203,7 +200,7 @@ sentText.addEventListener("input", (e) => {
   }
   // Re-render dependent views without destroying the focused input
   clearTimeout(_formInputTimer);
-  _formInputTimer = setTimeout(() => { renderCompareTable(); renderPreview(); renderPlainView(); }, 180);
+  _formInputTimer = setTimeout(() => { renderCompareTable(); renderPreview(); }, 180);
 });
 
 // Click on a file cell in the comparison table → choose that doc as gold for the token.
@@ -364,6 +361,9 @@ function renderFiles(){
   textWarn.innerHTML = warnedIndices.size > 0
     ? `<div class="textWarnBanner">${escapeHtml(t('files.warnBanner'))}</div>`
     : "";
+
+  _updateSectionVisibility();
+  renderConlluEditor(true);
 }
 
 // ── Drag & Drop (entire page) ──────────────────────────────────────────────────
@@ -588,12 +588,15 @@ function toggleFlag(sentIdx, tokId){
   } else {
     s.add(tokId);
   }
-  // Update row and button in-place (no full re-render needed)
+  // Update row, button, and sentText span in-place (no full re-render needed)
   const tr  = cmpTable.querySelector(`tr[data-id="${tokId}"]`);
   const btn = tr?.querySelector(".flagBtn");
   const isFlagged = !!state.flags[sentIdx]?.has(tokId);
   if(btn)  btn.classList.toggle("flagBtnActive", isFlagged);
   if(tr)   tr.classList.toggle("rowFlagged", isFlagged);
+  // Also update sentText token spans (both read-only and editable modes)
+  const span = sentText.querySelector(`[data-id="${tokId}"]`);
+  if(span) span.classList.toggle("sentTokenFlagged", isFlagged);
   // Reflect flag change in the minimap and dropdown without a full re-render
   renderSentMap();
   renderSentSelectOptions();
@@ -640,13 +643,14 @@ function renderProjectLock(){
   const btn = document.createElement("button");
   btn.className = "projectLockBtn";
   btn.textContent = state.unlocked ? t('project.btnView') : t('project.btnEdit');
-  btn.addEventListener("click", () => {
+  const _lockToggle = () => {
     state.unlocked = !state.unlocked;
     _saveActiveProject();
     renderProjectLock();
     renderFiles();
     renderSentence();
-  });
+  };
+  btn.addEventListener("click", _lockToggle);
 
   bar.appendChild(status);
   bar.appendChild(btn);
@@ -739,25 +743,13 @@ function _deleteToken(tokId){
 
 // ── Sentence management ────────────────────────────────────────────────────────
 
-let _sentEditOpen    = false;
-
-// Render sentence edit/insert/delete controls into #sentManageBar.
+// Render sentence add/delete controls + sentence list into #sentManageBar.
 function renderSentManage(){
   const bar = document.getElementById("sentManageBar");
   if(!bar) return;
   if(!state.unlocked || state.maxSents === 0){ bar.innerHTML = ""; return; }
 
   bar.innerHTML = "";
-
-  // ✎ Edit current sentence
-  const editBtn = document.createElement("button");
-  editBtn.className = "sentManageBtn";
-  editBtn.textContent = t('sent.editSentBtn');
-  editBtn.addEventListener("click", () => {
-    _sentEditOpen = !_sentEditOpen;
-    renderSentManage();
-  });
-  bar.appendChild(editBtn);
 
   // ➕ Insert new sentence after current
   const addBtn = document.createElement("button");
@@ -772,6 +764,7 @@ function renderSentManage(){
     state.currentSent = state.currentSent + 1;
     renderSentSelect();
     renderSentence();
+    renderConlluEditor(true);
   });
   bar.appendChild(addBtn);
 
@@ -787,63 +780,9 @@ function renderSentManage(){
     state.currentSent = Math.min(state.currentSent, Math.max(0, state.maxSents - 1));
     renderSentSelect();
     renderSentence();
+    renderConlluEditor(true);
   });
   bar.appendChild(delBtn);
-
-  // Inline sentence editor (shown when _sentEditOpen)
-  if(_sentEditOpen){
-    const panel = document.createElement("div");
-    panel.className = "sentEditPanel";
-
-    for(let i = 0; i < state.docs.length; i++){
-      const d = state.docs[i];
-      const label = document.createElement("div");
-      label.className = "sentEditLabel";
-      label.textContent = d.name;
-      panel.appendChild(label);
-
-      const ta = document.createElement("textarea");
-      ta.className = "sentEditTa";
-      ta.spellcheck = false;
-      const sent = d.sentences[state.currentSent];
-      ta.value = sent ? _sentToConlluLines(sent).join("\n") : "";
-      ta.dataset.docIdx = i;
-      panel.appendChild(ta);
-    }
-
-    const btnRow = document.createElement("div");
-    btnRow.className = "sentEditBtns";
-
-    const saveBtn = document.createElement("button");
-    saveBtn.textContent = t('sent.editSentSave');
-    saveBtn.addEventListener("click", () => {
-      pushUndo();
-      const textareas = panel.querySelectorAll("textarea[data-doc-idx]");
-      textareas.forEach(ta => {
-        const i = parseInt(ta.dataset.docIdx, 10);
-        const d = state.docs[i];
-        if(!d) return;
-        const parsed = parseConllu(ta.value);
-        if(parsed.sentences.length > 0) d.sentences[state.currentSent] = parsed.sentences[0];
-      });
-      recomputeMaxSents();
-      _sentEditOpen = false;
-      renderSentSelect();
-      renderSentence();
-    });
-    btnRow.appendChild(saveBtn);
-
-    const cancelBtn = document.createElement("button");
-    cancelBtn.textContent = t('sent.editSentCancel');
-    cancelBtn.addEventListener("click", () => {
-      _sentEditOpen = false;
-      renderSentManage();
-    });
-    btnRow.appendChild(cancelBtn);
-
-    panel.appendChild(btnRow);
-    bar.appendChild(panel);
-  }
 
   // Sentence list — always visible, active sentence highlighted with accent color
   const listPanel = document.createElement("div");
@@ -876,20 +815,6 @@ function renderSentManage(){
     if(state.confirmed.has(si)) iconsSpan.appendChild(Object.assign(document.createElement("span"), { textContent: "✓", title: t('sent.confirmed') }));
     if(state.flags[si]?.size > 0) iconsSpan.appendChild(Object.assign(document.createElement("span"), { textContent: "⚑" }));
     row.appendChild(iconsSpan);
-
-    // ✎ Edit button
-    const editBtn2 = document.createElement("button");
-    editBtn2.className = "sentListEditBtn";
-    editBtn2.textContent = "✎";
-    editBtn2.title = t('sent.editSentBtn');
-    editBtn2.addEventListener("click", (e) => {
-      e.stopPropagation();
-      state.currentSent = si;
-      _sentEditOpen = true;
-      renderSentSelect();
-      renderSentence();
-    });
-    row.appendChild(editBtn2);
 
     // Click row → navigate to that sentence
     row.addEventListener("click", () => {
@@ -949,7 +874,6 @@ function renderSentence(){
     colToggleBar.innerHTML = "";
     _updateSentNote();
     renderSentManage();
-    renderPlainView();
     return;
   }
 
@@ -993,12 +917,10 @@ function renderSentence(){
   renderPreview();
   _updateSentNote();
   renderSentManage();
-  renderPlainView();
 }
 
-// ── Plain CoNLL-U view ─────────────────────────────────────────────────────────
+// ── Plain CoNLL-U helper ───────────────────────────────────────────────────────
 
-let _plainViewOpen = localStorage.getItem('plain-view') === 'true';
 
 // Build and return the raw CoNLL-U lines for a single parsed sentence.
 function _sentToConlluLines(sent){
@@ -1017,43 +939,97 @@ function _sentToConlluLines(sent){
   return lines;
 }
 
-// Re-render the plain CoNLL-U view panel (only when open).
-function renderPlainView(){
-  const pv = document.getElementById("plainView");
-  const btn = document.getElementById("plainViewToggle");
-  if(!pv) return;
-  if(btn){
-    btn.textContent = _plainViewOpen ? t('plain.toggleOff') : t('plain.toggle');
-    btn.classList.toggle("plainViewToggleActive", _plainViewOpen);
-  }
-  if(!_plainViewOpen){ pv.innerHTML = ""; return; }
+// ── CoNLL-U editor section ─────────────────────────────────────────────────────
 
-  const sentIndex = state.currentSent;
-  if(state.docs.length === 0 || state.maxSents === 0){ pv.innerHTML = ""; return; }
+let _conlluEditorOpen = localStorage.getItem('conllu-editor-open') === 'true';
 
-  let html = `<div class="pvWrap">`;
-
-  for(const doc of state.docs){
-    const sent = doc.sentences[sentIndex];
-    const raw = sent ? _sentToConlluLines(sent).join("\n") : t('sent.missing');
-    html += `<div class="pvBlock">
-      <div class="pvTitle">${escapeHtml(doc.name)}</div>
-      <pre class="pvPre">${escapeHtml(raw)}</pre>
-    </div>`;
-  }
-
-  html += `</div>`;
-  pv.innerHTML = html;
+// Build full CoNLL-U text for all sentences of a doc (blank line separator).
+function _docToConlluText(d){
+  if(!d || !d.sentences.length) return '';
+  const parts = d.sentences.map(s => _sentToConlluLines(s).join('\n'));
+  return parts.join('\n\n');
 }
 
-const _pvToggleBtn = document.getElementById("plainViewToggle");
-if(_pvToggleBtn){
-  _pvToggleBtn.addEventListener("click", () => {
-    _plainViewOpen = !_plainViewOpen;
-    localStorage.setItem("plain-view", String(_plainViewOpen));
-    renderPlainView();
+// Render (or update) the CoNLL-U editor section.
+// If force=true, always rebuild textareas (used after external data change).
+function renderConlluEditor(force){
+  const wrap   = document.getElementById('conlluEditorWrap');
+  const toggle = document.getElementById('conlluEditorToggle');
+  if(!wrap) return;
+  if(toggle){
+    toggle.textContent = _conlluEditorOpen ? t('conllu.close') : t('conllu.open');
+    toggle.classList.toggle('open', _conlluEditorOpen);
+    toggle.setAttribute('aria-expanded', String(_conlluEditorOpen));
+  }
+  if(!_conlluEditorOpen){ wrap.hidden = true; return; }
+  wrap.hidden = false;
+  if(state.docs.length === 0){
+    wrap.innerHTML = `<p class="muted small">${escapeHtml(t('files.none'))}</p>`;
+    return;
+  }
+  // Only rebuild on force or initial open (no textareas yet)
+  if(!force && wrap.querySelector('textarea')) return;
+
+  wrap.innerHTML = '';
+  for(let i = 0; i < state.docs.length; i++){
+    const d = state.docs[i];
+    const block = document.createElement('div');
+    block.className = 'conlluDocBlock';
+    const lbl = document.createElement('div');
+    lbl.className = 'conlluDocLabel';
+    lbl.textContent = d.name;
+    block.appendChild(lbl);
+    const ta = document.createElement('textarea');
+    ta.className = 'conlluDocTa';
+    ta.spellcheck = false;
+    ta.dataset.docIdx = i;
+    ta.value = _docToConlluText(d);
+    // Auto-size to content
+    const _autoH = el => { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; };
+    requestAnimationFrame(() => _autoH(ta));
+    ta.addEventListener('input', () => _autoH(ta));
+    block.appendChild(ta);
+    wrap.appendChild(block);
+  }
+
+  const btnRow = document.createElement('div');
+  btnRow.className = 'conlluEditorBtns';
+
+  const saveBtn = document.createElement('button');
+  saveBtn.textContent = t('sent.editSentSave');
+  saveBtn.addEventListener('click', () => {
+    pushUndo();
+    wrap.querySelectorAll('textarea[data-doc-idx]').forEach(ta => {
+      const d = state.docs[parseInt(ta.dataset.docIdx, 10)];
+      if(!d) return;
+      d.sentences = parseConllu(ta.value).sentences;
+    });
+    recomputeMaxSents();
+    state.currentSent = Math.min(state.currentSent, Math.max(0, state.maxSents - 1));
+    renderConlluEditor(true);
+    renderSentSelect();
+    renderSentence();
   });
+  btnRow.appendChild(saveBtn);
+
+  const cancelBtn = document.createElement('button');
+  cancelBtn.textContent = t('sent.editSentCancel');
+  cancelBtn.addEventListener('click', () => {
+    renderConlluEditor(true); // reset textareas to current data
+  });
+  btnRow.appendChild(cancelBtn);
+
+  wrap.appendChild(btnRow);
 }
+
+// Global toggle function — also called via onclick attribute in index.html for mobile tap reliability.
+function toggleConlluEditor(){
+  _conlluEditorOpen = !_conlluEditorOpen;
+  localStorage.setItem('conllu-editor-open', String(_conlluEditorOpen));
+  renderConlluEditor(true);
+}
+const _conlluToggleBtn = document.getElementById('conlluEditorToggle');
+if(_conlluToggleBtn) _conlluToggleBtn.addEventListener('click', toggleConlluEditor);
 
 // ── Clipboard copy ─────────────────────────────────────────────────────────────
 
@@ -1284,12 +1260,13 @@ const _DEV_SESSION_KEY    = 'devModeSession';
 const _DEV_RELOADED_KEY   = 'devModeReloadedAt';
 let   _devModeTimer    = null;
 let   _devModeVersion  = null;   // last seen build version token
+let   _devModeFails    = 0;      // consecutive fetch failures
 
 function _devModePoll(){
   fetch('version.txt?_=' + Date.now(), { cache: 'no-store' })
-    .then(r => r.ok ? r.text() : null)
+    .then(r => r.ok ? r.text() : Promise.reject())
     .then(ver => {
-      if(!ver) return;
+      _devModeFails = 0;
       ver = ver.trim();
       if(_devModeVersion === null){ _devModeVersion = ver; _devModeUpdateBadge(ver); return; }
       if(ver !== _devModeVersion){
@@ -1301,12 +1278,21 @@ function _devModePoll(){
         window.location.reload();
       }
     })
-    .catch(() => {});
+    .catch(() => {
+      _devModeFails++;
+      if(_devModeFails >= 3){
+        // version.txt not reachable — auto-disable dev mode
+        localStorage.setItem(_DEV_MODE_KEY, '0');
+        _devModeStop();
+        renderDevModeBar();
+      }
+    });
 }
 
 function _devModeStart(){
   if(_devModeTimer) return;
   _devModeVersion = null;
+  _devModeFails   = 0;
   _devModeTimer = setInterval(_devModePoll, 2000);
   _devModePoll(); // immediate first check to set baseline version
 }
@@ -1337,22 +1323,9 @@ function _devModeUpdateBadge(ver){
 function renderDevModeBar(){
   const bar = document.getElementById('devModeBar');
   if(!bar) return;
-  const on = localStorage.getItem(_DEV_MODE_KEY) === '1';
-  bar.innerHTML =
-    `<label class="devModeLabel">
-      <input type="checkbox" id="devModeCb"${on ? ' checked' : ''}>
-      <span data-i18n="devMode.label">${t('devMode.label')}</span>
-    </label>
-    <span class="devModeStatus ${on ? 'devModeOn' : ''}">
-      ${on ? t('devMode.on') : t('devMode.off')}
-    </span>`;
-  document.getElementById('devModeCb').addEventListener('change', (e) => {
-    const enabled = e.target.checked;
-    localStorage.setItem(_DEV_MODE_KEY, enabled ? '1' : '0');
-    if(enabled) _devModeStart(); else _devModeStop();
-    renderDevModeBar();
-  });
-  if(on) _devModeStart();
+  // Dev mode is activated only via ?dev URL param — no visible UI control
+  bar.innerHTML = '';
+  if(localStorage.getItem(_DEV_MODE_KEY) === '1') _devModeStart();
 }
 
 // Restore session if we reloaded due to a build change, then show reload toast.
@@ -1392,6 +1365,21 @@ function _devModeShowReloadToast(reloadedAt){
   setTimeout(() => { toast.remove(); }, 4200);
 }
 
+// ── Section visibility ─────────────────────────────────────────────────────────
+
+// Show only section 1 (Files) when no files are loaded; show all sections otherwise.
+function _updateSectionVisibility(){
+  const wrap = document.querySelector('main.wrap');
+  if(wrap) wrap.classList.toggle('noFiles', state.docs.length === 0);
+}
+
+// Called on page load: auto-load the last saved session if no files are loaded.
+// Defined here; actual auto-save logic stays in export.js.
+function _autoLoadLastSession(){
+  // export.js exposes _tryAutoSaveRestoreAuto() for silent auto-restore
+  if(typeof _tryAutoSaveRestoreAuto === 'function') _tryAutoSaveRestoreAuto();
+}
+
 // ── Init ───────────────────────────────────────────────────────────────────────
 buildDeprelOptionsCache();
 DEFAULT_LABELS = JSON.parse(JSON.stringify(LABELS)); // snapshot before any project overrides
@@ -1400,10 +1388,15 @@ _initAutoAdvance();   // restore auto-advance checkbox from localStorage
 renderFiles();
 renderSentSelect();
 renderSentence();
+renderConlluEditor(true);
+_updateSectionVisibility();
 // ?dev in URL → force-enable dev mode (persisted to localStorage)
 if(new URLSearchParams(location.search).has('dev')){
   localStorage.setItem(_DEV_MODE_KEY, '1');
 }
 renderDevModeBar();
-// Restore session saved before auto-reload (deferred so export.js is loaded first)
-window.addEventListener('load', _devModeRestoreSession, { once: true });
+// Auto-load last session from localStorage on first open
+window.addEventListener('load', () => {
+  _devModeRestoreSession();
+  _autoLoadLastSession();
+}, { once: true });

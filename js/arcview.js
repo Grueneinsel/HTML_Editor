@@ -62,6 +62,19 @@ window.addEventListener('pointerup', e => {
   const r  = drag.svg.getBoundingClientRect();
   const mx = e.clientX - r.left;
   const my = e.clientY - r.top;
+  // Check for ROOT drop zone: if the pointer is released above the arc area
+  if (my < drag.wordY - 20 && drag.onSetHead) {
+    const curHead = drag.toks[drag.tokIdx]?.head;
+    if (curHead !== 0) {
+      drag.onSetHead(drag.depId, 0);
+      // Let the user set deprel for the now-root token
+      if (drag.onSetDeprel) {
+        const curDeprel = drag.toks[drag.tokIdx].deprel ?? 'root';
+        _arcShowDeprelPopup(e.clientX, e.clientY, drag.depId, curDeprel, drag.onSetDeprel);
+      }
+    }
+    return;
+  }
   const ni = _arcNearest(mx, my, drag.centers, drag.wordY, drag.cellH);
   if (ni !== null && drag.toks[ni].id !== drag.depId) {
     const newHeadId = drag.toks[ni].id;
@@ -118,7 +131,25 @@ function _arcNearest(mx, my, centers, wordY, cellH) {
 }
 
 // Highlight the drop target token during a drag (blue = valid, red = would cycle).
+// Also highlights the ROOT zone when the pointer is above the arc area.
 function _arcHighlightDrop(mx, my) {
+  // Root zone highlight
+  const inRootZone = my < _arcDrag.wordY - 20;
+  const rz = _arcDrag.svg._arcRootZone;
+  if (rz) {
+    const curHead = _arcDrag.toks[_arcDrag.tokIdx]?.head;
+    if (inRootZone && curHead !== 0) {
+      rz.setAttribute('fill', 'rgba(61,232,154,0.15)');
+      rz.setAttribute('stroke', 'var(--ok)');
+    } else {
+      rz.setAttribute('fill', 'transparent');
+      rz.setAttribute('stroke', 'transparent');
+    }
+  }
+  if (inRootZone) {
+    _arcClearHighlight(_arcDrag);
+    return;
+  }
   const ni  = _arcNearest(mx, my, _arcDrag.centers, _arcDrag.wordY, _arcDrag.cellH);
   const nid = (ni !== null && _arcDrag.toks[ni].id !== _arcDrag.depId) ? _arcDrag.toks[ni].id : null;
   if (nid === _arcDrag._hovId) return;
@@ -135,11 +166,14 @@ function _arcHighlightDrop(mx, my) {
   }
 }
 
-// Clear any active drop-target highlight.
+// Clear any active drop-target highlight (token and root zone).
 function _arcClearHighlight(drag) {
   if (drag._hovEl) { drag._hovEl.style.fill = 'transparent'; drag._hovEl = null; }
   drag._hovId  = null;
   drag._hovBad = false;
+  // Also clear root zone
+  const rz = drag.svg._arcRootZone;
+  if (rz) { rz.setAttribute('fill', 'transparent'); rz.setAttribute('stroke', 'transparent'); }
 }
 
 // ── Cycle detection ───────────────────────────────────────────────────────────
@@ -277,7 +311,9 @@ function buildArcDiagram(tokMap, { onSetHead = null, onDeleteArc = null, onSetDe
   };
 
   const svg = mk('svg', { width:svgW, height:svgH });
-  svg.style.cssText = 'display:block; overflow:visible; cursor:default; touch-action:none;';
+  // Allow vertical page-scroll over the diagram; touch-action:none is applied
+  // only on token boxes so drags still work reliably on tablets.
+  svg.style.cssText = 'display:block; overflow:visible; cursor:default; touch-action:pan-y;';
 
   mc.font = '10px sans-serif';
 
@@ -319,7 +355,33 @@ function buildArcDiagram(tokMap, { onSetHead = null, onDeleteArc = null, onSetDe
           _arcShowDeprelPopup(svgR.left + dx + 14 + lw, svgR.top + ty + 2, depId, e.label, onSetDeprel);
         });
       }
+
+      // Root ✕ delete button (shown on hover)
+      let rootBtnG = null;
+      if (editable && onDeleteArc) {
+        rootBtnG = mk('g');
+        rootBtnG.style.cssText = 'cursor:pointer; opacity:0; pointer-events:none; transition:opacity .12s;';
+        const bx = dx + lw + 22;
+        const by = ty + 7;
+        rootBtnG.appendChild(mk('circle', { cx:bx, cy:by, r:7, fill:'var(--bad)', opacity:0.9 }));
+        const rxt = mk('text', { x:bx, y:by+4, 'text-anchor':'middle',
+          'font-size':11, 'font-weight':900, fill:'#fff', 'pointer-events':'none' });
+        rxt.textContent = '×';
+        rootBtnG.appendChild(rxt);
+        rootBtnG.addEventListener('click', ev => { ev.stopPropagation(); onDeleteArc(depId); });
+        let rootHideTimer = null;
+        const rootShow = () => { clearTimeout(rootHideTimer); rootBtnG.style.opacity='1'; rootBtnG.style.pointerEvents=''; };
+        const rootHide = () => { rootHideTimer = setTimeout(() => { rootBtnG.style.opacity='0'; rootBtnG.style.pointerEvents='none'; }, 300); };
+        g.addEventListener('pointerenter', rootShow);
+        g.addEventListener('pointerleave', rootHide);
+        labelG.addEventListener('pointerenter', rootShow);
+        labelG.addEventListener('pointerleave', rootHide);
+        rootBtnG.addEventListener('pointerenter', () => clearTimeout(rootHideTimer));
+        rootBtnG.addEventListener('pointerleave', rootHide);
+      }
+
       edgeLabelGroups.push(labelG);
+      if (rootBtnG) edgeLabelGroups.push(rootBtnG);
 
     } else {
       const x1   = centers[e.dep];
@@ -441,6 +503,8 @@ function buildArcDiagram(tokMap, { onSetHead = null, onDeleteArc = null, onSetDe
       rx:6, fill:'transparent',
       cursor: editable ? 'grab' : (scrollToTok ? 'pointer' : 'default') });
     overlay.dataset.arctokid = t.id;
+    // Block scroll over token boxes so drag works on tablets (SVG allows pan-y globally)
+    overlay.style.touchAction = 'none';
 
     if (editable) {
       overlay.addEventListener('pointerdown', ev => {
@@ -472,6 +536,21 @@ function buildArcDiagram(tokMap, { onSetHead = null, onDeleteArc = null, onSetDe
   // ── Render arc labels + buttons on top of all arc paths ───────────────────
   // Appended after token boxes so they are always visible above overlapping paths.
   for (const lg of edgeLabelGroups) svg.appendChild(lg);
+
+  // ── ROOT drop zone indicator (editable only) ──────────────────────────────
+  // A dashed rectangle at the top of the SVG that lights up when a drag enters
+  // the "above arcs" region. Dropping here sets head=0 (root).
+  if (editable && onSetHead) {
+    const rootZone = mk('rect', {
+      x:GAP, y:2, width:svgW - GAP * 2, height:PTOP + 8,
+      rx:4, fill:'transparent', stroke:'transparent',
+      'stroke-dasharray':'4,3', 'stroke-width':1.5,
+      'pointer-events':'none' });
+    rootZone.id = '_arcRootZone_' + Math.random().toString(36).slice(2);
+    svg.appendChild(rootZone);
+    // Store ref so _arcHighlightDrop can toggle it
+    svg._arcRootZone = rootZone;
+  }
 
   const wrap = document.createElement('div');
   wrap.className = 'arcDiagramWrap';

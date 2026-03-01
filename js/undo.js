@@ -52,6 +52,7 @@ function undo(){
   _redoStack.push(_snapshot());
   _restore(_undoStack.pop());
   renderSentence();
+  if(typeof renderConlluEditor === 'function') renderConlluEditor(true);
   _syncUndoBtns();
 }
 
@@ -60,6 +61,7 @@ function redo(){
   _undoStack.push(_snapshot());
   _restore(_redoStack.pop());
   renderSentence();
+  if(typeof renderConlluEditor === 'function') renderConlluEditor(true);
   _syncUndoBtns();
 }
 

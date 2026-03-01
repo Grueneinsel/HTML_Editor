@@ -6,7 +6,8 @@ const helpModal   = document.getElementById("helpModal");
 const helpClose   = document.getElementById("helpCloseBtn");
 const helpContent = document.getElementById("helpContent");
 
-helpBtn.addEventListener("click", openHelp);
+// click listeners are the canonical handlers; inline onclick in HTML handles mobile tap
+helpBtn.addEventListener("click",  openHelp);
 helpClose.addEventListener("click", closeHelp);
 // Click on the modal backdrop (outside the content box) closes the modal.
 helpModal.addEventListener("click", e => { if(e.target === helpModal) closeHelp(); });

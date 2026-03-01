@@ -5,9 +5,30 @@ Runs entirely locally without a server — simply open `index.html` in your brow
 
 ---
 
+## Feature Overview
+
+| Feature | Description |
+|---------|-------------|
+| **Multi-project management** | Any number of projects with their own files, annotations, and undo stack |
+| **CoNLL-U comparison** | Token-by-token diff of multiple files against a Gold annotation |
+| **Interactive tree** | Dependency trees with drag-and-drop arcs, relation selector, ROOT drop zone |
+| **Gold annotation** | Via click, popup, or keyboard shortcuts — custom values override file values |
+| **CoNLL-U editor** | Direct editing of all sentences per file as plain text (section 5) |
+| **Sentence management** | Insert, delete sentences — sentence list always visible |
+| **Undo/Redo** | Up to 80 steps per project; saved with session |
+| **Session export** | Save and load complete working state as JSON |
+| **Autosave** | Working state saved every 30 seconds; automatically restored on next page open |
+| **Tagset configuration** | Custom DEPREL lists, UPOS/XPOS values, and dependency layers via `labels.js` or JSON |
+| **Export** | Download Gold CoNLL-U and tree view (all sentences) |
+| **Keyboard shortcuts** | Full operation without mouse |
+| **Multi-language** | German / English; add more languages via `lang/xx.js` |
+| **Tablet support** | Touch-optimised; arcs draggable, scrolling works |
+
+---
+
 ## Quick Start
 
-1. Open `index.html` in your browser
+1. Open `index.html` in your browser — last session is loaded automatically
 2. Load at least two `.conllu` files — or click **"Load demo"**
 3. Select a sentence → tree view and comparison table appear automatically
 4. Click Gold cells or use keyboard shortcuts to edit annotations
@@ -39,6 +60,17 @@ Click a tab to switch to that project. State (files, sentence position, undo sta
 |---|---|
 | `[` | Previous project |
 | `]` | Next project |
+
+### Project Lock
+
+Each project can be **locked** or **unlocked** (button in section 1, below the file list):
+
+| State | Symbol | Behaviour |
+|-------|--------|-----------|
+| Locked | 🔒 | Read-only: no editing via table, popup, or tree |
+| Unlocked | 🔓 | All editing features active; HEAD/DEPREL columns appear |
+
+The state is saved with the session and restored on load.
 
 ### Automatic Assignment on Load
 
@@ -231,7 +263,19 @@ Use the **column toggle bar** to show or hide individual file columns.
 
 ---
 
-## 5) Export
+## 5) Edit CoNLL-U
+
+Section 5 contains an expandable **text editor** for the raw CoNLL-U data.
+
+- **"▾ Open"** expands the editor; **"▴ Close"** collapses it again
+- Each loaded file has its own textarea showing the complete CoNLL-U text of all sentences
+- Fields grow automatically with the content — no internal scrolling in the textarea
+- Edit the text directly → **"✓ Apply"** applies the changes to all other views
+- **"✕ Reset"** discards all changes and restores the last saved state
+
+---
+
+## 6) Export
 
 ### Individual File
 
@@ -266,7 +310,7 @@ The session format is versioned (`version: 2`) and human-readable JSON. Older se
 
 ### Autosave
 
-The working state is automatically saved to the browser's LocalStorage every **30 seconds**. On the next page load, a banner offers the option to restore or dismiss the saved state.
+The working state is automatically saved to the browser's LocalStorage every **30 seconds**. On the next page load, the last state is **restored automatically and silently** — no prompt.
 
 ---
 
@@ -290,6 +334,7 @@ The history is saved with the session (up to 80 steps per project).
 | `←` / `→` | Previous / next sentence |
 | `Ctrl+←` / `Ctrl+→` | First / last sentence |
 | `n` / `N` | Next / previous sentence with diffs |
+| `f` / `F` | Next / previous flagged sentence (`⚑`) |
 | `[` / `]` | Previous / next project |
 | `↑` / `↓` | Navigate table rows |
 | `Enter` | Open Gold popup for focused row |
@@ -302,6 +347,7 @@ The history is saved with the session (up to 80 steps per project).
 | `c` | Copy current sentence as CoNLL-U to clipboard |
 | `e` | Export Gold CoNLL-U |
 | `E` (Shift+e) | Export tree view |
+| `r` | Read current sentence aloud (TTS) |
 | `?` | Open / close help |
 | `Esc` | Clear focus / close popup / close help |
 

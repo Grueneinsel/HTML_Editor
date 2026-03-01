@@ -15,7 +15,8 @@
       <kbd>←</kbd><kbd>→</kbd> <span data-i18n="kbd.sent">Satz</span> &nbsp;
       <kbd>Ctrl+←</kbd><kbd>Ctrl+→</kbd> <span data-i18n="kbd.firstLast">Erster/Letzter</span> &nbsp;
       <kbd>n</kbd><kbd>N</kbd> <span data-i18n="kbd.nextDiff">Nächster/Vorheriger Diff</span> &nbsp;
-      <kbd>f</kbd><kbd>F</kbd> <span data-i18n="kbd.flagNext">Nächste Markierung</span> &nbsp;|&nbsp;
+      <kbd>f</kbd><kbd>F</kbd> <span data-i18n="kbd.flagNext">Nächste Markierung</span> &nbsp;
+      <kbd>[</kbd><kbd>]</kbd> <span data-i18n="kbd.project">Projekt</span> &nbsp;|&nbsp;
       <kbd>↑</kbd><kbd>↓</kbd> <span data-i18n="kbd.row">Zeile</span> &nbsp;
       <kbd>Enter</kbd> <span data-i18n="kbd.popup">Gold-Popup</span> &nbsp;|&nbsp;
       <kbd>1</kbd>–<kbd>9</kbd> <span data-i18n="kbd.chooseDoc">Doc wählen</span> &nbsp;
@@ -37,7 +38,7 @@
       <button id="themeToggleBtn" class="langBtn" onclick="toggleTheme()" title="Theme">☀️</button>
       <button id="globalResetBtn" class="langBtn globalResetBtn" data-i18n="files.globalReset">↺ Alles zurücksetzen</button>
     </div>
-    <button id="helpBtn" class="helpBtn" data-i18n-title="help.btnTitle">?</button>
+    <button id="helpBtn" class="helpBtn" data-i18n-title="help.btnTitle" onclick="openHelp()">?</button>
   </header>
 
   <div id="projectTabBar" class="projectTabBar"></div>
@@ -115,20 +116,27 @@
         <button id="customClearBtn" class="danger" disabled data-i18n="custom.clear">Custom Satz löschen</button>
         <button id="undoBtn" disabled data-i18n="undo.btn">↩ Undo</button>
         <button id="redoBtn" disabled data-i18n="redo.btn">↪ Redo</button>
-        <button id="plainViewToggle" class="plainViewToggle" data-i18n="plain.toggle">📄 Rohdaten</button>
       </div>
       <div id="colToggleBar" class="colToggleBar"></div>
       <div class="tableWrap" style="margin-top:8px">
         <table id="cmpTable"></table>
       </div>
-      <div id="plainView" class="plainView"></div>
       <p class="muted small" style="margin-top:10px" data-i18n="export.mwtNote">
         Hinweis: Multi-Word-Tokens (IDs mit „-" oder „.") werden ignoriert.
       </p>
     </section>
 
+    <section class="card conlluEditorSection" id="conlluEditorSection">
+      <h2 class="conlluEditorH2">
+        <span data-i18n="sec.conllu">5) CoNLL-U bearbeiten</span>
+        <button class="helpHintBtn" data-i18n-title="help.hintTitle" onclick="openHelpSection('sec.conllu')">?</button>
+        <button id="conlluEditorToggle" class="conlluEditorToggle" aria-expanded="false" onclick="toggleConlluEditor()">▾</button>
+      </h2>
+      <div id="conlluEditorWrap" class="conlluEditorWrap" hidden></div>
+    </section>
+
     <section class="card">
-      <h2 data-i18n="sec.export">5) Export <button class="helpHintBtn" data-i18n-title="help.hintTitle" onclick="openHelpSection('sec.export')">?</button></h2>
+      <h2 data-i18n="sec.export">6) Export <button class="helpHintBtn" data-i18n-title="help.hintTitle" onclick="openHelpSection('sec.export')">?</button></h2>
       <div class="row">
         <button id="exportConlluBtn"    disabled data-i18n="export.conllu">Gold CoNLL-U herunterladen</button>
         <button id="exportAllConlluBtn" disabled data-i18n="export.conlluAll">Alle Projekte CoNLL-U herunterladen</button>
@@ -152,8 +160,14 @@
     </section>
   </main>
 
+  <footer class="appFooter">
+    <span>CoNLL-U Vergleich <strong>v1.0</strong></span>
+    <span class="appFooterSep">·</span>
+    <span data-i18n="footer.author">Entwickelt von Frederik Konopka</span>
+  </footer>
+
   <div id="devVersionBadge" hidden></div>
-  <div id="autosaveBanner" class="autosaveBanner" style="display:none"></div>
+  <div id="autosaveBanner" class="autosaveBanner" style="display:none" hidden></div>
 
   <div id="dropOverlay" class="dropOverlay">
     <div class="dropOverlayInner">
@@ -161,8 +175,8 @@
     </div>
   </div>
 
-  <div id="helpModal" class="helpModal">
-    <button id="helpCloseBtn" data-i18n-title="kbd.close">✕</button>
+  <div id="helpModal" class="helpModal" onclick="if(event.target===this)closeHelp()">
+    <button id="helpCloseBtn" data-i18n-title="kbd.close" onclick="closeHelp()">✕</button>
     <div class="helpModalBox">
       <div id="helpContent" class="helpContent"></div>
     </div>

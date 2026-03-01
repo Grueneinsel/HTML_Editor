@@ -221,6 +221,7 @@ function importSession(jsonText){
         undoStack:   p.undo  || [],
         redoStack:   p.redo  || [],
         labels:      projLabels,
+        unlocked:    p.unlocked || false,
       };
     });
     state.activeProjectIdx = Math.min(data.activeProjectIdx || 0, state.projects.length - 1);
@@ -380,7 +381,7 @@ function _buildSessionObject(){
     activeProjectIdx: state.activeProjectIdx,
     projects: state.projects.map(p => ({
       name:        p.name,
-      docs:        p.docs.map(d => ({ name: d.name, content: d.content || "" })),
+      docs:        p.docs.map(d => ({ name: d.name, content: (typeof _docToConlluText === 'function' ? _docToConlluText(d) : null) || d.content || "" })),
       custom:      JSON.parse(JSON.stringify(p.custom    || {})),
       goldPick:    JSON.parse(JSON.stringify(p.goldPick  || {})),
       confirmed:   p.confirmed instanceof Set ? Array.from(p.confirmed) : (p.confirmed || []),
@@ -391,6 +392,7 @@ function _buildSessionObject(){
       undo:        p.undoStack || [],
       redo:        p.redoStack || [],
       labels:      p.labels ? JSON.parse(JSON.stringify(p.labels)) : null,
+      unlocked:    p.unlocked || false,
     })),
   };
 }
@@ -407,52 +409,22 @@ function _autoSave(){
 // Run autosave every 30 seconds.
 setInterval(_autoSave, 30_000);
 
-// On startup, check for an autosave (v1 or v2) and show a restore banner if found.
-function _tryAutoSaveRestore(){
+// Auto-restore the last session silently on page load (called by main.js after init).
+// Only restores if no docs are currently loaded (e.g., not after a dev-mode reload).
+function _tryAutoSaveRestoreAuto(){
+  if(state.docs.length > 0) return;
   let raw;
   try { raw = localStorage.getItem(AUTOSAVE_KEY); } catch { return; }
   if(!raw) return;
-
   let data;
   try { data = JSON.parse(raw); } catch { return; }
-
-  // Accept both v1 (single-project) and v2 (multi-project) autosaves.
   const isV1 = data?.version === 1 && Array.isArray(data.docs) && data.docs.length > 0;
   const isV2 = data?.version === 2 && Array.isArray(data.projects)
                && data.projects.some(p => Array.isArray(p.docs) && p.docs.length > 0);
   if(!isV1 && !isV2) return;
-
-  // Format the saved date for display
-  let dateStr = data.savedAt || "";
-  try { dateStr = new Date(dateStr).toLocaleString(); } catch { /* keep raw */ }
-
-  const banner = document.getElementById("autosaveBanner");
-  if(!banner) return;
-
-  banner.innerHTML = "";
-  const msg = document.createElement("span");
-  msg.textContent = t("autosave.found", { date: dateStr }) + " ";
-
-  const restoreBtn = document.createElement("button");
-  restoreBtn.textContent = t("autosave.restore");
-  restoreBtn.addEventListener("click", () => {
+  try {
     importSession(raw);
-    banner.style.display = "none";
-    try { localStorage.removeItem(AUTOSAVE_KEY); } catch {}
-  });
-
-  const dismissBtn = document.createElement("button");
-  dismissBtn.textContent = t("autosave.dismiss");
-  dismissBtn.addEventListener("click", () => {
-    banner.style.display = "none";
-    try { localStorage.removeItem(AUTOSAVE_KEY); } catch {}
-  });
-
-  banner.appendChild(msg);
-  banner.appendChild(restoreBtn);
-  banner.appendChild(dismissBtn);
-  banner.style.display = "";
+    if(typeof renderConlluEditor === 'function') renderConlluEditor(true);
+    if(typeof _updateSectionVisibility === 'function') _updateSectionVisibility();
+  } catch(_){}
 }
-
-// Scripts are loaded at end of body, so DOM is ready — call directly
-_tryAutoSaveRestore();

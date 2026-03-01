@@ -325,7 +325,7 @@ button.danger:hover:not(:disabled){ border-color:#ff5f5f; background:#1e0e0e }
 .statDiff{ color:var(--bad); border-color:#4a1a1a; background:#200d0d }
 
 /* Tables */
-.tableWrap{ overflow:auto; border:1px solid var(--line); border-radius:12px }
+.tableWrap{ overflow:auto; border:1px solid var(--line); border-radius:12px; }
 table{ width:100%; border-collapse:collapse; font-family:var(--mono); font-size:12px }
 th, td{
   border-bottom:1px solid var(--line);
@@ -417,6 +417,8 @@ td input.headInlineInput{ width:4.5em !important; text-align:center !important; 
   padding:14px 16px;
   min-width:230px;
   box-shadow:0 8px 40px var(--shadow);
+  overscroll-behavior:contain;
+  touch-action:pan-y;
 }
 .goldPopup.active{ display:block; }
 .gpTitle{ font-size:11px; color:var(--muted); font-weight:700; margin-bottom:10px; }
@@ -562,6 +564,7 @@ tr.keyFocus > td:first-child{ border-left:2px solid var(--accent) }
   font-size:12px; padding:4px 10px; border-radius:6px;
   border:1px solid var(--line); background:var(--bg-control);
   cursor:pointer; transition:border-color .15s, color .15s;
+  touch-action:manipulation;
 }
 .projectLockBtn:hover{ border-color:var(--accent); }
 
@@ -570,7 +573,7 @@ tr.keyFocus > td:first-child{ border-left:2px solid var(--accent) }
 .sentManageBtn{
   font-size:12px; padding:3px 9px; border-radius:6px;
   border:1px solid var(--line); background:var(--bg-control); cursor:pointer;
-  transition:border-color .15s;
+  transition:border-color .15s; touch-action:manipulation;
 }
 .sentManageBtn:hover{ border-color:var(--accent); }
 .sentEditPanel{ display:flex; flex-direction:column; gap:6px; margin-top:6px; width:100%; }
@@ -672,7 +675,7 @@ tr.keyFocus > td:first-child{ border-left:2px solid var(--accent) }
   padding: 10px 14px 6px;
   border-bottom: 1px solid var(--line);
   background: rgba(0,0,0,.12);
-  touch-action: pan-x; /* allow horizontal scroll but let SVG handle vertical for drag */
+  touch-action: auto;
 }
 html[data-theme="light"] .arcDiagramWrap{ background: rgba(0,0,0,.03); }
 
@@ -745,12 +748,14 @@ html[data-theme="light"] .treeSingleBtn:hover{ background:#b8dcf0; }
 
 /* ── Help-Button im Header ── */
 .helpBtn{
-  width:30px; height:30px;
+  width:40px; height:40px;
+  min-width:40px; min-height:40px;
   border-radius:50%;
   padding:0;
   font-size:15px; font-weight:800;
   flex-shrink:0;
   margin-left:auto;
+  touch-action:manipulation;
 }
 
 /* ── Help-Modal ── */
@@ -770,7 +775,9 @@ html[data-theme="light"] .treeSingleBtn:hover{ background:#b8dcf0; }
   min-width:0;
   max-height:calc(100vh - 64px);
   overflow-x:hidden;
-  overflow-y:auto;
+  overflow-y:scroll;
+  -webkit-overflow-scrolling:touch;
+  touch-action:pan-y;
   background:var(--card);
   border:1px solid var(--line2);
   border-radius:16px;
@@ -779,9 +786,10 @@ html[data-theme="light"] .treeSingleBtn:hover{ background:#b8dcf0; }
 }
 #helpCloseBtn{
   position:fixed; top:16px; right:20px; z-index:10001;
-  width:32px; height:32px;
-  padding:0; border-radius:50%; font-size:14px;
+  width:44px; height:44px;
+  padding:0; border-radius:50%; font-size:16px;
   display:none;
+  touch-action:manipulation;
 }
 .helpModal.active #helpCloseBtn{ display:flex; align-items:center; justify-content:center; }
 
@@ -821,6 +829,15 @@ html[data-theme="light"] .treeSingleBtn:hover{ background:#b8dcf0; }
 
 /* Session row separator */
 .sessionRow{ margin-top:10px; padding-top:10px; border-top:1px solid var(--line); }
+
+/* App footer */
+.appFooter{
+  text-align:center; padding:14px 20px; font-size:11px;
+  color:var(--muted); border-top:1px solid var(--line);
+  display:flex; align-items:center; justify-content:center; gap:6px;
+}
+.appFooterSep{ opacity:.4; }
+.appFooter strong{ color:var(--text); }
 
 /* Autosave restore banner */
 .autosaveBanner{
@@ -1171,3 +1188,70 @@ td:hover .fileEditBtn { display: inline-block; }
   color: var(--ok);
   border-color: var(--ok);
 }
+
+/* ── CoNLL-U editor section ── */
+.conlluEditorH2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.conlluEditorToggle {
+  margin-left: auto;
+  padding: 5px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  background: var(--bg-control);
+  color: var(--accent);
+  cursor: pointer;
+  touch-action: manipulation;
+  min-height: 34px;
+}
+.conlluEditorToggle:hover { background: var(--bg-focus-soft); }
+.conlluEditorToggle.open { background: var(--accent); color: var(--bg); }
+.conlluEditorWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 10px;
+}
+.conlluDocBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.conlluDocLabel {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  padding: 2px 0;
+}
+.conlluDocTa {
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1.55;
+  width: 100%;
+  min-height: 60px;
+  resize: none;
+  overflow: hidden;
+  padding: 10px 12px;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--line2);
+  border-radius: 8px;
+}
+.conlluDocTa:focus { border-color: var(--accent); outline: none; }
+.conlluEditorBtns {
+  display: flex;
+  gap: 8px;
+  padding-top: 4px;
+}
+
+/* ── Show only section 1 when no files loaded ── */
+.wrap.noFiles section.card:not(.card:first-child) {
+  display: none;
+}
+
+/* Sentence list overscroll */
+.sentListPanel { overscroll-behavior: contain; }

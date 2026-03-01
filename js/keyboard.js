@@ -65,7 +65,6 @@ document.addEventListener("keydown", (e) => {
         state.currentSent--;
       }
       keyFocusTokId = null;
-      if(typeof _sentEditOpen !== 'undefined') _sentEditOpen = false;
       if(typeof _sentListOpen  !== 'undefined') _sentListOpen  = false;
       renderSentence();
       break;
@@ -79,7 +78,6 @@ document.addEventListener("keydown", (e) => {
         state.currentSent++;
       }
       keyFocusTokId = null;
-      if(typeof _sentEditOpen !== 'undefined') _sentEditOpen = false;
       if(typeof _sentListOpen  !== 'undefined') _sentListOpen  = false;
       renderSentence();
       break;
