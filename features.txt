@@ -1,0 +1,174 @@
+CoNLL-U Vergleich — Feature-Liste
+==================================
+
+Browserbasiertes Tool zum Vergleichen und Annotieren mehrerer CoNLL-U-Dateien.
+Läuft vollständig lokal ohne Server (index.html im Browser öffnen).
+
+
+── DATEIEN & PROJEKTE ────────────────────────────────────────────────────────
+
+- Mehrere Projekte gleichzeitig, jedes mit eigenen Dateien, Annotationen,
+  Undo-Stack und Tagset
+- Projekt-Tab-Leiste: Projekte erstellen, umbenennen, löschen, umsortieren
+- Wechsel zwischen Projekten speichert den Zustand automatisch
+- Tastaturkürzel für Projektwechsel: [ / ]
+- Projektschloss: gesperrt (nur lesend) oder entsperrt (alle Bearbeitungsfunktionen)
+- Automatische Zuweisung von Dateien zu Projekten bei unterschiedlichen Satzzahlen
+- Dateien laden: Datei-Dialog, Drag & Drop, Demo-Button
+- Unterstützte Dateitypen: .conllu, .conll, .txt, .json
+- Intelligente Typ-Erkennung: Session-JSON / Tagset-JSON / CoNLL-U automatisch unterschieden
+- Datei-Aktionen pro Zeile: Download (Original), Reihenfolge ändern (▲/▼),
+  in anderes Projekt verschieben, löschen
+- Textkonsistenzwarnung: ⚠️-Badge und Banner bei unterschiedlichen Token-Formen
+
+
+── SATZNAVIGATION ────────────────────────────────────────────────────────────
+
+- Dropdown mit Satznummern, Tokenanzahl, Diff-Zähler, Bestätigungsstatus (★)
+- Farbkodierung: grün (kein Diff), rot (Diff), gold (bestätigt), orange (markiert)
+- Rahmenfarbe des Dropdowns spiegelt aktuellen Satzstatus wider
+- Vorheriger / nächster Satz: ← / →, Ctrl+← / Ctrl+→ (erster/letzter)
+- Satz-Map: farbige Punktreihe, Klick springt direkt zum Satz
+- Sprung zum nächsten/vorherigen Satz mit Diffs: n / N
+- Sprung zur nächsten/vorherigen markierten Stelle: f / F
+
+
+── SATZTEXT & TOKEN-BEARBEITUNG ─────────────────────────────────────────────
+
+- Satztext als klickbare Tokens; Klick springt zur Tabellenzeile
+- Bidirektionale Hervorhebung: Tabellennavigation hebt Wort im Satztext hervor
+- Im Bearbeitungsmodus: Token-Formulareingaben direkt im Satztext
+- Token einfügen (+ vor jedem Token) und löschen (× an jedem Token)
+- Neue Sätze einfügen und löschen (mit Satzliste)
+- Satzliste immer sichtbar im Bearbeitungsmodus; aktiver Satz hervorgehoben
+- Token-IDs werden nach Einfügen/Löschen automatisch neu nummeriert
+- HEAD-Referenzen werden beim Umnummerieren automatisch angepasst
+
+
+── BAUMANSICHT ───────────────────────────────────────────────────────────────
+
+- Text-Baumdarstellung für jede geladene Datei (Diff gegen Gold)
+- Farbkodierung: grün (identisch), gelb (gleicher HEAD, andere Relation/Labels),
+  gold (nur Gold), blau (nur Datei), ✕ (fehlt)
+- Unterschiede in Label-Spalten (UPOS, XPOS, …) werden inline annotiert
+- Klick auf Zeile springt zur Tabellenzeile
+- „→ Gold"-Button: ganzen Teilbaum als Gold übernehmen
+- SVG-Arc-Diagramm (Gold): interaktiv bearbeitbar
+  - Drag & Drop: neuen HEAD setzen
+  - Zyklus-Erkennung: ungültige Verbindungen werden abgelehnt
+  - Klick auf Arc-Label: Relation ändern (Popup)
+  - × Button: Kante löschen (Hover; auf Touch-Geräten dauerhaft sichtbar)
+  - Klick auf Token: springt zur Tabellenzeile
+
+
+── VERGLEICHSTABELLE ─────────────────────────────────────────────────────────
+
+- Spalten: ID, FORM, Label-Spalten (UPOS/XPOS/…), GOLD, je eine Datei-Spalte
+- Gold-Spalte: zeigt HEAD/DEPREL + alle Label-Werte; Badge C (Custom) oder D1/D2/…
+- Datei-Spalten: abweichende Felder rot hervorgehoben
+- Klick auf Datei-Zelle: wählt Datei als Gold-Quelle für diesen Token
+- Gold-Popup (Klick auf Gold-Zelle oder Enter):
+  - HEAD-Dropdown (alle Tokens des Satzes)
+  - DEPREL-Dropdown(s) aus Tagset-Konfiguration
+  - Label-Felder (Dropdown oder Freitext) für alle konfigurierten Spalten
+  - Tastatur im Popup: Tab/Shift+Tab (Felder), Enter (schließen), r (zurücksetzen), Esc
+- Custom-Annotation: eigene Werte setzen, die Datei-Werte überschreiben
+  - „Custom aus [Datei]"-Buttons: Datei als Ausgangsbasis kopieren
+  - „Custom Satz löschen": alle Custom-Einträge des Satzes entfernen
+- Token markieren (⚑): pro Token, navigierbar mit f / F
+- Bulk-Aktionen: alle Sätze ohne Diffs bestätigen, alle Diffs markieren,
+  alle Markierungen löschen
+- Spalten ein-/ausblenden über Toggle-Leiste
+
+
+── GOLD-ANNOTATION & BESTÄTIGUNG ────────────────────────────────────────────
+
+- Gold-Auswahl pro Token: Datei-Klick, Tastatur (1–9), Custom-Popup
+- Custom-Werte haben immer Vorrang vor Datei-Wahl
+- Satz bestätigen / Bestätigung aufheben: Button oder Space
+- Auto-Weiter: nach Bestätigung automatisch zum nächsten unbestätigten Satz
+- Notizfeld pro Satz (freier Text, in Session gespeichert)
+- CoNLL-U-Kopieren: aktuellen Satz als Gold-CoNLL-U in Zwischenablage (c)
+
+
+── CONLL-U-EDITOR ────────────────────────────────────────────────────────────
+
+- Ausklappbarer Texteditor (Abschnitt 5): roher CoNLL-U-Text je Datei
+- Textarea wächst automatisch mit Inhalt
+- „✓ Übernehmen": Änderungen in alle Ansichten übernehmen
+- „✕ Zurücksetzen / Abbrechen": Editor schließen ohne Übernahme
+
+
+── TAGSET-KONFIGURATION ─────────────────────────────────────────────────────
+
+- Klassisches Format: __upos__, __xpos__, Gruppen für DEPREL
+- Erweitertes Format:
+  - __cols__: beliebig viele Label-Spalten (key, name, values)
+  - __dep_cols__: beliebig viele Dependency-Schichten (key, name, groups)
+- Tagset hochladen: JSON per Datei-Dialog oder Drag & Drop
+- Tagset herunterladen: aktuelle Konfiguration als tagset.json
+- Vorlage herunterladen: leere tagset_template.json als Einstiegspunkt
+- Tagset wird mit Session gespeichert und wiederhergestellt
+- Tagset-Meta-Anzeige: Anzahl Deprels, UPOS- und XPOS-Werte
+
+
+── EXPORT ────────────────────────────────────────────────────────────────────
+
+- Gold CoNLL-U herunterladen: alle Sätze mit aktuellen Annotationen (e)
+- Alle Projekte CoNLL-U herunterladen: projektübergreifender Export
+- Baumansicht herunterladen: alle Sätze als Text-Bäume (E)
+- Einzelne Datei herunterladen: Original-Inhalt (⬇ pro Datei)
+- CoNLL-U in Zwischenablage: aktueller Satz als Gold-CoNLL-U (c)
+- Multi-Word-Token (N-M) und Empty Nodes (N.M) werden im Export vollständig rekonstruiert
+
+
+── SESSION & AUTOSAVE ────────────────────────────────────────────────────────
+
+- Session-Export: alle Projekte, Annotationen, Undo-Verlauf, Tagset als JSON
+- Session-Import: Datei-Dialog, Drag & Drop oder als Tagset-Upload
+- Session-Format versioniert (v2 multi-project; v1 single-project abwärtskompatibel)
+- Autosave: alle 30 Sekunden in localStorage; beim Start automatisch geladen
+- Lautlose Wiederherstellung beim Öffnen ohne Rückfrage
+
+
+── UNDO / REDO ───────────────────────────────────────────────────────────────
+
+- Bis zu 80 Schritte pro Projekt
+- Ctrl+Z / Ctrl+Y (oder ↩/↪ Buttons)
+- Eigener Undo-Stack pro Projekt; wird mit Session exportiert
+
+
+── TASTATURKÜRZEL ────────────────────────────────────────────────────────────
+
+  ← / →              Vorheriger / nächster Satz
+  Ctrl+← / Ctrl+→    Erster / letzter Satz
+  n / N              Nächster / vorheriger Satz mit Diffs
+  f / F              Nächste / vorherige markierte Stelle (⚑)
+  [ / ]              Vorheriges / nächstes Projekt
+  ↑ / ↓              Tabellenzeile navigieren
+  Enter              Gold-Popup öffnen
+  Space              Satz bestätigen / Bestätigung aufheben
+  1–9                Datei N als Gold-Quelle
+  Ctrl+1–9           Custom aus Datei N laden
+  Ctrl+Z / Ctrl+Y    Undo / Redo
+  Del / Backspace    Custom des aktuellen Satzes löschen
+  c                  Satz als CoNLL-U kopieren
+  e / E              Gold CoNLL-U / Baumansicht exportieren
+  r                  Satz vorlesen (TTS)
+  ?                  Hilfe öffnen / schließen
+  Esc                Fokus / Popup / Hilfe schließen
+
+
+── WEITERE FEATURES ──────────────────────────────────────────────────────────
+
+- Text-to-Speech (TTS): aktuellen Satz vorlesen (Browser Web Speech API)
+- Mehrsprachige Oberfläche: Deutsch / Englisch (umschaltbar, gespeichert)
+  Weitere Sprachen per lang/xx.js erweiterbar
+- Dark Mode / Light Mode (umschaltbar, gespeichert)
+- Tablet-Unterstützung: Touch-optimiert, × Buttons dauerhaft sichtbar,
+  vergrößerte Tap-Ziele, Drag & Drop funktioniert mit Touch
+- Hilfe-Modal: vollständige Dokumentation direkt im Browser (?-Button)
+- Demo-Daten: sechs Beispielprojekte mit unterschiedlichen Schemas
+  (NER, SRL, Morphologie, Custom, Deutsch UD, Englisch UD)
+- Offline-Bundle: dist/index.html enthält alles inline, kein Server nötig
+- Dev-Modus: Auto-Reload bei Build-Änderungen (?dev in URL)
