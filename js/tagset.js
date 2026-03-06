@@ -218,12 +218,7 @@ function renderTagsetList(){
     : `<div class="tagsetListRow"><em class="muted">${t("tagset.noLabels")}</em></div>`;
 }
 
-{
-  const _tagsetListBtnEl = document.getElementById("tagsetListBtn");
-  const _tagsetListPanel = document.getElementById("tagsetListPanel");
-  if(_tagsetListBtnEl && _tagsetListPanel){
-    _tagsetListBtnEl.addEventListener("click", () => {
-      _tagsetListPanel.hidden = !_tagsetListPanel.hidden;
-    });
-  }
-}
+// Re-render tagset list when the details panel opens (may have changed while closed).
+document.getElementById("tagsetDetails")?.addEventListener("toggle", function(){
+  if(this.open) renderTagsetList();
+});

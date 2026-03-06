@@ -147,12 +147,18 @@ window.addEventListener('pointerup', e => {
   if (ni !== null && drag.toks[ni].id !== drag.depId) {
     const newHeadId = drag.toks[ni].id;
     if (_arcWouldCycle(drag.depId, newHeadId, drag.toks)) {
-      // Reject the drop: flash the target token red to signal the cycle
+      // Reject the drop: shake-flash the target token and give haptic buzz
+      navigator.vibrate?.([40, 20, 40]);
       if (drag.svg.isConnected) {
         const el = drag.svg.querySelector(`[data-arctokid="${newHeadId}"]`);
         if (el) {
-          el.style.fill = 'rgba(255,70,70,0.50)';
-          setTimeout(() => { el.style.fill = 'transparent'; }, 700);
+          el.classList.remove('arcCycleFlash', 'arcBadHover');
+          void el.getBoundingClientRect(); // force reflow to restart animation
+          el.classList.add('arcCycleFlash');
+          el.addEventListener('animationend', () => {
+            el.classList.remove('arcCycleFlash');
+            el.style.fill = 'transparent';
+          }, { once: true });
         }
       }
       return;
@@ -244,7 +250,12 @@ function _arcHighlightDrop(mx, my) {
     const el = _arcDrag._tokElCache?.get(nid) ?? _arcDrag.svg.querySelector(`[data-arctokid="${nid}"]`);
     if (el) {
       const bad = _arcWouldCycle(_arcDrag.depId, nid, _arcDrag.toks);
-      el.style.fill = bad ? 'rgba(255,70,70,0.40)' : 'rgba(74,158,255,0.30)';
+      if (bad) {
+        el.classList.add('arcBadHover');
+        el.style.fill = '';
+      } else {
+        el.style.fill = 'rgba(74,158,255,0.30)';
+      }
       _arcDrag._hovEl  = el;
       _arcDrag._hovBad = bad;
     }
@@ -253,7 +264,11 @@ function _arcHighlightDrop(mx, my) {
 
 // Clear any active drop-target highlight (token and root zone).
 function _arcClearHighlight(drag) {
-  if (drag._hovEl) { drag._hovEl.style.fill = 'transparent'; drag._hovEl = null; }
+  if (drag._hovEl) {
+    drag._hovEl.classList.remove('arcBadHover');
+    drag._hovEl.style.fill = 'transparent';
+    drag._hovEl = null;
+  }
   drag._hovId  = null;
   drag._hovBad = false;
   // Restore root zone to default idle appearance (always visible, just dimmer)

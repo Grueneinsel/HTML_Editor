@@ -164,7 +164,53 @@ body{ margin:0; font-family:var(--sans); background:var(--bg); color:var(--text)
 .langBtnActive{ opacity:1 !important; border-color:var(--accent) !important; background:#0d1e33 !important; }
 kbd{ display:inline-block; padding:1px 5px; border-radius:4px; border:1px solid var(--line2); background:#0f1a2a; font-family:var(--mono); font-size:10px; color:var(--text) }
 
-/* Layout */
+/* ── Animations ──────────────────────────────────────────────────────────────── */
+
+/* Arc: cycle-rejection shake on SVG token */
+@keyframes arcCycleReject {
+  0%   { fill: rgba(255,50,50,0.85); }
+  18%  { fill: rgba(255,60,50,0.85); transform: translateX(-5px); }
+  36%  { fill: rgba(255,50,50,0.80); transform: translateX( 5px); }
+  54%  { fill: rgba(255,70,50,0.65); transform: translateX(-3px); }
+  72%  { fill: rgba(255,50,50,0.40); transform: translateX( 2px); }
+  100% { fill: transparent;          transform: translateX(0);    }
+}
+[data-arctokid].arcCycleFlash {
+  transform-box: fill-box; transform-origin: center;
+  animation: arcCycleReject 0.5s ease-out forwards;
+}
+
+/* Arc: pulsing red hover on cycle-creating target */
+@keyframes arcBadHover {
+  0%, 100% { fill: rgba(255,60,60,0.35); }
+  50%       { fill: rgba(255,60,60,0.72); }
+}
+[data-arctokid].arcBadHover {
+  animation: arcBadHover 0.65s ease-in-out infinite;
+}
+
+/* Details: content fades in when panel opens */
+@keyframes disclosureFadeIn {
+  from { opacity:0; transform:translateY(-5px); }
+  to   { opacity:1; transform:translateY(0);    }
+}
+.disclosureDetails[open] > .disclosureContent,
+.disclosureDetails[open] > .tagsetListPanel {
+  animation: disclosureFadeIn 0.18s ease-out;
+}
+
+/* Sentence confirmation: green flash on sentText */
+@keyframes sentConfirmFlash {
+  0%   { box-shadow: inset 0 0 0 2px rgba(34,197,94,0.70); }
+  100% { box-shadow: inset 0 0 0 2px rgba(34,197,94,0.00); }
+}
+.sentConfirmFlash { animation: sentConfirmFlash 0.7s ease-out; }
+
+/* Generic button press feedback */
+button:not(:disabled):active,
+.btnLike:active { transform: scale(0.96); transition: transform 0.05s; }
+
+/* ── Layout ──────────────────────────────────────────────────────────────────── */
 .wrap{ max-width:1440px; margin:0 auto; padding:14px; display:grid; gap:10px }
 .card{
   background:var(--card);
@@ -177,6 +223,23 @@ h2{ margin:0 0 10px 0; font-size:13px; font-weight:700; color:var(--muted); text
 .muted{ color:var(--muted) }
 .small{ font-size:11px }
 .row{ display:flex; gap:8px; align-items:center; flex-wrap:wrap }
+
+/* Progressive disclosure */
+.disclosureDetails{ margin-top:6px; }
+.disclosureDetails > summary{
+  cursor:pointer; display:inline-flex; align-items:center; gap:5px;
+  font-size:12px; color:var(--muted); padding:2px 0;
+  user-select:none; list-style:none;
+}
+.disclosureDetails > summary::-webkit-details-marker{ display:none; }
+.disclosureDetails > summary::before{
+  content:'▸'; font-size:10px; display:inline-block;
+  transition:transform .15s;
+}
+.disclosureDetails[open] > summary::before{ transform:rotate(90deg); }
+.disclosureDetails > summary:hover{ color:var(--fg); }
+.disclosureDetails > summary > .muted{ margin-left:4px; }
+.disclosureContent{ padding-top:6px; }
 .sentInfoRow{ margin-top:4px; min-height:0; }
 
 /* Controls */

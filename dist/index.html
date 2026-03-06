@@ -171,7 +171,53 @@ body{ margin:0; font-family:var(--sans); background:var(--bg); color:var(--text)
 .langBtnActive{ opacity:1 !important; border-color:var(--accent) !important; background:#0d1e33 !important; }
 kbd{ display:inline-block; padding:1px 5px; border-radius:4px; border:1px solid var(--line2); background:#0f1a2a; font-family:var(--mono); font-size:10px; color:var(--text) }
 
-/* Layout */
+/* ── Animations ──────────────────────────────────────────────────────────────── */
+
+/* Arc: cycle-rejection shake on SVG token */
+@keyframes arcCycleReject {
+  0%   { fill: rgba(255,50,50,0.85); }
+  18%  { fill: rgba(255,60,50,0.85); transform: translateX(-5px); }
+  36%  { fill: rgba(255,50,50,0.80); transform: translateX( 5px); }
+  54%  { fill: rgba(255,70,50,0.65); transform: translateX(-3px); }
+  72%  { fill: rgba(255,50,50,0.40); transform: translateX( 2px); }
+  100% { fill: transparent;          transform: translateX(0);    }
+}
+[data-arctokid].arcCycleFlash {
+  transform-box: fill-box; transform-origin: center;
+  animation: arcCycleReject 0.5s ease-out forwards;
+}
+
+/* Arc: pulsing red hover on cycle-creating target */
+@keyframes arcBadHover {
+  0%, 100% { fill: rgba(255,60,60,0.35); }
+  50%       { fill: rgba(255,60,60,0.72); }
+}
+[data-arctokid].arcBadHover {
+  animation: arcBadHover 0.65s ease-in-out infinite;
+}
+
+/* Details: content fades in when panel opens */
+@keyframes disclosureFadeIn {
+  from { opacity:0; transform:translateY(-5px); }
+  to   { opacity:1; transform:translateY(0);    }
+}
+.disclosureDetails[open] > .disclosureContent,
+.disclosureDetails[open] > .tagsetListPanel {
+  animation: disclosureFadeIn 0.18s ease-out;
+}
+
+/* Sentence confirmation: green flash on sentText */
+@keyframes sentConfirmFlash {
+  0%   { box-shadow: inset 0 0 0 2px rgba(34,197,94,0.70); }
+  100% { box-shadow: inset 0 0 0 2px rgba(34,197,94,0.00); }
+}
+.sentConfirmFlash { animation: sentConfirmFlash 0.7s ease-out; }
+
+/* Generic button press feedback */
+button:not(:disabled):active,
+.btnLike:active { transform: scale(0.96); transition: transform 0.05s; }
+
+/* ── Layout ──────────────────────────────────────────────────────────────────── */
 .wrap{ max-width:1440px; margin:0 auto; padding:14px; display:grid; gap:10px }
 .card{
   background:var(--card);
@@ -184,6 +230,23 @@ h2{ margin:0 0 10px 0; font-size:13px; font-weight:700; color:var(--muted); text
 .muted{ color:var(--muted) }
 .small{ font-size:11px }
 .row{ display:flex; gap:8px; align-items:center; flex-wrap:wrap }
+
+/* Progressive disclosure */
+.disclosureDetails{ margin-top:6px; }
+.disclosureDetails > summary{
+  cursor:pointer; display:inline-flex; align-items:center; gap:5px;
+  font-size:12px; color:var(--muted); padding:2px 0;
+  user-select:none; list-style:none;
+}
+.disclosureDetails > summary::-webkit-details-marker{ display:none; }
+.disclosureDetails > summary::before{
+  content:'▸'; font-size:10px; display:inline-block;
+  transition:transform .15s;
+}
+.disclosureDetails[open] > summary::before{ transform:rotate(90deg); }
+.disclosureDetails > summary:hover{ color:var(--fg); }
+.disclosureDetails > summary > .muted{ margin-left:4px; }
+.disclosureContent{ padding-top:6px; }
 .sentInfoRow{ margin-top:4px; min-height:0; }
 
 /* Controls */
@@ -1559,24 +1622,11 @@ document.addEventListener('DOMContentLoaded', _syncThemeBtn);
     <h1>CoNLL-U Vergleich</h1>
     <p class="muted">
       <kbd>←</kbd><kbd>→</kbd> <span data-i18n="kbd.sent">Satz</span> &nbsp;
-      <kbd>Ctrl+←</kbd><kbd>Ctrl+→</kbd> <span data-i18n="kbd.firstLast">Erster/Letzter</span> &nbsp;
-      <kbd>n</kbd><kbd>N</kbd> <span data-i18n="kbd.nextDiff">Nächster/Vorheriger Diff</span> &nbsp;
-      <kbd>f</kbd><kbd>F</kbd> <span data-i18n="kbd.flagNext">Nächste Markierung</span> &nbsp;
-      <kbd>[</kbd><kbd>]</kbd> <span data-i18n="kbd.project">Projekt</span> &nbsp;|&nbsp;
+      <kbd>n</kbd><kbd>N</kbd> <span data-i18n="kbd.nextDiff">Nächster/Vorheriger Diff</span> &nbsp;|&nbsp;
       <kbd>↑</kbd><kbd>↓</kbd> <span data-i18n="kbd.row">Zeile</span> &nbsp;
-      <kbd>Enter</kbd> <span data-i18n="kbd.popup">Gold-Popup</span> &nbsp;|&nbsp;
-      <kbd>1</kbd>–<kbd>9</kbd> <span data-i18n="kbd.chooseDoc">Doc wählen</span> &nbsp;
-      <kbd>Ctrl+1</kbd>–<kbd>9</kbd> <span data-i18n="kbd.loadCustom">Custom laden</span> &nbsp;|&nbsp;
-      <kbd>Ctrl+Z</kbd> Undo &nbsp;
-      <kbd>Ctrl+Y</kbd> Redo &nbsp;
-      <kbd>Space</kbd> <span data-i18n="kbd.confirm">Bestätigen</span> &nbsp;
-      <kbd>Del</kbd> <span data-i18n="kbd.delCustom">Custom löschen</span> &nbsp;
-      <kbd>c</kbd> <span data-i18n="kbd.copy">Kopieren</span> &nbsp;
-      <kbd>e</kbd> <span data-i18n="kbd.exportConllu">Export CoNLL-U</span> &nbsp;
-      <kbd>E</kbd> <span data-i18n="kbd.exportTrees">Export Bäume</span> &nbsp;
-      <kbd>r</kbd> <span data-i18n="kbd.tts">Vorlesen</span> &nbsp;|&nbsp;
-      <kbd>?</kbd> <span data-i18n="kbd.help">Hilfe</span> &nbsp;
-      <kbd>Esc</kbd> <span data-i18n="kbd.close">Schließen</span>
+      <kbd>Enter</kbd> <span data-i18n="kbd.popup">Gold-Popup</span> &nbsp;
+      <kbd>Space</kbd> <span data-i18n="kbd.confirm">Bestätigen</span> &nbsp;|&nbsp;
+      <kbd>?</kbd> <span data-i18n="kbd.help">Hilfe</span>
     </p>
     <div class="langBar">
       <button class="langBtn" data-lang="de" onclick="setLang('de')" title="Deutsch">🇩🇪</button>
@@ -1600,15 +1650,16 @@ document.addEventListener('DOMContentLoaded', _syncThemeBtn);
         <button id="resetBtn" class="danger" data-i18n="files.reset">Reset</button>
         <span id="fileMeta" class="muted"></span>
       </div>
-      <div class="row" style="margin-top:6px">
-        <label class="btnLike" for="tagsetInput" data-i18n="tagset.upload">📤 Tagset hochladen</label>
-        <button id="tagsetDownloadBtn" data-i18n="tagset.download">📥 Tagset herunterladen</button>
-        <button id="tagsetTemplateBtn" data-i18n="tagset.template">📋 Vorlage herunterladen</button>
-        <button id="tagsetExampleBtn" data-i18n="tagset.example">📄 Beispiel herunterladen</button>
-        <button id="tagsetListBtn" data-i18n="tagset.listToggle">📑 Tagset anzeigen</button>
-        <span id="tagsetMeta" class="muted small"></span>
-      </div>
-      <div id="tagsetListPanel" class="tagsetListPanel"></div>
+      <details id="tagsetDetails" class="disclosureDetails">
+        <summary><span data-i18n="tagset.sectionTitle">⚙ Tagset</span><span id="tagsetMeta" class="muted small"></span></summary>
+        <div class="row disclosureContent">
+          <label class="btnLike" for="tagsetInput" data-i18n="tagset.upload">📤 Hochladen</label>
+          <button id="tagsetDownloadBtn" data-i18n="tagset.download">📥 Herunterladen</button>
+          <button id="tagsetTemplateBtn" data-i18n="tagset.template">📋 Vorlage</button>
+          <button id="tagsetExampleBtn" data-i18n="tagset.example">📄 Beispiel</button>
+        </div>
+        <div id="tagsetListPanel" class="tagsetListPanel"></div>
+      </details>
       <div id="fileList" class="fileList" style="margin-top:10px"></div>
       <div id="projectLockBar" class="projectLockBar"></div>
       <div id="textWarn"></div>
@@ -1625,14 +1676,16 @@ document.addEventListener('DOMContentLoaded', _syncThemeBtn);
         <label class="autoAdvanceRow">
           <input type="checkbox" id="autoAdvanceCb"> <span data-i18n="sent.autoAdvance">Auto-weiter</span>
         </label>
-        <button id="copyConlluBtn" disabled data-i18n="copy.btn">CoNLL-U kopieren</button>
         <span id="sentMeta" class="muted"></span>
       </div>
-      <div class="bulkRow">
-        <button id="confirmAllBtn" disabled data-i18n="sent.confirmAll">✓ Alle ohne Diffs bestätigen</button>
-        <button id="flagDiffsBtn"  disabled data-i18n="sent.flagDiffs">⚑ Alle Diffs markieren</button>
-        <button id="unflagAllBtn"  disabled data-i18n="sent.unflagAll">⚑ Markierungen löschen</button>
-      </div>
+      <details class="disclosureDetails">
+        <summary data-i18n="sent.bulkTitle">Massenaktionen</summary>
+        <div class="bulkRow disclosureContent">
+          <button id="confirmAllBtn" disabled data-i18n="sent.confirmAll">✓ Alle ohne Diffs bestätigen</button>
+          <button id="flagDiffsBtn"  disabled data-i18n="sent.flagDiffs">⚑ Alle Diffs markieren</button>
+          <button id="unflagAllBtn"  disabled data-i18n="sent.unflagAll">⚑ Markierungen löschen</button>
+        </div>
+      </details>
       <div class="row sentInfoRow">
         <div id="sentStats" class="sentStatsRow"></div>
         <span id="progressMeta" class="muted small progressMeta"></span>
@@ -1688,24 +1741,23 @@ document.addEventListener('DOMContentLoaded', _syncThemeBtn);
     <section class="card" id="exportSection">
       <h2 data-i18n="sec.export">6) Export <button class="helpHintBtn" data-i18n-title="help.hintTitle" onclick="openHelpSection('sec.export')">?</button></h2>
       <div class="row">
-        <button id="exportConlluBtn"    disabled data-i18n="export.conllu">Gold CoNLL-U herunterladen</button>
-        <button id="exportAllConlluBtn" disabled data-i18n="export.conlluAll">Alle Projekte CoNLL-U herunterladen</button>
-        <button id="exportTreeBtn"      disabled data-i18n="export.trees">Baumansicht (alle Sätze) herunterladen</button>
-        <button id="exportAllTreeBtn"   disabled data-i18n="export.treesAll">Alle Projekte Baumansicht herunterladen</button>
+        <button id="copyConlluBtn"   disabled data-i18n="copy.btn">CoNLL-U kopieren</button>
+        <button id="exportConlluBtn" disabled data-i18n="export.conllu">Gold CoNLL-U herunterladen</button>
       </div>
-      <p class="muted small" style="margin-top:8px" data-i18n="export.conlluDesc">
-        Gold CoNLL-U enthält alle Sätze mit den aktuellen Gold-Annotationen (HEAD, DEPREL, UPOS, XPOS).
-        LEMMA / FEATS / DEPS / MISC werden aus der Quelldatei übernommen.
-      </p>
-      <div class="row sessionRow">
+      <details class="disclosureDetails" style="margin-top:6px">
+        <summary data-i18n="export.more">Weitere Exporte</summary>
+        <div class="row disclosureContent">
+          <button id="exportAllConlluBtn" disabled data-i18n="export.conlluAll">Alle Projekte CoNLL-U</button>
+          <button id="exportTreeBtn"      disabled data-i18n="export.trees">Baumansicht herunterladen</button>
+          <button id="exportAllTreeBtn"   disabled data-i18n="export.treesAll">Alle Projekte Baumansicht</button>
+        </div>
+      </details>
+      <div class="row sessionRow" style="margin-top:8px">
         <button id="exportSessionBtn" data-i18n="session.save">💾 Session speichern</button>
         <label class="btnLike" for="importSessionInput" data-i18n="session.load">📂 Session laden</label>
         <input id="importSessionInput" type="file" accept=".json,.conllu,.conll,.txt" class="fileHidden">
         <span id="sessionMeta" class="muted small"></span>
       </div>
-      <p class="muted small" style="margin-top:4px" data-i18n="session.desc">
-        Session speichert alle geladenen Dateien, Annotationen und den kompletten Undo-/Redo-Verlauf als JSON.
-      </p>
       <div id="devModeBar" class="devModeBar"></div>
     </section>
   </main>
@@ -1841,9 +1893,10 @@ window.LANG_DE = {
 
   // Export
   'export.conllu':     'Gold CoNLL-U herunterladen',
-  'export.conlluAll':  'Alle Projekte CoNLL-U herunterladen',
-  'export.trees':      'Baumansicht (alle Sätze) herunterladen',
-  'export.treesAll':   'Alle Projekte Baumansicht herunterladen',
+  'export.conlluAll':  'Alle Projekte CoNLL-U',
+  'export.trees':      'Baumansicht herunterladen',
+  'export.treesAll':   'Alle Projekte Baumansicht',
+  'export.more':       'Weitere Exporte',
   'export.conlluDesc': 'Gold CoNLL-U enthält alle Sätze mit den aktuellen Gold-Annotationen (HEAD, DEPREL, UPOS, XPOS). LEMMA / FEATS / DEPS / MISC werden aus der Quelldatei übernommen.',
   'export.mwtNote':    'Hinweis: Multi-Word-Tokens (IDs mit „-" oder „.") werden ignoriert.',
 
@@ -1878,9 +1931,9 @@ window.LANG_DE = {
   'tagset.download':  '📥 Tagset herunterladen',
   'tagset.template':  '📋 Vorlage herunterladen',
   'tagset.loaded':    '{deprel} Deprel · {upos} UPOS · {xpos} XPOS geladen',
-  'tagset.example':    '📄 Beispiel herunterladen',
-  'tagset.listToggle': '📑 Tagset anzeigen',
-  'tagset.noLabels':   'Kein Tagset konfiguriert',
+  'tagset.sectionTitle': '⚙ Tagset',
+  'tagset.example':      '📄 Beispiel',
+  'tagset.noLabels':     'Kein Tagset konfiguriert',
   'tagset.errJson':   'Ungültige JSON-Datei.',
   'tagset.errFormat': 'Tagset muss ein JSON-Objekt sein.',
 
@@ -1962,6 +2015,7 @@ window.LANG_DE = {
   'sent.autoAdvance': 'Auto-weiter',
 
   // Massenoperationen
+  'sent.bulkTitle':   'Massenaktionen',
   'sent.confirmAll':  '✓ Alle ohne Diffs bestätigen',
   'sent.flagDiffs':   '⚑ Alle Diffs markieren',
   'sent.unflagAll':   '⚑ Markierungen löschen',
@@ -2094,9 +2148,10 @@ window.LANG_EN = {
 
   // Export
   'export.conllu':     'Download Gold CoNLL-U',
-  'export.conlluAll':  'Download all projects CoNLL-U',
-  'export.trees':      'Download tree view (all sentences)',
-  'export.treesAll':   'Download all projects tree view',
+  'export.conlluAll':  'All projects CoNLL-U',
+  'export.trees':      'Download tree view',
+  'export.treesAll':   'All projects tree view',
+  'export.more':       'More exports',
   'export.conlluDesc': 'Gold CoNLL-U contains all sentences with current Gold annotations (HEAD, DEPREL, UPOS, XPOS). LEMMA / FEATS / DEPS / MISC are taken from the source file.',
   'export.mwtNote':    'Note: Multi-word tokens (IDs with "-" or ".") are ignored.',
 
@@ -2105,9 +2160,9 @@ window.LANG_EN = {
   'tagset.download':  '📥 Download tagset',
   'tagset.template':  '📋 Download template',
   'tagset.loaded':    '{deprel} deprels · {upos} UPOS · {xpos} XPOS loaded',
-  'tagset.example':    '📄 Download example',
-  'tagset.listToggle': '📑 Show tagset',
-  'tagset.noLabels':   'No tagset configured',
+  'tagset.sectionTitle': '⚙ Tagset',
+  'tagset.example':      '📄 Example',
+  'tagset.noLabels':     'No tagset configured',
   'tagset.errJson':   'Invalid JSON file.',
   'tagset.errFormat': 'Tagset must be a JSON object.',
 
@@ -2215,6 +2270,7 @@ window.LANG_EN = {
   'sent.autoAdvance': 'Auto-advance',
 
   // Bulk actions
+  'sent.bulkTitle':   'Bulk actions',
   'sent.confirmAll':  '✓ Confirm all without diffs',
   'sent.flagDiffs':   '⚑ Flag all with diffs',
   'sent.unflagAll':   '⚑ Clear flags',
@@ -4414,12 +4470,18 @@ window.addEventListener('pointerup', e => {
   if (ni !== null && drag.toks[ni].id !== drag.depId) {
     const newHeadId = drag.toks[ni].id;
     if (_arcWouldCycle(drag.depId, newHeadId, drag.toks)) {
-      // Reject the drop: flash the target token red to signal the cycle
+      // Reject the drop: shake-flash the target token and give haptic buzz
+      navigator.vibrate?.([40, 20, 40]);
       if (drag.svg.isConnected) {
         const el = drag.svg.querySelector(`[data-arctokid="${newHeadId}"]`);
         if (el) {
-          el.style.fill = 'rgba(255,70,70,0.50)';
-          setTimeout(() => { el.style.fill = 'transparent'; }, 700);
+          el.classList.remove('arcCycleFlash', 'arcBadHover');
+          void el.getBoundingClientRect(); // force reflow to restart animation
+          el.classList.add('arcCycleFlash');
+          el.addEventListener('animationend', () => {
+            el.classList.remove('arcCycleFlash');
+            el.style.fill = 'transparent';
+          }, { once: true });
         }
       }
       return;
@@ -4511,7 +4573,12 @@ function _arcHighlightDrop(mx, my) {
     const el = _arcDrag._tokElCache?.get(nid) ?? _arcDrag.svg.querySelector(`[data-arctokid="${nid}"]`);
     if (el) {
       const bad = _arcWouldCycle(_arcDrag.depId, nid, _arcDrag.toks);
-      el.style.fill = bad ? 'rgba(255,70,70,0.40)' : 'rgba(74,158,255,0.30)';
+      if (bad) {
+        el.classList.add('arcBadHover');
+        el.style.fill = '';
+      } else {
+        el.style.fill = 'rgba(74,158,255,0.30)';
+      }
       _arcDrag._hovEl  = el;
       _arcDrag._hovBad = bad;
     }
@@ -4520,7 +4587,11 @@ function _arcHighlightDrop(mx, my) {
 
 // Clear any active drop-target highlight (token and root zone).
 function _arcClearHighlight(drag) {
-  if (drag._hovEl) { drag._hovEl.style.fill = 'transparent'; drag._hovEl = null; }
+  if (drag._hovEl) {
+    drag._hovEl.classList.remove('arcBadHover');
+    drag._hovEl.style.fill = 'transparent';
+    drag._hovEl = null;
+  }
   drag._hovId  = null;
   drag._hovBad = false;
   // Restore root zone to default idle appearance (always visible, just dimmer)
@@ -5674,15 +5745,10 @@ function renderTagsetList(){
     : `<div class="tagsetListRow"><em class="muted">${t("tagset.noLabels")}</em></div>`;
 }
 
-{
-  const _tagsetListBtnEl = document.getElementById("tagsetListBtn");
-  const _tagsetListPanel = document.getElementById("tagsetListPanel");
-  if(_tagsetListBtnEl && _tagsetListPanel){
-    _tagsetListBtnEl.addEventListener("click", () => {
-      _tagsetListPanel.hidden = !_tagsetListPanel.hidden;
-    });
-  }
-}
+// Re-render tagset list when the details panel opens (may have changed while closed).
+document.getElementById("tagsetDetails")?.addEventListener("toggle", function(){
+  if(this.open) renderTagsetList();
+});
 
 </script>
   <script>
@@ -5744,6 +5810,16 @@ function toggleConfirm(){
   }
   updateConfirmBtn();
   renderSentSelectOptions();
+  // Green flash on sentText when confirming (not unconfirming)
+  if(!wasConfirmed){
+    const st = document.getElementById('sentText');
+    if(st){
+      st.classList.remove('sentConfirmFlash');
+      void st.offsetWidth; // restart animation
+      st.classList.add('sentConfirmFlash');
+      st.addEventListener('animationend', () => st.classList.remove('sentConfirmFlash'), { once: true });
+    }
+  }
   // Auto-advance: after confirming, jump to the next unconfirmed sentence.
   if(!wasConfirmed && _autoAdvance){
     for(let j = state.currentSent + 1; j < state.maxSents; j++){

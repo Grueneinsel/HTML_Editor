@@ -99,9 +99,10 @@ window.LANG_EN = {
 
   // Export
   'export.conllu':     'Download Gold CoNLL-U',
-  'export.conlluAll':  'Download all projects CoNLL-U',
-  'export.trees':      'Download tree view (all sentences)',
-  'export.treesAll':   'Download all projects tree view',
+  'export.conlluAll':  'All projects CoNLL-U',
+  'export.trees':      'Download tree view',
+  'export.treesAll':   'All projects tree view',
+  'export.more':       'More exports',
   'export.conlluDesc': 'Gold CoNLL-U contains all sentences with current Gold annotations (HEAD, DEPREL, UPOS, XPOS). LEMMA / FEATS / DEPS / MISC are taken from the source file.',
   'export.mwtNote':    'Note: Multi-word tokens (IDs with "-" or ".") are ignored.',
 
@@ -110,9 +111,9 @@ window.LANG_EN = {
   'tagset.download':  '📥 Download tagset',
   'tagset.template':  '📋 Download template',
   'tagset.loaded':    '{deprel} deprels · {upos} UPOS · {xpos} XPOS loaded',
-  'tagset.example':    '📄 Download example',
-  'tagset.listToggle': '📑 Show tagset',
-  'tagset.noLabels':   'No tagset configured',
+  'tagset.sectionTitle': '⚙ Tagset',
+  'tagset.example':      '📄 Example',
+  'tagset.noLabels':     'No tagset configured',
   'tagset.errJson':   'Invalid JSON file.',
   'tagset.errFormat': 'Tagset must be a JSON object.',
 
@@ -220,6 +221,7 @@ window.LANG_EN = {
   'sent.autoAdvance': 'Auto-advance',
 
   // Bulk actions
+  'sent.bulkTitle':   'Bulk actions',
   'sent.confirmAll':  '✓ Confirm all without diffs',
   'sent.flagDiffs':   '⚑ Flag all with diffs',
   'sent.unflagAll':   '⚑ Clear flags',

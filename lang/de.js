@@ -99,9 +99,10 @@ window.LANG_DE = {
 
   // Export
   'export.conllu':     'Gold CoNLL-U herunterladen',
-  'export.conlluAll':  'Alle Projekte CoNLL-U herunterladen',
-  'export.trees':      'Baumansicht (alle Sätze) herunterladen',
-  'export.treesAll':   'Alle Projekte Baumansicht herunterladen',
+  'export.conlluAll':  'Alle Projekte CoNLL-U',
+  'export.trees':      'Baumansicht herunterladen',
+  'export.treesAll':   'Alle Projekte Baumansicht',
+  'export.more':       'Weitere Exporte',
   'export.conlluDesc': 'Gold CoNLL-U enthält alle Sätze mit den aktuellen Gold-Annotationen (HEAD, DEPREL, UPOS, XPOS). LEMMA / FEATS / DEPS / MISC werden aus der Quelldatei übernommen.',
   'export.mwtNote':    'Hinweis: Multi-Word-Tokens (IDs mit „-" oder „.") werden ignoriert.',
 
@@ -136,9 +137,9 @@ window.LANG_DE = {
   'tagset.download':  '📥 Tagset herunterladen',
   'tagset.template':  '📋 Vorlage herunterladen',
   'tagset.loaded':    '{deprel} Deprel · {upos} UPOS · {xpos} XPOS geladen',
-  'tagset.example':    '📄 Beispiel herunterladen',
-  'tagset.listToggle': '📑 Tagset anzeigen',
-  'tagset.noLabels':   'Kein Tagset konfiguriert',
+  'tagset.sectionTitle': '⚙ Tagset',
+  'tagset.example':      '📄 Beispiel',
+  'tagset.noLabels':     'Kein Tagset konfiguriert',
   'tagset.errJson':   'Ungültige JSON-Datei.',
   'tagset.errFormat': 'Tagset muss ein JSON-Objekt sein.',
 
@@ -220,6 +221,7 @@ window.LANG_DE = {
   'sent.autoAdvance': 'Auto-weiter',
 
   // Massenoperationen
+  'sent.bulkTitle':   'Massenaktionen',
   'sent.confirmAll':  '✓ Alle ohne Diffs bestätigen',
   'sent.flagDiffs':   '⚑ Alle Diffs markieren',
   'sent.unflagAll':   '⚑ Markierungen löschen',

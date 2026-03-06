@@ -56,6 +56,16 @@ function toggleConfirm(){
   }
   updateConfirmBtn();
   renderSentSelectOptions();
+  // Green flash on sentText when confirming (not unconfirming)
+  if(!wasConfirmed){
+    const st = document.getElementById('sentText');
+    if(st){
+      st.classList.remove('sentConfirmFlash');
+      void st.offsetWidth; // restart animation
+      st.classList.add('sentConfirmFlash');
+      st.addEventListener('animationend', () => st.classList.remove('sentConfirmFlash'), { once: true });
+    }
+  }
   // Auto-advance: after confirming, jump to the next unconfirmed sentence.
   if(!wasConfirmed && _autoAdvance){
     for(let j = state.currentSent + 1; j < state.maxSents; j++){
