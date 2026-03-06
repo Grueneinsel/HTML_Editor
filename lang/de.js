@@ -112,7 +112,7 @@ window.LANG_DE = {
   'session.exported':  'Exportiert: {n} Datei(en), {u} Undo-Schritte',
   'session.loaded':    'Geladen: {n} Datei(en) · {s} Sätze · {u} Undo-Schritte',
   'session.errJson':   'Ungültige JSON-Datei.',
-  'session.errFormat': 'Unbekanntes Session-Format (version ≠ 1).',
+  'session.errFormat': 'Unbekanntes Session-Format (erwartet version: 2).',
   'session.errNoDocs': 'Session enthält keine Dateien.',
 
   // Tastaturkürzel-Legende (Header)
@@ -136,6 +136,9 @@ window.LANG_DE = {
   'tagset.download':  '📥 Tagset herunterladen',
   'tagset.template':  '📋 Vorlage herunterladen',
   'tagset.loaded':    '{deprel} Deprel · {upos} UPOS · {xpos} XPOS geladen',
+  'tagset.example':    '📄 Beispiel herunterladen',
+  'tagset.listToggle': '📑 Tagset anzeigen',
+  'tagset.noLabels':   'Kein Tagset konfiguriert',
   'tagset.errJson':   'Ungültige JSON-Datei.',
   'tagset.errFormat': 'Tagset muss ein JSON-Objekt sein.',
 

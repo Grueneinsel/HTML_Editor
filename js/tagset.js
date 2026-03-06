@@ -3,8 +3,7 @@
 /** Returns true if parsed JSON looks like a saved session. */
 function _isSessionJson(data){
   if(!data || typeof data !== "object" || Array.isArray(data)) return false;
-  return (data.version === 1 || data.version === 2) &&
-         (Array.isArray(data.docs) || Array.isArray(data.projects));
+  return data.version === 2 && Array.isArray(data.projects);
 }
 
 /** Apply a parsed tagset object (LABELS) to the active project only. */
@@ -20,6 +19,7 @@ function applyTagsetJson(data){
   if(p) p.labels = JSON.parse(JSON.stringify(LABELS));
   renderSentence();
   _updateTagsetMeta();
+  renderTagsetList();
 }
 
 // Update the tagset-meta display line with counts from the currently active LABELS.
@@ -106,6 +106,124 @@ async function _dispatchFiles(files){
       a.download = "tagset_template.json";
       a.click();
       URL.revokeObjectURL(a.href);
+    });
+  }
+}
+
+// ── Example tagset download ────────────────────────────────────────────────────
+// A realistic, annotated example showing the extended __cols__ / __dep_cols__ format.
+const _TAGSET_EXAMPLE = JSON.stringify({
+  "_comment": "Beispiel-Tagset im erweiterten Format (__cols__ + __dep_cols__).",
+
+  "__cols__": [
+    {
+      "key":    "upos",
+      "name":   "UPOS",
+      "values": ["ADJ","ADP","ADV","AUX","CCONJ","DET","INTJ","NOUN","NUM",
+                 "PART","PRON","PROPN","PUNCT","SCONJ","SYM","VERB","X"]
+    },
+    {
+      "key":    "xpos",
+      "name":   "XPOS (STTS)",
+      "values": ["ADJA","ADJD","ADV","ART","CARD","FM","ITJ","KON","KOUS",
+                 "NE","NN","PDAT","PDS","PPER","PPOSS","PRELS","PRF",
+                 "PTKNEG","PWAV","VAFIN","VAINF","VAPP","VMFIN","VVFIN",
+                 "VVINF","VVPP","XY","$,","$.","$("]
+    }
+  ],
+
+  "__dep_cols__": [
+    {
+      "key":  "dep",
+      "name": "UD DepRel",
+      "groups": {
+        "Kernargumente":   ["nsubj","nsubj:pass","obj","iobj","csubj","ccomp","xcomp"],
+        "Nicht-Kernarg.":  ["obl","obl:arg","vocative","expl","dislocated"],
+        "Modifikatoren":   ["advcl","advmod","discourse"],
+        "Funktionswörter": ["aux","aux:pass","cop","mark"],
+        "Nominalabh.":     ["nmod","appos","nummod","acl","acl:relcl","amod","det","clf","case"],
+        "Koordination":    ["conj","cc"],
+        "MWE & Sonstiges": ["fixed","flat","flat:name","list","parataxis","compound",
+                            "orphan","goeswith","reparandum","punct","root","dep"]
+      }
+    }
+  ]
+}, null, 2);
+
+{
+  const _tagsetExampleBtnEl = document.getElementById("tagsetExampleBtn");
+  if(_tagsetExampleBtnEl){
+    _tagsetExampleBtnEl.addEventListener("click", () => {
+      const blob = new Blob([_TAGSET_EXAMPLE], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "tagset_example.json";
+      a.click();
+      URL.revokeObjectURL(a.href);
+    });
+  }
+}
+
+// ── Per-project tagset list ────────────────────────────────────────────────────
+
+/** Render the active project's tagset content into the detail panel. */
+function renderTagsetList(){
+  const panel = document.getElementById("tagsetListPanel");
+  if(!panel) return;
+
+  const lbl = LABELS || {};
+  const cols    = lbl["__cols__"]     || [];
+  const depCols = lbl["__dep_cols__"] || [];
+
+  // Old format fallback
+  const uposArr = lbl["__upos__"] || [];
+  const xposArr = lbl["__xpos__"] || [];
+  const oldGroups = Object.entries(lbl).filter(([k]) => !k.startsWith("__"));
+
+  const sections = [];
+
+  // Label columns (__cols__ or __upos__/__xpos__)
+  const labelArr = cols.length ? cols : [
+    ...(uposArr.length ? [{ key:"upos", name:"UPOS",        values: uposArr }] : []),
+    ...(xposArr.length ? [{ key:"xpos", name:"XPOS",        values: xposArr }] : []),
+  ];
+  for(const col of labelArr){
+    const vals = col.values || [];
+    sections.push(`<div class="tagsetSection">
+      <div class="tagsetSectionHead">${escapeHtml(col.name || col.key)} <span class="muted">(${vals.length})</span></div>
+      <div class="tagsetSectionBody">${vals.map(v => `<span class="tagsetTag">${escapeHtml(v)}</span>`).join("")}</div>
+    </div>`);
+  }
+
+  // Dep columns (__dep_cols__ or old group format)
+  const depArr = depCols.length ? depCols
+    : (oldGroups.length ? [{ key:"dep", name:"DepRel", groups: Object.fromEntries(oldGroups) }] : []);
+  for(const dc of depArr){
+    const groups  = dc.groups || {};
+    const total   = Object.values(groups).reduce((s, a) => s + a.length, 0);
+    const groupHtml = Object.entries(groups).map(([gname, tags]) =>
+      `<div class="tagsetGroup">
+        <span class="tagsetGroupName">${escapeHtml(gname)}</span>
+        ${tags.map(v => `<span class="tagsetTag">${escapeHtml(v)}</span>`).join("")}
+      </div>`
+    ).join("");
+    sections.push(`<div class="tagsetSection tagsetSection--dep">
+      <div class="tagsetSectionHead">${escapeHtml(dc.name || dc.key)} <span class="muted">(${total})</span></div>
+      <div class="tagsetSectionBody">${groupHtml}</div>
+    </div>`);
+  }
+
+  panel.innerHTML = sections.length
+    ? sections.join("")
+    : `<div class="tagsetListRow"><em class="muted">${t("tagset.noLabels")}</em></div>`;
+}
+
+{
+  const _tagsetListBtnEl = document.getElementById("tagsetListBtn");
+  const _tagsetListPanel = document.getElementById("tagsetListPanel");
+  if(_tagsetListBtnEl && _tagsetListPanel){
+    _tagsetListBtnEl.addEventListener("click", () => {
+      _tagsetListPanel.hidden = !_tagsetListPanel.hidden;
     });
   }
 }

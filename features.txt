@@ -108,6 +108,8 @@ Läuft vollständig lokal ohne Server (index.html im Browser öffnen).
 - Tagset hochladen: JSON per Datei-Dialog oder Drag & Drop
 - Tagset herunterladen: aktuelle Konfiguration als tagset.json
 - Vorlage herunterladen: leere tagset_template.json als Einstiegspunkt
+- Beispiel herunterladen: ausgefülltes tagset_example.json mit UD-Schema
+- Projekttagset-Liste: aufklappbare Übersicht aller Projekte mit Tagset-Zusammenfassung
 - Tagset wird mit Session gespeichert und wiederhergestellt
 - Tagset-Meta-Anzeige: Anzahl Deprels, UPOS- und XPOS-Werte
 
@@ -126,7 +128,7 @@ Läuft vollständig lokal ohne Server (index.html im Browser öffnen).
 
 - Session-Export: alle Projekte, Annotationen, Undo-Verlauf, Tagset als JSON
 - Session-Import: Datei-Dialog, Drag & Drop oder als Tagset-Upload
-- Session-Format versioniert (v2 multi-project; v1 single-project abwärtskompatibel)
+- Session-Format versioniert (v2 multi-project)
 - Autosave: alle 30 Sekunden in localStorage; beim Start automatisch geladen
 - Lautlose Wiederherstellung beim Öffnen ohne Rückfrage
 

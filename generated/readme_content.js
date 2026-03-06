@@ -16,16 +16,17 @@ Läuft vollständig lokal ohne Server — einfach \`index.html\` im Browser öff
 | **CoNLL-U-Vergleich** | Token-für-Token-Diff mehrerer Dateien gegen eine Gold-Annotation |
 | **Interaktiver Baum** | Abhängigkeitsbäume mit Drag-&-Drop-Pfeilen, Relation-Auswahl, ROOT-Zone |
 | **Gold-Annotation** | Per Klick, Popup oder Tastaturkürzel — Custom-Werte überschreiben Datei-Werte |
-| **CoNLL-U-Editor** | Direkte Bearbeitung aller Sätze je Datei als plain Text (Abschnitt 5) |
+| **CoNLL-U-Editor** | Strukturierter Editor und Roh-Textarea je Datei; Gold-Tabelle im Lesemodus sichtbar |
 | **Satzverwaltung** | Sätze einfügen, löschen, sortieren — Satzliste immer sichtbar |
 | **Undo/Redo** | Bis zu 80 Schritte pro Projekt; wird mit Session gespeichert |
 | **Session-Export** | Vollständigen Arbeitsstand als JSON sichern und laden |
 | **Autosave** | Arbeitsstand wird alle 30 Sekunden lokal gesichert und beim Start automatisch geladen |
 | **Tagset-Konfiguration** | Eigene DEPREL-Listen, UPOS/XPOS-Werte und Dependency-Layer per \`labels.js\` oder JSON |
 | **Export** | Gold CoNLL-U und Baumansicht (alle Sätze) herunterladen |
+| **Guided Tour** | Interaktive Einführung mit Spotlight und Tooltips anhand des englischen Beispiels |
 | **Tastaturkürzel** | Vollständige Bedienung ohne Maus |
 | **Mehrsprachig** | Deutsch / Englisch; weitere Sprachen per \`lang/xx.js\` |
-| **Tablet-Unterstützung** | Touch-optimiert; Pfeile ziehbar, Scrollen funktioniert |
+| **Tablet-Unterstützung** | Touch-optimiert; Pfeile ziehbar, vergrößerte Tap-Ziele |
 
 ---
 
@@ -266,15 +267,24 @@ Die Anzahl der Felder passt sich automatisch an die geladene Tagset-Konfiguratio
 
 ---
 
-## 5) CoNLL-U bearbeiten
+## 5) CoNLL-U
 
-Abschnitt 5 enthält einen ausklappbaren **Texteditor** für die rohen CoNLL-U-Daten.
+Abschnitt 5 zeigt und bearbeitet die CoNLL-U-Daten des aktuellen Satzes. Das Verhalten hängt vom **Bearbeitungsmodus** ab (Schloss in Abschnitt 1):
 
-- **„▾ Öffnen"** klappt den Editor aus; **„▴ Schließen"** klappt ihn wieder ein
-- Für jede geladene Datei gibt es eine eigene Textarea mit dem vollständigen CoNLL-U-Text aller Sätze
-- Die Felder wachsen automatisch mit dem Inhalt — kein Scrollen in der Textarea nötig
-- Änderungen direkt am Text eingeben → **„✓ Übernehmen"** übernimmt sie in alle anderen Ansichten
-- **„✕ Zurücksetzen"** verwirft alle Änderungen und stellt den zuletzt gespeicherten Stand wieder her
+### Lesemodus (gesperrt 🔒)
+
+- **Gold-Tabelle** zeigt alle Tokens mit den aktuellen Gold-Annotationen (HEAD, DEPREL, UPOS, XPOS) — schreibgeschützt
+- Zeilen mit aktiven Custom-Überschreibungen sind farbig hervorgehoben
+
+### Bearbeitungsmodus (entsperrt 🔓)
+
+- **Gold-Tabelle** (editierbar): HEAD, DEPREL, UPOS und XPOS direkt anpassen — Änderungen werden sofort als Custom-Werte gespeichert
+- **Tab „📝 Strukturierter Editor"**: Alle CoNLL-U-Felder jeder Datei als strukturierte Tabelle; Zeilen hinzufügen/löschen, Werte direkt eingeben
+- **Tab „Rohtext"**: Vollständiger CoNLL-U-Text je Datei als Textarea; wächst automatisch mit dem Inhalt
+  - Änderungen eingeben → **„✓ Übernehmen"** überträgt sie in alle anderen Ansichten
+  - **„✕ Zurücksetzen"** verwirft Änderungen und stellt den letzten gespeicherten Stand wieder her
+
+Der Titel des Abschnitts wechselt automatisch zwischen **„5) CoNLL-U"** (Lesemodus) und **„5) CoNLL-U bearbeiten"** (Bearbeitungsmodus).
 
 ---
 
@@ -284,12 +294,19 @@ Abschnitt 5 enthält einen ausklappbaren **Texteditor** für die rohen CoNLL-U-D
 
 Der **⬇-Button** neben jeder Datei lädt den Original-Inhalt der Datei als \`.conllu\` herunter.
 
-### Alle Sätze (Gold-Annotation)
+### Aktives Projekt
 
 | Button | Inhalt |
 |--------|--------|
-| **Gold CoNLL-U herunterladen** | Alle Sätze mit aktuellen Gold-Annotationen (HEAD, DEPREL, UPOS, XPOS); LEMMA/FEATS/DEPS/MISC aus Quelldatei |
-| **Baumansicht herunterladen** | Alle Sätze als Text-Bäume mit Gold-Baum und Diff-Bäumen pro Datei |
+| **Gold CoNLL-U herunterladen** | Alle Sätze des aktiven Projekts mit aktuellen Gold-Annotationen (HEAD, DEPREL, UPOS, XPOS); LEMMA/FEATS/DEPS/MISC aus Quelldatei |
+| **Baumansicht (alle Sätze) herunterladen** | Alle Sätze als Text-Bäume mit Gold-Baum und Diff-Bäumen pro Datei |
+
+### Alle Projekte
+
+| Button | Inhalt |
+|--------|--------|
+| **Alle Projekte CoNLL-U herunterladen** | Exportiert Gold-CoNLL-U für jedes Projekt als separate Datei (\`gold_Projektname.conllu\`) |
+| **Alle Projekte Baumansicht herunterladen** | Exportiert Baumansichten für jedes Projekt als separate Datei |
 
 Tastaturkürzel: \`e\` → CoNLL-U · \`E\` → Baumansicht · \`c\` → aktuellen Satz in Zwischenablage
 
@@ -309,7 +326,7 @@ Der **Session-Mechanismus** sichert den vollständigen Arbeitsstand aller Projek
 | **📂 Session laden** | Importiert eine gespeicherte Session-Datei |
 | **Drag & Drop** | \`.json\`-Datei auf die Seite ziehen → wird automatisch als Session erkannt |
 
-Das Session-Format ist versioniert (\`version: 2\`) und als JSON lesbar. Ältere Sessions (\`version: 1\`) werden automatisch als einzelnes Projekt importiert.
+Das Session-Format ist versioniert (\`version: 2\`) und als JSON lesbar.
 
 ### Autosave
 
@@ -317,7 +334,7 @@ Der Arbeitsstand wird alle **30 Sekunden** automatisch im Browser-LocalStorage g
 
 ---
 
-## 6) Undo / Redo
+## Undo / Redo
 
 Alle Annotationsänderungen (Datei-Auswahl, Custom-Popup, Bestätigen, Teilbaum-Übernahme) sind rückgängig machbar. Jedes Projekt hat seinen eigenen Undo-Stack.
 
@@ -327,6 +344,16 @@ Alle Annotationsänderungen (Datei-Auswahl, Custom-Popup, Bestätigen, Teilbaum-
 | **↪ Redo** / \`Ctrl+Y\` | Rückgängige Änderung wiederherstellen |
 
 Der Verlauf wird in der Session mitgespeichert (bis zu 80 Schritte pro Projekt).
+
+---
+
+## Guided Tour
+
+Der **🎓 Guided Tour**-Button oben rechts startet eine interaktive Einführung in alle Funktionen des Tools.
+
+- Die Tour öffnet das englische Beispielprojekt automatisch in einem **temporären Projekt** — eigene Daten bleiben vollständig erhalten
+- Spotlight und Tooltip führen Schritt für Schritt durch alle 16 Stationen: Projekte, Dateien, Satznavigation, Baumansicht, Vergleichstabelle, Gold-Annotation, Bearbeitungsmodus, CoNLL-U-Editor, Export
+- Beenden mit **„Tour abbrechen"**, \`Esc\` oder dem „Fertig"-Button — das Tour-Projekt wird danach automatisch entfernt
 
 ---
 
@@ -345,7 +372,7 @@ Der Verlauf wird in der Session mitgespeichert (bis zu 80 Schritte pro Projekt).
 | \`1\`–\`9\` | Datei N als Gold-Quelle für fokussierte Zeile wählen |
 | \`Ctrl+1\`–\`9\` | Custom aus Datei N laden |
 | \`Ctrl+Z\` | Undo |
-| \`Ctrl+Y\` | Redo |
+| \`Ctrl+Y\` / \`Ctrl+Shift+Z\` | Redo |
 | \`Del\` / \`Backspace\` | Custom des aktuellen Satzes löschen |
 | \`c\` | Aktuellen Satz als CoNLL-U in Zwischenablage kopieren |
 | \`e\` | Gold CoNLL-U exportieren |
@@ -520,6 +547,7 @@ HTML_Editor/
 │   ├── i18n.js                ← Übersetzungs-Engine (t(), setLang(), registerLang())
 │   ├── theme.js               ← Dark/Light-Mode-Umschalter
 │   ├── help.js                ← Hilfe-Modal (lädt readme_content.js)
+│   ├── tour.js                ← Guided Tour (temporäres Projekt, Spotlight, Tooltips)
 │   └── main.js                ← Initialisierung, Event-Listener, UI-Rendering
 │
 ├── lang/
@@ -571,7 +599,7 @@ HTML_Editor/
 | \`js/state.js\` | Zentraler Zustandsspeicher; \`LABEL_COLS\` und \`DEP_COLS\` steuern die Spalten-Konfiguration |
 | \`js/projects.js\` | Projekt-Verwaltung; Snapshot-Swap beim Tab-Wechsel; Auto-Zuweisung bei unterschiedlicher Satzzahl |
 | \`js/arcview.js\` | SVG-Arc-Diagramm mit Drag & Drop und Zyklus-Erkennung |
-| \`js/export.js\` | Session-Format v2 (multi-project); abwärtskompatibel zu v1 |
+| \`js/export.js\` | Session-Format v2 (multi-project); Import/Export, Autosave |
 | \`bundler.py\` | Bündelt alle Ressourcen in \`dist/index.html\` für offline/eingebetteten Einsatz |
 | \`make_readme_js.py\` | Wandelt \`README.md\` → \`generated/readme_content.js\` (für Hilfe-Modal) |
 
@@ -633,16 +661,17 @@ Runs entirely locally without a server — simply open \`index.html\` in your br
 | **CoNLL-U comparison** | Token-by-token diff of multiple files against a Gold annotation |
 | **Interactive tree** | Dependency trees with drag-and-drop arcs, relation selector, ROOT drop zone |
 | **Gold annotation** | Via click, popup, or keyboard shortcuts — custom values override file values |
-| **CoNLL-U editor** | Direct editing of all sentences per file as plain text (section 5) |
+| **CoNLL-U editor** | Structured editor and raw textarea per file; gold table visible in read-only mode |
 | **Sentence management** | Insert, delete sentences — sentence list always visible |
 | **Undo/Redo** | Up to 80 steps per project; saved with session |
 | **Session export** | Save and load complete working state as JSON |
 | **Autosave** | Working state saved every 30 seconds; automatically restored on next page open |
 | **Tagset configuration** | Custom DEPREL lists, UPOS/XPOS values, and dependency layers via \`labels.js\` or JSON |
 | **Export** | Download Gold CoNLL-U and tree view (all sentences) |
+| **Guided Tour** | Interactive introduction with spotlight and tooltips using the English example |
 | **Keyboard shortcuts** | Full operation without mouse |
 | **Multi-language** | German / English; add more languages via \`lang/xx.js\` |
-| **Tablet support** | Touch-optimised; arcs draggable, scrolling works |
+| **Tablet support** | Touch-optimised; arcs draggable, larger tap targets |
 
 ---
 
@@ -883,15 +912,24 @@ Use the **column toggle bar** to show or hide individual file columns.
 
 ---
 
-## 5) Edit CoNLL-U
+## 5) CoNLL-U
 
-Section 5 contains an expandable **text editor** for the raw CoNLL-U data.
+Section 5 shows and edits the CoNLL-U data for the current sentence. Its behaviour depends on the **edit mode** (lock in section 1):
 
-- **"▾ Open"** expands the editor; **"▴ Close"** collapses it again
-- Each loaded file has its own textarea showing the complete CoNLL-U text of all sentences
-- Fields grow automatically with the content — no internal scrolling in the textarea
-- Edit the text directly → **"✓ Apply"** applies the changes to all other views
-- **"✕ Reset"** discards all changes and restores the last saved state
+### Read-only mode (locked 🔒)
+
+- **Gold table** shows all tokens with current Gold annotations (HEAD, DEPREL, UPOS, XPOS) — read-only
+- Rows with active custom overrides are highlighted
+
+### Edit mode (unlocked 🔓)
+
+- **Gold table** (editable): adjust HEAD, DEPREL, UPOS, and XPOS directly — changes are saved immediately as custom values
+- **Tab "📝 Structured Editor"**: all CoNLL-U fields of each file as a structured table; add/delete rows, edit values directly
+- **Tab "Raw text"**: full CoNLL-U text per file as a textarea; grows automatically with content
+  - Edit the text → **"✓ Apply"** transfers changes to all other views
+  - **"✕ Reset"** discards changes and restores the last saved state
+
+The section title switches automatically between **"5) CoNLL-U"** (read-only) and **"5) Edit CoNLL-U"** (edit mode).
 
 ---
 
@@ -901,12 +939,19 @@ Section 5 contains an expandable **text editor** for the raw CoNLL-U data.
 
 The **⬇ button** next to each file downloads the original file content as \`.conllu\`.
 
-### All Sentences (Gold Annotation)
+### Active Project
 
 | Button | Content |
 |--------|---------|
-| **Download Gold CoNLL-U** | All sentences with current Gold annotations (HEAD, DEPREL, UPOS, XPOS); LEMMA/FEATS/DEPS/MISC from source file |
-| **Download tree view** | All sentences as plain-text trees with Gold tree and diff trees per file |
+| **Download Gold CoNLL-U** | All sentences of the active project with current Gold annotations (HEAD, DEPREL, UPOS, XPOS); LEMMA/FEATS/DEPS/MISC from source file |
+| **Download tree view (all sentences)** | All sentences as plain-text trees with Gold tree and diff trees per file |
+
+### All Projects
+
+| Button | Content |
+|--------|---------|
+| **Download all projects CoNLL-U** | Exports Gold CoNLL-U for each project as a separate file (\`gold_ProjectName.conllu\`) |
+| **Download all projects tree view** | Exports tree views for each project as a separate file |
 
 Keyboard shortcuts: \`e\` → CoNLL-U · \`E\` → tree view · \`c\` → copy current sentence to clipboard
 
@@ -926,7 +971,7 @@ The **session mechanism** saves the complete working state of all projects:
 | **📂 Load session** | Imports a saved session file |
 | **Drag & Drop** | Drop a \`.json\` file onto the page → automatically recognised as a session |
 
-The session format is versioned (\`version: 2\`) and human-readable JSON. Older sessions (\`version: 1\`) are automatically imported as a single project.
+The session format is versioned (\`version: 2\`) and human-readable JSON.
 
 ### Autosave
 
@@ -934,7 +979,7 @@ The working state is automatically saved to the browser's LocalStorage every **3
 
 ---
 
-## 6) Undo / Redo
+## Undo / Redo
 
 All annotation changes (file selection, custom popup, confirm, subtree adoption) can be undone. Each project has its own undo stack.
 
@@ -944,6 +989,16 @@ All annotation changes (file selection, custom popup, confirm, subtree adoption)
 | **↪ Redo** / \`Ctrl+Y\` | Redo undone change |
 
 The history is saved with the session (up to 80 steps per project).
+
+---
+
+## Guided Tour
+
+The **🎓 Guided Tour** button in the top-right corner starts an interactive introduction to all features.
+
+- The tour automatically opens the English example in a **temporary project** — your own data is completely untouched
+- A spotlight and tooltip walk you through all 16 steps: projects, files, sentence navigation, tree view, comparison table, gold annotation, edit mode, CoNLL-U editor, and export
+- Exit with **"Skip tour"**, \`Esc\`, or the "Done" button — the tour project is removed automatically
 
 ---
 
@@ -962,7 +1017,7 @@ The history is saved with the session (up to 80 steps per project).
 | \`1\`–\`9\` | Select file N as Gold source for focused row |
 | \`Ctrl+1\`–\`9\` | Load custom from file N |
 | \`Ctrl+Z\` | Undo |
-| \`Ctrl+Y\` | Redo |
+| \`Ctrl+Y\` / \`Ctrl+Shift+Z\` | Redo |
 | \`Del\` / \`Backspace\` | Delete custom for current sentence |
 | \`c\` | Copy current sentence as CoNLL-U to clipboard |
 | \`e\` | Export Gold CoNLL-U |
@@ -1137,6 +1192,7 @@ HTML_Editor/
 │   ├── i18n.js                ← Translation engine (t(), setLang(), registerLang())
 │   ├── theme.js               ← Dark/light mode toggle
 │   ├── help.js                ← Help modal (loads readme_content.js)
+│   ├── tour.js                ← Guided tour (temporary project, spotlight, tooltips)
 │   └── main.js                ← Initialisation, event listeners, UI rendering
 │
 ├── lang/
@@ -1188,7 +1244,7 @@ HTML_Editor/
 | \`js/state.js\` | Central state store; \`LABEL_COLS\` and \`DEP_COLS\` control column configuration |
 | \`js/projects.js\` | Project management; snapshot-swap on tab switch; auto-assignment for different sentence counts |
 | \`js/arcview.js\` | SVG arc diagram with drag & drop and cycle detection |
-| \`js/export.js\` | Session format v2 (multi-project); backward-compatible with v1 |
+| \`js/export.js\` | Session format v2 (multi-project); import/export, autosave |
 | \`bundler.py\` | Bundles all resources into \`dist/index.html\` for offline/embedded use |
 | \`make_readme_js.py\` | Converts \`README.md\` + \`README.en.md\` → \`generated/readme_content.js\` (for help modal) |
 

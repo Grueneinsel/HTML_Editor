@@ -10,17 +10,35 @@
 // Read-only (file views): click on token box scrolls to table row only.
 // ─────────────────────────────────────────────────────────────────────────────
 
-const _ARC_THRESH       = 5;  // px movement required on mouse to promote pointerdown to drag
-const _ARC_THRESH_TOUCH = 12; // higher threshold for touch/stylus (avoids accidental drags)
+const _ARC_THRESH       = 5;   // px movement required on mouse to promote pointerdown to drag
+const _ARC_THRESH_TOUCH = 14;  // movement threshold after hold fires
+const _ARC_HOLD_MS      = 230; // ms to hold still before touch drag mode activates
+const _ARC_HOLD_CANCEL  = 9;   // px movement during hold period that cancels hold (user is scrolling)
 
 let _arcPreDrag  = null; // pending drag state set on pointerdown, before threshold is crossed
 let _arcDrag     = null; // active drag state after threshold has been crossed
 let _arcRafId    = null; // rAF handle for pointermove throttle (avoids layout thrashing on tablet)
 let _arcLastMoveE = null; // latest captured pointermove event (consumed inside rAF)
+let _arcPreHold  = null; // touch-only: state before hold timer fires (no drag yet)
+let _arcHoldTimer = null; // setTimeout handle for hold-to-drag
 
 // Core pointermove logic — called inside a requestAnimationFrame so it runs at most
 // once per display frame instead of at the raw event rate (important for tablet perf).
 function _arcProcessMove(e) {
+  // Handle pre-hold: if the user moves too much during the hold period, cancel it
+  // so the browser can handle the gesture (e.g. vertical scroll).
+  if (_arcPreHold && e.pointerId === _arcPreHold.pointerId) {
+    const dx = e.clientX - _arcPreHold.startX;
+    const dy = e.clientY - _arcPreHold.startY;
+    if (Math.hypot(dx, dy) > _ARC_HOLD_CANCEL) {
+      clearTimeout(_arcHoldTimer); _arcHoldTimer = null;
+      // Release capture so the browser can resume scroll handling
+      try { _arcPreHold.overlayEl.releasePointerCapture(_arcPreHold.pointerId); } catch {}
+      _arcPreHold = null;
+    }
+    return; // Don't process as drag yet regardless
+  }
+
   if (_arcPreDrag && e.pointerId !== _arcPreDrag.pointerId) return;
   if (_arcDrag    && e.pointerId !== _arcDrag.pointerId)    return;
   // Promote pre-drag to real drag once the appropriate threshold is crossed
@@ -59,6 +77,11 @@ window.addEventListener('pointermove', e => {
 // Global pointercancel: browser cancelled the pointer (e.g. scroll gesture took over on tablet).
 // Clean up any active drag so the rubber-band line doesn't stay stuck on screen.
 window.addEventListener('pointercancel', e => {
+  // Cancel pre-hold if the browser took over
+  if (_arcPreHold && e.pointerId === _arcPreHold.pointerId) {
+    clearTimeout(_arcHoldTimer); _arcHoldTimer = null;
+    _arcPreHold = null;
+  }
   if (_arcPreDrag && e.pointerId !== _arcPreDrag.pointerId) return;
   if (_arcDrag    && e.pointerId !== _arcDrag.pointerId)    return;
   if (_arcRafId !== null) { cancelAnimationFrame(_arcRafId); _arcRafId = null; _arcLastMoveE = null; }
@@ -66,6 +89,7 @@ window.addEventListener('pointercancel', e => {
     _arcDrag.line?.remove();
     _arcDrag.dot?.remove();
     _arcDrag.svg.style.cursor = '';
+    if (_arcDrag._srcEl) _arcDrag._srcEl.style.fill = 'transparent';
     _arcClearHighlight(_arcDrag);
   }
   _arcPreDrag = null;
@@ -74,6 +98,13 @@ window.addEventListener('pointercancel', e => {
 
 // Global pointerup: handle drop — either a plain click (no threshold crossed) or a real drag.
 window.addEventListener('pointerup', e => {
+  // Touch hold released before timer fired → treat as click
+  if (_arcPreHold && e.pointerId === _arcPreHold.pointerId) {
+    clearTimeout(_arcHoldTimer); _arcHoldTimer = null;
+    const ph = _arcPreHold; _arcPreHold = null;
+    if (ph.onScrollTok) ph.onScrollTok(ph.depId);
+    return;
+  }
   if (_arcPreDrag && e.pointerId !== _arcPreDrag.pointerId) return;
   if (_arcDrag    && e.pointerId !== _arcDrag.pointerId)    return;
   if (_arcPreDrag && !_arcDrag) {
@@ -91,6 +122,7 @@ window.addEventListener('pointerup', e => {
     drag.line.remove();
     drag.dot.remove();
     drag.svg.style.cursor = '';
+    if (drag._srcEl) drag._srcEl.style.fill = 'transparent';
     _arcClearHighlight(drag);
   }
   // Use cached rect when available (set during drag) to avoid an extra reflow
@@ -157,7 +189,12 @@ function _arcBeginDrag(e) {
     const el = pd.svg.querySelector(`[data-arctokid="${t.id}"]`);
     if (el) _tokElCache.set(t.id, el);
   }
-  _arcDrag = { ...pd, line, dot, _hovId:null, _hovEl:null, _hovBad:false, _tokElCache, _svgRect:null };
+  // Highlight the source token so the user knows the drag is active
+  const srcEl = _tokElCache.get(pd.toks[pd.tokIdx].id);
+  if (srcEl) srcEl.style.fill = 'rgba(255,200,50,0.35)';
+  // Short haptic pulse on touch devices to confirm drag start
+  if (pd.isTouch) navigator.vibrate?.(12);
+  _arcDrag = { ...pd, line, dot, _hovId:null, _hovEl:null, _hovBad:false, _tokElCache, _srcEl:srcEl, _svgRect:null };
 }
 
 // Find the nearest token center within a vertical hit band around the word row.
@@ -268,11 +305,12 @@ function _arcShowDeprelPopup(anchorX, anchorY, depId, currentDeprel, onSetDeprel
        'list','parataxis','orphan','goeswith','reparandum','punct','root','dep']
       .map(d => `<option value="${d}">${d}</option>`).join('');
 
+  const _popupTouch = window.matchMedia('(pointer: coarse)').matches;
   const sel = document.createElement('select');
-  sel.size = 12;
+  sel.size = _popupTouch ? 10 : 12;
   sel.innerHTML = optsHtml;
   sel.value = currentDeprel;
-  sel.style.cssText = 'display:block; border:none; outline:none; background:var(--bg); color:var(--text); font-size:12px; font-family:inherit; cursor:pointer; min-width:110px;';
+  sel.style.cssText = `display:block; border:none; outline:none; background:var(--bg); color:var(--text); font-size:${_popupTouch ? 16 : 12}px; font-family:inherit; cursor:pointer; min-width:${_popupTouch ? 150 : 110}px;`;
 
   const close = () => popup.remove();
   sel.addEventListener('change', () => { onSetDeprel(depId, sel.value); close(); });
@@ -567,26 +605,47 @@ function buildArcDiagram(tokMap, { onSetHead = null, onDeleteArc = null, onSetDe
       rx:6, fill:'transparent',
       cursor: editable ? 'grab' : (scrollToTok ? 'pointer' : 'default') });
     overlay.dataset.arctokid = t.id;
-    // Block scroll over token boxes so drag works on tablets (SVG allows pan-y globally)
-    overlay.style.touchAction = 'none';
-
     if (editable) {
+      // Touch: allow vertical scroll (pan-y) — hold timer decides if it's a drag.
+      // Mouse: block all default pointer actions (none) so drag starts immediately.
+      overlay.style.touchAction = 'pan-y';
+
       overlay.addEventListener('pointerdown', ev => {
         // Ignore right-clicks on mouse; accept all buttons for stylus/touch
         if (ev.pointerType === 'mouse' && ev.button !== 0) return;
-        ev.preventDefault();
-        // Capture pointer so pointermove/pointerup stay reliable even outside the element
-        overlay.setPointerCapture(ev.pointerId);
-        // Record pre-drag state; actual drag starts only after _ARC_THRESH movement
-        _arcPreDrag = {
+
+        const isTouch = ev.pointerType !== 'mouse';
+        const tokData = {
           startX: ev.clientX, startY: ev.clientY,
           pointerId: ev.pointerId,
-          isTouch: ev.pointerType !== 'mouse',
+          isTouch,
           tokIdx: i, depId: t.id,
           svg, centers, wordY, cellH: CELL_H, rootH: ROOT_H, rootZoneH: ROOT_ZONE, toks,
           onSetHead, onSetDeprel, onScrollTok: scrollToTok,
           _hovId: null, _hovEl: null, _hovBad: false,
         };
+
+        if (isTouch) {
+          // Hold-to-drag: capture pointer early so we track movement reliably,
+          // but don't enter drag mode until hold timer fires.
+          // If the user moves > _ARC_HOLD_CANCEL px before the timer, we release
+          // capture and let the browser handle the gesture (e.g. vertical scroll).
+          overlay.setPointerCapture(ev.pointerId);
+          _arcPreHold = { ...tokData, overlayEl: overlay };
+          _arcHoldTimer = setTimeout(() => {
+            if (!_arcPreHold) return;
+            const ph = _arcPreHold; _arcPreHold = null;
+            // Hold confirmed — enter pre-drag mode with visual + haptic feedback
+            ph.overlayEl.style.fill = 'rgba(255,200,50,0.35)';
+            navigator.vibrate?.(15);
+            _arcPreDrag = ph;
+          }, _ARC_HOLD_MS);
+        } else {
+          // Mouse: immediate pre-drag (existing behaviour)
+          ev.preventDefault();
+          overlay.setPointerCapture(ev.pointerId);
+          _arcPreDrag = tokData;
+        }
       });
       overlay.addEventListener('pointerenter', () => { overlay.style.fill = 'rgba(74,158,255,0.10)'; });
       overlay.addEventListener('pointerleave', () => { overlay.style.fill = 'transparent'; });

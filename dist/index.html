@@ -503,6 +503,51 @@ tr.keyFocus > td:first-child{ border-left:2px solid var(--accent) }
   font-size:11px; line-height:1.5;
 }
 
+/* Tagset detail panel */
+.tagsetListPanel{
+  margin-top:6px; border-radius:8px;
+  border:1px solid var(--border); background:var(--card-bg);
+  display:flex; flex-wrap:wrap; overflow:hidden;
+}
+.tagsetListRow{ padding:5px 10px; font-size:12px; width:100%; }
+.tagsetSection{
+  padding:5px 10px 7px;
+  border-right:1px solid var(--border);
+  border-bottom:1px solid var(--border);
+  flex:0 0 auto;
+}
+.tagsetSection--dep{
+  flex:1 1 auto;
+  border-right:none;
+}
+/* hide bottom border on last row of sections */
+.tagsetSection:last-child,
+.tagsetSection--dep:last-child{ border-bottom:none; }
+.tagsetSectionHead{
+  font-size:10px; font-weight:700; text-transform:uppercase;
+  letter-spacing:.4px; color:var(--muted); margin-bottom:4px;
+}
+/* label columns: tags flow inline */
+.tagsetSection:not(.tagsetSection--dep) .tagsetSectionBody{
+  display:flex; flex-wrap:wrap; gap:2px;
+}
+/* dep columns: groups in a 2-col grid */
+.tagsetSection--dep .tagsetSectionBody{
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(230px, 1fr));
+  gap:2px 10px;
+}
+.tagsetGroup{ display:flex; flex-wrap:wrap; gap:2px; align-items:baseline; }
+.tagsetGroupName{
+  font-size:10px; color:var(--muted); white-space:nowrap;
+  flex-shrink:0; padding-right:3px;
+}
+.tagsetTag{
+  display:inline-block; font-size:11px; font-family:monospace;
+  background:var(--border); border-radius:3px; padding:1px 4px;
+  color:var(--fg);
+}
+
 /* File list + Drop zone */
 .fileList{
   display:grid; gap:6px;
@@ -1559,8 +1604,11 @@ document.addEventListener('DOMContentLoaded', _syncThemeBtn);
         <label class="btnLike" for="tagsetInput" data-i18n="tagset.upload">📤 Tagset hochladen</label>
         <button id="tagsetDownloadBtn" data-i18n="tagset.download">📥 Tagset herunterladen</button>
         <button id="tagsetTemplateBtn" data-i18n="tagset.template">📋 Vorlage herunterladen</button>
+        <button id="tagsetExampleBtn" data-i18n="tagset.example">📄 Beispiel herunterladen</button>
+        <button id="tagsetListBtn" data-i18n="tagset.listToggle">📑 Tagset anzeigen</button>
         <span id="tagsetMeta" class="muted small"></span>
       </div>
+      <div id="tagsetListPanel" class="tagsetListPanel"></div>
       <div id="fileList" class="fileList" style="margin-top:10px"></div>
       <div id="projectLockBar" class="projectLockBar"></div>
       <div id="textWarn"></div>
@@ -1806,7 +1854,7 @@ window.LANG_DE = {
   'session.exported':  'Exportiert: {n} Datei(en), {u} Undo-Schritte',
   'session.loaded':    'Geladen: {n} Datei(en) · {s} Sätze · {u} Undo-Schritte',
   'session.errJson':   'Ungültige JSON-Datei.',
-  'session.errFormat': 'Unbekanntes Session-Format (version ≠ 1).',
+  'session.errFormat': 'Unbekanntes Session-Format (erwartet version: 2).',
   'session.errNoDocs': 'Session enthält keine Dateien.',
 
   // Tastaturkürzel-Legende (Header)
@@ -1830,6 +1878,9 @@ window.LANG_DE = {
   'tagset.download':  '📥 Tagset herunterladen',
   'tagset.template':  '📋 Vorlage herunterladen',
   'tagset.loaded':    '{deprel} Deprel · {upos} UPOS · {xpos} XPOS geladen',
+  'tagset.example':    '📄 Beispiel herunterladen',
+  'tagset.listToggle': '📑 Tagset anzeigen',
+  'tagset.noLabels':   'Kein Tagset konfiguriert',
   'tagset.errJson':   'Ungültige JSON-Datei.',
   'tagset.errFormat': 'Tagset muss ein JSON-Objekt sein.',
 
@@ -2054,6 +2105,9 @@ window.LANG_EN = {
   'tagset.download':  '📥 Download tagset',
   'tagset.template':  '📋 Download template',
   'tagset.loaded':    '{deprel} deprels · {upos} UPOS · {xpos} XPOS loaded',
+  'tagset.example':    '📄 Download example',
+  'tagset.listToggle': '📑 Show tagset',
+  'tagset.noLabels':   'No tagset configured',
   'tagset.errJson':   'Invalid JSON file.',
   'tagset.errFormat': 'Tagset must be a JSON object.',
 
@@ -2064,7 +2118,7 @@ window.LANG_EN = {
   'session.exported':  'Exported: {n} file(s), {u} undo steps',
   'session.loaded':    'Loaded: {n} file(s) · {s} sentences · {u} undo steps',
   'session.errJson':   'Invalid JSON file.',
-  'session.errFormat': 'Unknown session format (version ≠ 1).',
+  'session.errFormat': 'Unknown session format (expected version: 2).',
   'session.errNoDocs': 'Session contains no files.',
 
   // Keyboard shortcut legend (header)
@@ -3210,6 +3264,7 @@ function _loadActiveProject(){
   buildDeprelOptionsCache();
   if(typeof _resetPopup       === "function") _resetPopup();
   if(typeof _updateTagsetMeta === "function") _updateTagsetMeta();
+  if(typeof renderTagsetList  === "function") renderTagsetList();
 }
 
 // ── Public API ────────────────────────────────────────────────────────────────
@@ -4222,17 +4277,35 @@ cmpTable.addEventListener('click', (e) => {
 // Read-only (file views): click on token box scrolls to table row only.
 // ─────────────────────────────────────────────────────────────────────────────
 
-const _ARC_THRESH       = 5;  // px movement required on mouse to promote pointerdown to drag
-const _ARC_THRESH_TOUCH = 12; // higher threshold for touch/stylus (avoids accidental drags)
+const _ARC_THRESH       = 5;   // px movement required on mouse to promote pointerdown to drag
+const _ARC_THRESH_TOUCH = 14;  // movement threshold after hold fires
+const _ARC_HOLD_MS      = 230; // ms to hold still before touch drag mode activates
+const _ARC_HOLD_CANCEL  = 9;   // px movement during hold period that cancels hold (user is scrolling)
 
 let _arcPreDrag  = null; // pending drag state set on pointerdown, before threshold is crossed
 let _arcDrag     = null; // active drag state after threshold has been crossed
 let _arcRafId    = null; // rAF handle for pointermove throttle (avoids layout thrashing on tablet)
 let _arcLastMoveE = null; // latest captured pointermove event (consumed inside rAF)
+let _arcPreHold  = null; // touch-only: state before hold timer fires (no drag yet)
+let _arcHoldTimer = null; // setTimeout handle for hold-to-drag
 
 // Core pointermove logic — called inside a requestAnimationFrame so it runs at most
 // once per display frame instead of at the raw event rate (important for tablet perf).
 function _arcProcessMove(e) {
+  // Handle pre-hold: if the user moves too much during the hold period, cancel it
+  // so the browser can handle the gesture (e.g. vertical scroll).
+  if (_arcPreHold && e.pointerId === _arcPreHold.pointerId) {
+    const dx = e.clientX - _arcPreHold.startX;
+    const dy = e.clientY - _arcPreHold.startY;
+    if (Math.hypot(dx, dy) > _ARC_HOLD_CANCEL) {
+      clearTimeout(_arcHoldTimer); _arcHoldTimer = null;
+      // Release capture so the browser can resume scroll handling
+      try { _arcPreHold.overlayEl.releasePointerCapture(_arcPreHold.pointerId); } catch {}
+      _arcPreHold = null;
+    }
+    return; // Don't process as drag yet regardless
+  }
+
   if (_arcPreDrag && e.pointerId !== _arcPreDrag.pointerId) return;
   if (_arcDrag    && e.pointerId !== _arcDrag.pointerId)    return;
   // Promote pre-drag to real drag once the appropriate threshold is crossed
@@ -4271,6 +4344,11 @@ window.addEventListener('pointermove', e => {
 // Global pointercancel: browser cancelled the pointer (e.g. scroll gesture took over on tablet).
 // Clean up any active drag so the rubber-band line doesn't stay stuck on screen.
 window.addEventListener('pointercancel', e => {
+  // Cancel pre-hold if the browser took over
+  if (_arcPreHold && e.pointerId === _arcPreHold.pointerId) {
+    clearTimeout(_arcHoldTimer); _arcHoldTimer = null;
+    _arcPreHold = null;
+  }
   if (_arcPreDrag && e.pointerId !== _arcPreDrag.pointerId) return;
   if (_arcDrag    && e.pointerId !== _arcDrag.pointerId)    return;
   if (_arcRafId !== null) { cancelAnimationFrame(_arcRafId); _arcRafId = null; _arcLastMoveE = null; }
@@ -4278,6 +4356,7 @@ window.addEventListener('pointercancel', e => {
     _arcDrag.line?.remove();
     _arcDrag.dot?.remove();
     _arcDrag.svg.style.cursor = '';
+    if (_arcDrag._srcEl) _arcDrag._srcEl.style.fill = 'transparent';
     _arcClearHighlight(_arcDrag);
   }
   _arcPreDrag = null;
@@ -4286,6 +4365,13 @@ window.addEventListener('pointercancel', e => {
 
 // Global pointerup: handle drop — either a plain click (no threshold crossed) or a real drag.
 window.addEventListener('pointerup', e => {
+  // Touch hold released before timer fired → treat as click
+  if (_arcPreHold && e.pointerId === _arcPreHold.pointerId) {
+    clearTimeout(_arcHoldTimer); _arcHoldTimer = null;
+    const ph = _arcPreHold; _arcPreHold = null;
+    if (ph.onScrollTok) ph.onScrollTok(ph.depId);
+    return;
+  }
   if (_arcPreDrag && e.pointerId !== _arcPreDrag.pointerId) return;
   if (_arcDrag    && e.pointerId !== _arcDrag.pointerId)    return;
   if (_arcPreDrag && !_arcDrag) {
@@ -4303,6 +4389,7 @@ window.addEventListener('pointerup', e => {
     drag.line.remove();
     drag.dot.remove();
     drag.svg.style.cursor = '';
+    if (drag._srcEl) drag._srcEl.style.fill = 'transparent';
     _arcClearHighlight(drag);
   }
   // Use cached rect when available (set during drag) to avoid an extra reflow
@@ -4369,7 +4456,12 @@ function _arcBeginDrag(e) {
     const el = pd.svg.querySelector(`[data-arctokid="${t.id}"]`);
     if (el) _tokElCache.set(t.id, el);
   }
-  _arcDrag = { ...pd, line, dot, _hovId:null, _hovEl:null, _hovBad:false, _tokElCache, _svgRect:null };
+  // Highlight the source token so the user knows the drag is active
+  const srcEl = _tokElCache.get(pd.toks[pd.tokIdx].id);
+  if (srcEl) srcEl.style.fill = 'rgba(255,200,50,0.35)';
+  // Short haptic pulse on touch devices to confirm drag start
+  if (pd.isTouch) navigator.vibrate?.(12);
+  _arcDrag = { ...pd, line, dot, _hovId:null, _hovEl:null, _hovBad:false, _tokElCache, _srcEl:srcEl, _svgRect:null };
 }
 
 // Find the nearest token center within a vertical hit band around the word row.
@@ -4480,11 +4572,12 @@ function _arcShowDeprelPopup(anchorX, anchorY, depId, currentDeprel, onSetDeprel
        'list','parataxis','orphan','goeswith','reparandum','punct','root','dep']
       .map(d => `<option value="${d}">${d}</option>`).join('');
 
+  const _popupTouch = window.matchMedia('(pointer: coarse)').matches;
   const sel = document.createElement('select');
-  sel.size = 12;
+  sel.size = _popupTouch ? 10 : 12;
   sel.innerHTML = optsHtml;
   sel.value = currentDeprel;
-  sel.style.cssText = 'display:block; border:none; outline:none; background:var(--bg); color:var(--text); font-size:12px; font-family:inherit; cursor:pointer; min-width:110px;';
+  sel.style.cssText = `display:block; border:none; outline:none; background:var(--bg); color:var(--text); font-size:${_popupTouch ? 16 : 12}px; font-family:inherit; cursor:pointer; min-width:${_popupTouch ? 150 : 110}px;`;
 
   const close = () => popup.remove();
   sel.addEventListener('change', () => { onSetDeprel(depId, sel.value); close(); });
@@ -4779,26 +4872,47 @@ function buildArcDiagram(tokMap, { onSetHead = null, onDeleteArc = null, onSetDe
       rx:6, fill:'transparent',
       cursor: editable ? 'grab' : (scrollToTok ? 'pointer' : 'default') });
     overlay.dataset.arctokid = t.id;
-    // Block scroll over token boxes so drag works on tablets (SVG allows pan-y globally)
-    overlay.style.touchAction = 'none';
-
     if (editable) {
+      // Touch: allow vertical scroll (pan-y) — hold timer decides if it's a drag.
+      // Mouse: block all default pointer actions (none) so drag starts immediately.
+      overlay.style.touchAction = 'pan-y';
+
       overlay.addEventListener('pointerdown', ev => {
         // Ignore right-clicks on mouse; accept all buttons for stylus/touch
         if (ev.pointerType === 'mouse' && ev.button !== 0) return;
-        ev.preventDefault();
-        // Capture pointer so pointermove/pointerup stay reliable even outside the element
-        overlay.setPointerCapture(ev.pointerId);
-        // Record pre-drag state; actual drag starts only after _ARC_THRESH movement
-        _arcPreDrag = {
+
+        const isTouch = ev.pointerType !== 'mouse';
+        const tokData = {
           startX: ev.clientX, startY: ev.clientY,
           pointerId: ev.pointerId,
-          isTouch: ev.pointerType !== 'mouse',
+          isTouch,
           tokIdx: i, depId: t.id,
           svg, centers, wordY, cellH: CELL_H, rootH: ROOT_H, rootZoneH: ROOT_ZONE, toks,
           onSetHead, onSetDeprel, onScrollTok: scrollToTok,
           _hovId: null, _hovEl: null, _hovBad: false,
         };
+
+        if (isTouch) {
+          // Hold-to-drag: capture pointer early so we track movement reliably,
+          // but don't enter drag mode until hold timer fires.
+          // If the user moves > _ARC_HOLD_CANCEL px before the timer, we release
+          // capture and let the browser handle the gesture (e.g. vertical scroll).
+          overlay.setPointerCapture(ev.pointerId);
+          _arcPreHold = { ...tokData, overlayEl: overlay };
+          _arcHoldTimer = setTimeout(() => {
+            if (!_arcPreHold) return;
+            const ph = _arcPreHold; _arcPreHold = null;
+            // Hold confirmed — enter pre-drag mode with visual + haptic feedback
+            ph.overlayEl.style.fill = 'rgba(255,200,50,0.35)';
+            navigator.vibrate?.(15);
+            _arcPreDrag = ph;
+          }, _ARC_HOLD_MS);
+        } else {
+          // Mouse: immediate pre-drag (existing behaviour)
+          ev.preventDefault();
+          overlay.setPointerCapture(ev.pointerId);
+          _arcPreDrag = tokData;
+        }
       });
       overlay.addEventListener('pointerenter', () => { overlay.style.fill = 'rgba(74,158,255,0.10)'; });
       overlay.addEventListener('pointerleave', () => { overlay.style.fill = 'transparent'; });
@@ -5345,8 +5459,7 @@ function renderPreview(){
 /** Returns true if parsed JSON looks like a saved session. */
 function _isSessionJson(data){
   if(!data || typeof data !== "object" || Array.isArray(data)) return false;
-  return (data.version === 1 || data.version === 2) &&
-         (Array.isArray(data.docs) || Array.isArray(data.projects));
+  return data.version === 2 && Array.isArray(data.projects);
 }
 
 /** Apply a parsed tagset object (LABELS) to the active project only. */
@@ -5362,6 +5475,7 @@ function applyTagsetJson(data){
   if(p) p.labels = JSON.parse(JSON.stringify(LABELS));
   renderSentence();
   _updateTagsetMeta();
+  renderTagsetList();
 }
 
 // Update the tagset-meta display line with counts from the currently active LABELS.
@@ -5448,6 +5562,124 @@ async function _dispatchFiles(files){
       a.download = "tagset_template.json";
       a.click();
       URL.revokeObjectURL(a.href);
+    });
+  }
+}
+
+// ── Example tagset download ────────────────────────────────────────────────────
+// A realistic, annotated example showing the extended __cols__ / __dep_cols__ format.
+const _TAGSET_EXAMPLE = JSON.stringify({
+  "_comment": "Beispiel-Tagset im erweiterten Format (__cols__ + __dep_cols__).",
+
+  "__cols__": [
+    {
+      "key":    "upos",
+      "name":   "UPOS",
+      "values": ["ADJ","ADP","ADV","AUX","CCONJ","DET","INTJ","NOUN","NUM",
+                 "PART","PRON","PROPN","PUNCT","SCONJ","SYM","VERB","X"]
+    },
+    {
+      "key":    "xpos",
+      "name":   "XPOS (STTS)",
+      "values": ["ADJA","ADJD","ADV","ART","CARD","FM","ITJ","KON","KOUS",
+                 "NE","NN","PDAT","PDS","PPER","PPOSS","PRELS","PRF",
+                 "PTKNEG","PWAV","VAFIN","VAINF","VAPP","VMFIN","VVFIN",
+                 "VVINF","VVPP","XY","$,","$.","$("]
+    }
+  ],
+
+  "__dep_cols__": [
+    {
+      "key":  "dep",
+      "name": "UD DepRel",
+      "groups": {
+        "Kernargumente":   ["nsubj","nsubj:pass","obj","iobj","csubj","ccomp","xcomp"],
+        "Nicht-Kernarg.":  ["obl","obl:arg","vocative","expl","dislocated"],
+        "Modifikatoren":   ["advcl","advmod","discourse"],
+        "Funktionswörter": ["aux","aux:pass","cop","mark"],
+        "Nominalabh.":     ["nmod","appos","nummod","acl","acl:relcl","amod","det","clf","case"],
+        "Koordination":    ["conj","cc"],
+        "MWE & Sonstiges": ["fixed","flat","flat:name","list","parataxis","compound",
+                            "orphan","goeswith","reparandum","punct","root","dep"]
+      }
+    }
+  ]
+}, null, 2);
+
+{
+  const _tagsetExampleBtnEl = document.getElementById("tagsetExampleBtn");
+  if(_tagsetExampleBtnEl){
+    _tagsetExampleBtnEl.addEventListener("click", () => {
+      const blob = new Blob([_TAGSET_EXAMPLE], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "tagset_example.json";
+      a.click();
+      URL.revokeObjectURL(a.href);
+    });
+  }
+}
+
+// ── Per-project tagset list ────────────────────────────────────────────────────
+
+/** Render the active project's tagset content into the detail panel. */
+function renderTagsetList(){
+  const panel = document.getElementById("tagsetListPanel");
+  if(!panel) return;
+
+  const lbl = LABELS || {};
+  const cols    = lbl["__cols__"]     || [];
+  const depCols = lbl["__dep_cols__"] || [];
+
+  // Old format fallback
+  const uposArr = lbl["__upos__"] || [];
+  const xposArr = lbl["__xpos__"] || [];
+  const oldGroups = Object.entries(lbl).filter(([k]) => !k.startsWith("__"));
+
+  const sections = [];
+
+  // Label columns (__cols__ or __upos__/__xpos__)
+  const labelArr = cols.length ? cols : [
+    ...(uposArr.length ? [{ key:"upos", name:"UPOS",        values: uposArr }] : []),
+    ...(xposArr.length ? [{ key:"xpos", name:"XPOS",        values: xposArr }] : []),
+  ];
+  for(const col of labelArr){
+    const vals = col.values || [];
+    sections.push(`<div class="tagsetSection">
+      <div class="tagsetSectionHead">${escapeHtml(col.name || col.key)} <span class="muted">(${vals.length})</span></div>
+      <div class="tagsetSectionBody">${vals.map(v => `<span class="tagsetTag">${escapeHtml(v)}</span>`).join("")}</div>
+    </div>`);
+  }
+
+  // Dep columns (__dep_cols__ or old group format)
+  const depArr = depCols.length ? depCols
+    : (oldGroups.length ? [{ key:"dep", name:"DepRel", groups: Object.fromEntries(oldGroups) }] : []);
+  for(const dc of depArr){
+    const groups  = dc.groups || {};
+    const total   = Object.values(groups).reduce((s, a) => s + a.length, 0);
+    const groupHtml = Object.entries(groups).map(([gname, tags]) =>
+      `<div class="tagsetGroup">
+        <span class="tagsetGroupName">${escapeHtml(gname)}</span>
+        ${tags.map(v => `<span class="tagsetTag">${escapeHtml(v)}</span>`).join("")}
+      </div>`
+    ).join("");
+    sections.push(`<div class="tagsetSection tagsetSection--dep">
+      <div class="tagsetSectionHead">${escapeHtml(dc.name || dc.key)} <span class="muted">(${total})</span></div>
+      <div class="tagsetSectionBody">${groupHtml}</div>
+    </div>`);
+  }
+
+  panel.innerHTML = sections.length
+    ? sections.join("")
+    : `<div class="tagsetListRow"><em class="muted">${t("tagset.noLabels")}</em></div>`;
+}
+
+{
+  const _tagsetListBtnEl = document.getElementById("tagsetListBtn");
+  const _tagsetListPanel = document.getElementById("tagsetListPanel");
+  if(_tagsetListBtnEl && _tagsetListPanel){
+    _tagsetListBtnEl.addEventListener("click", () => {
+      _tagsetListPanel.hidden = !_tagsetListPanel.hidden;
     });
   }
 }
@@ -7183,6 +7415,7 @@ _initAutoAdvance();   // restore auto-advance checkbox from localStorage
 renderFiles();
 renderSentSelect();
 renderSentence();
+if(typeof renderTagsetList === 'function') renderTagsetList();
 renderConlluEditor(true);
 _updateSectionVisibility();
 // ?dev in URL → force-enable dev mode (persisted to localStorage)
@@ -7397,83 +7630,40 @@ function importSession(jsonText){
   try { data = JSON.parse(jsonText); }
   catch { alert(t('session.errJson')); return; }
 
-  // ── v2: multi-project format ──────────────────────────────────────────────
-  if(data.version === 2 && Array.isArray(data.projects) && data.projects.length){
-    state.projects = data.projects.map(p => {
-      const docs = (p.docs || []).filter(d => typeof d.content === "string").map(d => {
-        const parsed = parseConllu(d.content);
-        return { key: `session::${d.name}`, name: d.name, content: d.content, sentences: parsed.sentences };
-      });
-      // Per-project labels: use saved labels, fall back to top-level (old sessions), then default
-      const projLabels = p.labels
-        || (data.labels && typeof data.labels === "object" ? data.labels : null);
-      return {
-        name:        p.name || t('project.default'),
-        docs,
-        custom:      JSON.parse(JSON.stringify(p.custom    || {})),
-        goldPick:    JSON.parse(JSON.stringify(p.goldPick  || {})),
-        confirmed:   p.confirmed || [],
-        notes:       JSON.parse(JSON.stringify(p.notes     || {})),
-        flags:       p.flags || {},
-        currentSent: p.currentSent || 0,
-        maxSents:    Math.max(0, ...docs.map(d => d.sentences.length), 0),
-        hiddenCols:  p.hiddenCols  || [],
-        undoStack:   p.undo  || [],
-        redoStack:   p.redo  || [],
-        labels:      projLabels,
-        unlocked:    p.unlocked || false,
-      };
-    });
-    state.activeProjectIdx = Math.min(data.activeProjectIdx || 0, state.projects.length - 1);
-    _loadActiveProject();
-    renderProjectTabs();
-    renderFiles();
-    renderSentSelect();
-    renderSentence();
-    const totalDocs = state.projects.reduce((s, p) => s + p.docs.length, 0);
-    _showSessionMeta(t('session.loaded', { n: totalDocs, s: state.maxSents, u: data.projects[state.activeProjectIdx]?.undo?.length || 0 }));
-    return;
-  }
-
-  // ── v1: backward-compat single-project ───────────────────────────────────
-  if(data.version !== 1 || !Array.isArray(data.docs)){
+  if(data.version !== 2 || !Array.isArray(data.projects) || !data.projects.length){
     alert(t('session.errFormat')); return;
   }
-  if(!data.docs.length){
-    alert(t('session.errNoDocs')); return;
-  }
 
-  const docs = [];
-  for(const d of data.docs){
-    if(typeof d.content !== "string") continue;
-    const parsed = parseConllu(d.content);
-    docs.push({ key: `session::${d.name}`, name: d.name, content: d.content, sentences: parsed.sentences });
-  }
-  const maxSents = Math.max(0, ...docs.map(d => d.sentences.length), 0);
-  const currentSent = Math.min(data.currentSent || 0, Math.max(0, maxSents - 1));
-
-  state.projects = [{
-    name:        `${t('project.default')} 1`,
-    docs,
-    custom:      JSON.parse(JSON.stringify(data.custom    || {})),
-    goldPick:    JSON.parse(JSON.stringify(data.goldPick  || {})),
-    confirmed:   data.confirmed || [],
-    notes:       JSON.parse(JSON.stringify(data.notes     || {})),
-    flags:       {},
-    currentSent,
-    maxSents,
-    hiddenCols:  [],
-    undoStack:   data.undo || [],
-    redoStack:   data.redo || [],
-    labels:      (data.labels && typeof data.labels === "object") ? data.labels : null,
-  }];
-  state.activeProjectIdx = 0;
+  state.projects = data.projects.map(p => {
+    const docs = (p.docs || []).filter(d => typeof d.content === "string").map(d => {
+      const parsed = parseConllu(d.content);
+      return { key: `session::${d.name}`, name: d.name, content: d.content, sentences: parsed.sentences };
+    });
+    return {
+      name:        p.name || t('project.default'),
+      docs,
+      custom:      JSON.parse(JSON.stringify(p.custom    || {})),
+      goldPick:    JSON.parse(JSON.stringify(p.goldPick  || {})),
+      confirmed:   p.confirmed || [],
+      notes:       JSON.parse(JSON.stringify(p.notes     || {})),
+      flags:       p.flags || {},
+      currentSent: p.currentSent || 0,
+      maxSents:    Math.max(0, ...docs.map(d => d.sentences.length), 0),
+      hiddenCols:  p.hiddenCols  || [],
+      undoStack:   p.undo  || [],
+      redoStack:   p.redo  || [],
+      labels:      p.labels || null,
+      unlocked:    p.unlocked || false,
+    };
+  });
+  state.activeProjectIdx = Math.min(data.activeProjectIdx || 0, state.projects.length - 1);
   _loadActiveProject();
   renderProjectTabs();
   renderFiles();
   renderSentSelect();
   renderSentence();
-  _showSessionMeta(t('session.loaded', { n: docs.length, s: maxSents, u: data.undo?.length || 0 }));
+  const totalDocs = state.projects.reduce((s, p) => s + p.docs.length, 0);
+  _showSessionMeta(t('session.loaded', { n: totalDocs, s: state.maxSents, u: data.projects[state.activeProjectIdx]?.undo?.length || 0 }));
 }
 
 // Show a transient message in the session meta area, auto-clearing after 4 seconds.
@@ -7618,10 +7808,9 @@ function _tryAutoSaveRestoreAuto(){
   if(!raw) return;
   let data;
   try { data = JSON.parse(raw); } catch { return; }
-  const isV1 = data?.version === 1 && Array.isArray(data.docs) && data.docs.length > 0;
   const isV2 = data?.version === 2 && Array.isArray(data.projects)
                && data.projects.some(p => Array.isArray(p.docs) && p.docs.length > 0);
-  if(!isV1 && !isV2) return;
+  if(!isV2) return;
   try {
     importSession(raw);
     if(typeof renderConlluEditor === 'function') renderConlluEditor(true);
@@ -7893,16 +8082,17 @@ Läuft vollständig lokal ohne Server — einfach \`index.html\` im Browser öff
 | **CoNLL-U-Vergleich** | Token-für-Token-Diff mehrerer Dateien gegen eine Gold-Annotation |
 | **Interaktiver Baum** | Abhängigkeitsbäume mit Drag-&-Drop-Pfeilen, Relation-Auswahl, ROOT-Zone |
 | **Gold-Annotation** | Per Klick, Popup oder Tastaturkürzel — Custom-Werte überschreiben Datei-Werte |
-| **CoNLL-U-Editor** | Direkte Bearbeitung aller Sätze je Datei als plain Text (Abschnitt 5) |
+| **CoNLL-U-Editor** | Strukturierter Editor und Roh-Textarea je Datei; Gold-Tabelle im Lesemodus sichtbar |
 | **Satzverwaltung** | Sätze einfügen, löschen, sortieren — Satzliste immer sichtbar |
 | **Undo/Redo** | Bis zu 80 Schritte pro Projekt; wird mit Session gespeichert |
 | **Session-Export** | Vollständigen Arbeitsstand als JSON sichern und laden |
 | **Autosave** | Arbeitsstand wird alle 30 Sekunden lokal gesichert und beim Start automatisch geladen |
 | **Tagset-Konfiguration** | Eigene DEPREL-Listen, UPOS/XPOS-Werte und Dependency-Layer per \`labels.js\` oder JSON |
 | **Export** | Gold CoNLL-U und Baumansicht (alle Sätze) herunterladen |
+| **Guided Tour** | Interaktive Einführung mit Spotlight und Tooltips anhand des englischen Beispiels |
 | **Tastaturkürzel** | Vollständige Bedienung ohne Maus |
 | **Mehrsprachig** | Deutsch / Englisch; weitere Sprachen per \`lang/xx.js\` |
-| **Tablet-Unterstützung** | Touch-optimiert; Pfeile ziehbar, Scrollen funktioniert |
+| **Tablet-Unterstützung** | Touch-optimiert; Pfeile ziehbar, vergrößerte Tap-Ziele |
 
 ---
 
@@ -8143,15 +8333,24 @@ Die Anzahl der Felder passt sich automatisch an die geladene Tagset-Konfiguratio
 
 ---
 
-## 5) CoNLL-U bearbeiten
+## 5) CoNLL-U
 
-Abschnitt 5 enthält einen ausklappbaren **Texteditor** für die rohen CoNLL-U-Daten.
+Abschnitt 5 zeigt und bearbeitet die CoNLL-U-Daten des aktuellen Satzes. Das Verhalten hängt vom **Bearbeitungsmodus** ab (Schloss in Abschnitt 1):
 
-- **„▾ Öffnen"** klappt den Editor aus; **„▴ Schließen"** klappt ihn wieder ein
-- Für jede geladene Datei gibt es eine eigene Textarea mit dem vollständigen CoNLL-U-Text aller Sätze
-- Die Felder wachsen automatisch mit dem Inhalt — kein Scrollen in der Textarea nötig
-- Änderungen direkt am Text eingeben → **„✓ Übernehmen"** übernimmt sie in alle anderen Ansichten
-- **„✕ Zurücksetzen"** verwirft alle Änderungen und stellt den zuletzt gespeicherten Stand wieder her
+### Lesemodus (gesperrt 🔒)
+
+- **Gold-Tabelle** zeigt alle Tokens mit den aktuellen Gold-Annotationen (HEAD, DEPREL, UPOS, XPOS) — schreibgeschützt
+- Zeilen mit aktiven Custom-Überschreibungen sind farbig hervorgehoben
+
+### Bearbeitungsmodus (entsperrt 🔓)
+
+- **Gold-Tabelle** (editierbar): HEAD, DEPREL, UPOS und XPOS direkt anpassen — Änderungen werden sofort als Custom-Werte gespeichert
+- **Tab „📝 Strukturierter Editor"**: Alle CoNLL-U-Felder jeder Datei als strukturierte Tabelle; Zeilen hinzufügen/löschen, Werte direkt eingeben
+- **Tab „Rohtext"**: Vollständiger CoNLL-U-Text je Datei als Textarea; wächst automatisch mit dem Inhalt
+  - Änderungen eingeben → **„✓ Übernehmen"** überträgt sie in alle anderen Ansichten
+  - **„✕ Zurücksetzen"** verwirft Änderungen und stellt den letzten gespeicherten Stand wieder her
+
+Der Titel des Abschnitts wechselt automatisch zwischen **„5) CoNLL-U"** (Lesemodus) und **„5) CoNLL-U bearbeiten"** (Bearbeitungsmodus).
 
 ---
 
@@ -8161,12 +8360,19 @@ Abschnitt 5 enthält einen ausklappbaren **Texteditor** für die rohen CoNLL-U-D
 
 Der **⬇-Button** neben jeder Datei lädt den Original-Inhalt der Datei als \`.conllu\` herunter.
 
-### Alle Sätze (Gold-Annotation)
+### Aktives Projekt
 
 | Button | Inhalt |
 |--------|--------|
-| **Gold CoNLL-U herunterladen** | Alle Sätze mit aktuellen Gold-Annotationen (HEAD, DEPREL, UPOS, XPOS); LEMMA/FEATS/DEPS/MISC aus Quelldatei |
-| **Baumansicht herunterladen** | Alle Sätze als Text-Bäume mit Gold-Baum und Diff-Bäumen pro Datei |
+| **Gold CoNLL-U herunterladen** | Alle Sätze des aktiven Projekts mit aktuellen Gold-Annotationen (HEAD, DEPREL, UPOS, XPOS); LEMMA/FEATS/DEPS/MISC aus Quelldatei |
+| **Baumansicht (alle Sätze) herunterladen** | Alle Sätze als Text-Bäume mit Gold-Baum und Diff-Bäumen pro Datei |
+
+### Alle Projekte
+
+| Button | Inhalt |
+|--------|--------|
+| **Alle Projekte CoNLL-U herunterladen** | Exportiert Gold-CoNLL-U für jedes Projekt als separate Datei (\`gold_Projektname.conllu\`) |
+| **Alle Projekte Baumansicht herunterladen** | Exportiert Baumansichten für jedes Projekt als separate Datei |
 
 Tastaturkürzel: \`e\` → CoNLL-U · \`E\` → Baumansicht · \`c\` → aktuellen Satz in Zwischenablage
 
@@ -8186,7 +8392,7 @@ Der **Session-Mechanismus** sichert den vollständigen Arbeitsstand aller Projek
 | **📂 Session laden** | Importiert eine gespeicherte Session-Datei |
 | **Drag & Drop** | \`.json\`-Datei auf die Seite ziehen → wird automatisch als Session erkannt |
 
-Das Session-Format ist versioniert (\`version: 2\`) und als JSON lesbar. Ältere Sessions (\`version: 1\`) werden automatisch als einzelnes Projekt importiert.
+Das Session-Format ist versioniert (\`version: 2\`) und als JSON lesbar.
 
 ### Autosave
 
@@ -8194,7 +8400,7 @@ Der Arbeitsstand wird alle **30 Sekunden** automatisch im Browser-LocalStorage g
 
 ---
 
-## 6) Undo / Redo
+## Undo / Redo
 
 Alle Annotationsänderungen (Datei-Auswahl, Custom-Popup, Bestätigen, Teilbaum-Übernahme) sind rückgängig machbar. Jedes Projekt hat seinen eigenen Undo-Stack.
 
@@ -8204,6 +8410,16 @@ Alle Annotationsänderungen (Datei-Auswahl, Custom-Popup, Bestätigen, Teilbaum-
 | **↪ Redo** / \`Ctrl+Y\` | Rückgängige Änderung wiederherstellen |
 
 Der Verlauf wird in der Session mitgespeichert (bis zu 80 Schritte pro Projekt).
+
+---
+
+## Guided Tour
+
+Der **🎓 Guided Tour**-Button oben rechts startet eine interaktive Einführung in alle Funktionen des Tools.
+
+- Die Tour öffnet das englische Beispielprojekt automatisch in einem **temporären Projekt** — eigene Daten bleiben vollständig erhalten
+- Spotlight und Tooltip führen Schritt für Schritt durch alle 16 Stationen: Projekte, Dateien, Satznavigation, Baumansicht, Vergleichstabelle, Gold-Annotation, Bearbeitungsmodus, CoNLL-U-Editor, Export
+- Beenden mit **„Tour abbrechen"**, \`Esc\` oder dem „Fertig"-Button — das Tour-Projekt wird danach automatisch entfernt
 
 ---
 
@@ -8222,7 +8438,7 @@ Der Verlauf wird in der Session mitgespeichert (bis zu 80 Schritte pro Projekt).
 | \`1\`–\`9\` | Datei N als Gold-Quelle für fokussierte Zeile wählen |
 | \`Ctrl+1\`–\`9\` | Custom aus Datei N laden |
 | \`Ctrl+Z\` | Undo |
-| \`Ctrl+Y\` | Redo |
+| \`Ctrl+Y\` / \`Ctrl+Shift+Z\` | Redo |
 | \`Del\` / \`Backspace\` | Custom des aktuellen Satzes löschen |
 | \`c\` | Aktuellen Satz als CoNLL-U in Zwischenablage kopieren |
 | \`e\` | Gold CoNLL-U exportieren |
@@ -8397,6 +8613,7 @@ HTML_Editor/
 │   ├── i18n.js                ← Übersetzungs-Engine (t(), setLang(), registerLang())
 │   ├── theme.js               ← Dark/Light-Mode-Umschalter
 │   ├── help.js                ← Hilfe-Modal (lädt readme_content.js)
+│   ├── tour.js                ← Guided Tour (temporäres Projekt, Spotlight, Tooltips)
 │   └── main.js                ← Initialisierung, Event-Listener, UI-Rendering
 │
 ├── lang/
@@ -8448,7 +8665,7 @@ HTML_Editor/
 | \`js/state.js\` | Zentraler Zustandsspeicher; \`LABEL_COLS\` und \`DEP_COLS\` steuern die Spalten-Konfiguration |
 | \`js/projects.js\` | Projekt-Verwaltung; Snapshot-Swap beim Tab-Wechsel; Auto-Zuweisung bei unterschiedlicher Satzzahl |
 | \`js/arcview.js\` | SVG-Arc-Diagramm mit Drag & Drop und Zyklus-Erkennung |
-| \`js/export.js\` | Session-Format v2 (multi-project); abwärtskompatibel zu v1 |
+| \`js/export.js\` | Session-Format v2 (multi-project); Import/Export, Autosave |
 | \`bundler.py\` | Bündelt alle Ressourcen in \`dist/index.html\` für offline/eingebetteten Einsatz |
 | \`make_readme_js.py\` | Wandelt \`README.md\` → \`generated/readme_content.js\` (für Hilfe-Modal) |
 
@@ -8510,16 +8727,17 @@ Runs entirely locally without a server — simply open \`index.html\` in your br
 | **CoNLL-U comparison** | Token-by-token diff of multiple files against a Gold annotation |
 | **Interactive tree** | Dependency trees with drag-and-drop arcs, relation selector, ROOT drop zone |
 | **Gold annotation** | Via click, popup, or keyboard shortcuts — custom values override file values |
-| **CoNLL-U editor** | Direct editing of all sentences per file as plain text (section 5) |
+| **CoNLL-U editor** | Structured editor and raw textarea per file; gold table visible in read-only mode |
 | **Sentence management** | Insert, delete sentences — sentence list always visible |
 | **Undo/Redo** | Up to 80 steps per project; saved with session |
 | **Session export** | Save and load complete working state as JSON |
 | **Autosave** | Working state saved every 30 seconds; automatically restored on next page open |
 | **Tagset configuration** | Custom DEPREL lists, UPOS/XPOS values, and dependency layers via \`labels.js\` or JSON |
 | **Export** | Download Gold CoNLL-U and tree view (all sentences) |
+| **Guided Tour** | Interactive introduction with spotlight and tooltips using the English example |
 | **Keyboard shortcuts** | Full operation without mouse |
 | **Multi-language** | German / English; add more languages via \`lang/xx.js\` |
-| **Tablet support** | Touch-optimised; arcs draggable, scrolling works |
+| **Tablet support** | Touch-optimised; arcs draggable, larger tap targets |
 
 ---
 
@@ -8760,15 +8978,24 @@ Use the **column toggle bar** to show or hide individual file columns.
 
 ---
 
-## 5) Edit CoNLL-U
+## 5) CoNLL-U
 
-Section 5 contains an expandable **text editor** for the raw CoNLL-U data.
+Section 5 shows and edits the CoNLL-U data for the current sentence. Its behaviour depends on the **edit mode** (lock in section 1):
 
-- **"▾ Open"** expands the editor; **"▴ Close"** collapses it again
-- Each loaded file has its own textarea showing the complete CoNLL-U text of all sentences
-- Fields grow automatically with the content — no internal scrolling in the textarea
-- Edit the text directly → **"✓ Apply"** applies the changes to all other views
-- **"✕ Reset"** discards all changes and restores the last saved state
+### Read-only mode (locked 🔒)
+
+- **Gold table** shows all tokens with current Gold annotations (HEAD, DEPREL, UPOS, XPOS) — read-only
+- Rows with active custom overrides are highlighted
+
+### Edit mode (unlocked 🔓)
+
+- **Gold table** (editable): adjust HEAD, DEPREL, UPOS, and XPOS directly — changes are saved immediately as custom values
+- **Tab "📝 Structured Editor"**: all CoNLL-U fields of each file as a structured table; add/delete rows, edit values directly
+- **Tab "Raw text"**: full CoNLL-U text per file as a textarea; grows automatically with content
+  - Edit the text → **"✓ Apply"** transfers changes to all other views
+  - **"✕ Reset"** discards changes and restores the last saved state
+
+The section title switches automatically between **"5) CoNLL-U"** (read-only) and **"5) Edit CoNLL-U"** (edit mode).
 
 ---
 
@@ -8778,12 +9005,19 @@ Section 5 contains an expandable **text editor** for the raw CoNLL-U data.
 
 The **⬇ button** next to each file downloads the original file content as \`.conllu\`.
 
-### All Sentences (Gold Annotation)
+### Active Project
 
 | Button | Content |
 |--------|---------|
-| **Download Gold CoNLL-U** | All sentences with current Gold annotations (HEAD, DEPREL, UPOS, XPOS); LEMMA/FEATS/DEPS/MISC from source file |
-| **Download tree view** | All sentences as plain-text trees with Gold tree and diff trees per file |
+| **Download Gold CoNLL-U** | All sentences of the active project with current Gold annotations (HEAD, DEPREL, UPOS, XPOS); LEMMA/FEATS/DEPS/MISC from source file |
+| **Download tree view (all sentences)** | All sentences as plain-text trees with Gold tree and diff trees per file |
+
+### All Projects
+
+| Button | Content |
+|--------|---------|
+| **Download all projects CoNLL-U** | Exports Gold CoNLL-U for each project as a separate file (\`gold_ProjectName.conllu\`) |
+| **Download all projects tree view** | Exports tree views for each project as a separate file |
 
 Keyboard shortcuts: \`e\` → CoNLL-U · \`E\` → tree view · \`c\` → copy current sentence to clipboard
 
@@ -8803,7 +9037,7 @@ The **session mechanism** saves the complete working state of all projects:
 | **📂 Load session** | Imports a saved session file |
 | **Drag & Drop** | Drop a \`.json\` file onto the page → automatically recognised as a session |
 
-The session format is versioned (\`version: 2\`) and human-readable JSON. Older sessions (\`version: 1\`) are automatically imported as a single project.
+The session format is versioned (\`version: 2\`) and human-readable JSON.
 
 ### Autosave
 
@@ -8811,7 +9045,7 @@ The working state is automatically saved to the browser's LocalStorage every **3
 
 ---
 
-## 6) Undo / Redo
+## Undo / Redo
 
 All annotation changes (file selection, custom popup, confirm, subtree adoption) can be undone. Each project has its own undo stack.
 
@@ -8821,6 +9055,16 @@ All annotation changes (file selection, custom popup, confirm, subtree adoption)
 | **↪ Redo** / \`Ctrl+Y\` | Redo undone change |
 
 The history is saved with the session (up to 80 steps per project).
+
+---
+
+## Guided Tour
+
+The **🎓 Guided Tour** button in the top-right corner starts an interactive introduction to all features.
+
+- The tour automatically opens the English example in a **temporary project** — your own data is completely untouched
+- A spotlight and tooltip walk you through all 16 steps: projects, files, sentence navigation, tree view, comparison table, gold annotation, edit mode, CoNLL-U editor, and export
+- Exit with **"Skip tour"**, \`Esc\`, or the "Done" button — the tour project is removed automatically
 
 ---
 
@@ -8839,7 +9083,7 @@ The history is saved with the session (up to 80 steps per project).
 | \`1\`–\`9\` | Select file N as Gold source for focused row |
 | \`Ctrl+1\`–\`9\` | Load custom from file N |
 | \`Ctrl+Z\` | Undo |
-| \`Ctrl+Y\` | Redo |
+| \`Ctrl+Y\` / \`Ctrl+Shift+Z\` | Redo |
 | \`Del\` / \`Backspace\` | Delete custom for current sentence |
 | \`c\` | Copy current sentence as CoNLL-U to clipboard |
 | \`e\` | Export Gold CoNLL-U |
@@ -9014,6 +9258,7 @@ HTML_Editor/
 │   ├── i18n.js                ← Translation engine (t(), setLang(), registerLang())
 │   ├── theme.js               ← Dark/light mode toggle
 │   ├── help.js                ← Help modal (loads readme_content.js)
+│   ├── tour.js                ← Guided tour (temporary project, spotlight, tooltips)
 │   └── main.js                ← Initialisation, event listeners, UI rendering
 │
 ├── lang/
@@ -9065,7 +9310,7 @@ HTML_Editor/
 | \`js/state.js\` | Central state store; \`LABEL_COLS\` and \`DEP_COLS\` control column configuration |
 | \`js/projects.js\` | Project management; snapshot-swap on tab switch; auto-assignment for different sentence counts |
 | \`js/arcview.js\` | SVG arc diagram with drag & drop and cycle detection |
-| \`js/export.js\` | Session format v2 (multi-project); backward-compatible with v1 |
+| \`js/export.js\` | Session format v2 (multi-project); import/export, autosave |
 | \`bundler.py\` | Bundles all resources into \`dist/index.html\` for offline/embedded use |
 | \`make_readme_js.py\` | Converts \`README.md\` + \`README.en.md\` → \`generated/readme_content.js\` (for help modal) |
 
@@ -9727,32 +9972,43 @@ function _tourPositionTip(tip, targetRect) {
 
   requestAnimationFrame(() => {
     if (!document.getElementById('tourTip')) return;
-    const tw  = tip.offsetWidth  || 320;
-    const th  = tip.offsetHeight || 200;
     const vw  = window.innerWidth;
     const vh  = window.innerHeight;
-    const GAP = 16;
+    const GAP = 12;
+
+    // Measure tip size now that it's off-screen but rendered
+    const tw  = Math.min(tip.offsetWidth  || 320, vw - GAP * 2);
+    const th  = tip.offsetHeight || 200;
+
+    // Clamp helper — always keeps value in [lo, hi]; if hi < lo, returns lo
+    const clamp = (v, lo, hi) => Math.max(lo, Math.min(v, Math.max(lo, hi)));
+
     let left, top;
 
     if (!targetRect) {
-      left = Math.round(Math.max(GAP, (vw - tw) / 2));
-      top  = Math.round(Math.max(GAP, (vh - th) / 2));
+      left = Math.round(clamp((vw - tw) / 2, GAP, vw - tw - GAP));
+      top  = Math.round(clamp((vh - th) / 2, GAP, vh - th - GAP));
     } else {
       const r = targetRect;
-      if (r.bottom + th + GAP < vh) {
+      // Prefer below target, then above, then top of screen
+      if (r.bottom + th + GAP <= vh) {
         top = r.bottom + GAP;
-      } else if (r.top - th - GAP > 0) {
+      } else if (r.top - th - GAP >= 0) {
         top = r.top - th - GAP;
       } else {
         top = GAP;
       }
-      left = Math.min(Math.max(GAP, r.left), vw - tw - GAP);
+      // Align left edge with target, but keep fully inside viewport
+      left = clamp(r.left, GAP, vw - tw - GAP);
+      // Ensure bottom edge is also in viewport
+      top  = clamp(top, GAP, vh - th - GAP);
       top  = Math.round(top);
       left = Math.round(left);
     }
 
-    tip.style.left = `${left}px`;
-    tip.style.top  = `${top}px`;
+    tip.style.width = `${tw}px`; // prevent reflow-caused width changes after placement
+    tip.style.left  = `${left}px`;
+    tip.style.top   = `${top}px`;
   });
 }
 

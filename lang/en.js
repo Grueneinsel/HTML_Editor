@@ -110,6 +110,9 @@ window.LANG_EN = {
   'tagset.download':  '📥 Download tagset',
   'tagset.template':  '📋 Download template',
   'tagset.loaded':    '{deprel} deprels · {upos} UPOS · {xpos} XPOS loaded',
+  'tagset.example':    '📄 Download example',
+  'tagset.listToggle': '📑 Show tagset',
+  'tagset.noLabels':   'No tagset configured',
   'tagset.errJson':   'Invalid JSON file.',
   'tagset.errFormat': 'Tagset must be a JSON object.',
 
@@ -120,7 +123,7 @@ window.LANG_EN = {
   'session.exported':  'Exported: {n} file(s), {u} undo steps',
   'session.loaded':    'Loaded: {n} file(s) · {s} sentences · {u} undo steps',
   'session.errJson':   'Invalid JSON file.',
-  'session.errFormat': 'Unknown session format (version ≠ 1).',
+  'session.errFormat': 'Unknown session format (expected version: 2).',
   'session.errNoDocs': 'Session contains no files.',
 
   // Keyboard shortcut legend (header)

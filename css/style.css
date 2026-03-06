@@ -496,6 +496,51 @@ tr.keyFocus > td:first-child{ border-left:2px solid var(--accent) }
   font-size:11px; line-height:1.5;
 }
 
+/* Tagset detail panel */
+.tagsetListPanel{
+  margin-top:6px; border-radius:8px;
+  border:1px solid var(--border); background:var(--card-bg);
+  display:flex; flex-wrap:wrap; overflow:hidden;
+}
+.tagsetListRow{ padding:5px 10px; font-size:12px; width:100%; }
+.tagsetSection{
+  padding:5px 10px 7px;
+  border-right:1px solid var(--border);
+  border-bottom:1px solid var(--border);
+  flex:0 0 auto;
+}
+.tagsetSection--dep{
+  flex:1 1 auto;
+  border-right:none;
+}
+/* hide bottom border on last row of sections */
+.tagsetSection:last-child,
+.tagsetSection--dep:last-child{ border-bottom:none; }
+.tagsetSectionHead{
+  font-size:10px; font-weight:700; text-transform:uppercase;
+  letter-spacing:.4px; color:var(--muted); margin-bottom:4px;
+}
+/* label columns: tags flow inline */
+.tagsetSection:not(.tagsetSection--dep) .tagsetSectionBody{
+  display:flex; flex-wrap:wrap; gap:2px;
+}
+/* dep columns: groups in a 2-col grid */
+.tagsetSection--dep .tagsetSectionBody{
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(230px, 1fr));
+  gap:2px 10px;
+}
+.tagsetGroup{ display:flex; flex-wrap:wrap; gap:2px; align-items:baseline; }
+.tagsetGroupName{
+  font-size:10px; color:var(--muted); white-space:nowrap;
+  flex-shrink:0; padding-right:3px;
+}
+.tagsetTag{
+  display:inline-block; font-size:11px; font-family:monospace;
+  background:var(--border); border-radius:3px; padding:1px 4px;
+  color:var(--fg);
+}
+
 /* File list + Drop zone */
 .fileList{
   display:grid; gap:6px;

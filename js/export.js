@@ -197,83 +197,40 @@ function importSession(jsonText){
   try { data = JSON.parse(jsonText); }
   catch { alert(t('session.errJson')); return; }
 
-  // ── v2: multi-project format ──────────────────────────────────────────────
-  if(data.version === 2 && Array.isArray(data.projects) && data.projects.length){
-    state.projects = data.projects.map(p => {
-      const docs = (p.docs || []).filter(d => typeof d.content === "string").map(d => {
-        const parsed = parseConllu(d.content);
-        return { key: `session::${d.name}`, name: d.name, content: d.content, sentences: parsed.sentences };
-      });
-      // Per-project labels: use saved labels, fall back to top-level (old sessions), then default
-      const projLabels = p.labels
-        || (data.labels && typeof data.labels === "object" ? data.labels : null);
-      return {
-        name:        p.name || t('project.default'),
-        docs,
-        custom:      JSON.parse(JSON.stringify(p.custom    || {})),
-        goldPick:    JSON.parse(JSON.stringify(p.goldPick  || {})),
-        confirmed:   p.confirmed || [],
-        notes:       JSON.parse(JSON.stringify(p.notes     || {})),
-        flags:       p.flags || {},
-        currentSent: p.currentSent || 0,
-        maxSents:    Math.max(0, ...docs.map(d => d.sentences.length), 0),
-        hiddenCols:  p.hiddenCols  || [],
-        undoStack:   p.undo  || [],
-        redoStack:   p.redo  || [],
-        labels:      projLabels,
-        unlocked:    p.unlocked || false,
-      };
-    });
-    state.activeProjectIdx = Math.min(data.activeProjectIdx || 0, state.projects.length - 1);
-    _loadActiveProject();
-    renderProjectTabs();
-    renderFiles();
-    renderSentSelect();
-    renderSentence();
-    const totalDocs = state.projects.reduce((s, p) => s + p.docs.length, 0);
-    _showSessionMeta(t('session.loaded', { n: totalDocs, s: state.maxSents, u: data.projects[state.activeProjectIdx]?.undo?.length || 0 }));
-    return;
-  }
-
-  // ── v1: backward-compat single-project ───────────────────────────────────
-  if(data.version !== 1 || !Array.isArray(data.docs)){
+  if(data.version !== 2 || !Array.isArray(data.projects) || !data.projects.length){
     alert(t('session.errFormat')); return;
   }
-  if(!data.docs.length){
-    alert(t('session.errNoDocs')); return;
-  }
 
-  const docs = [];
-  for(const d of data.docs){
-    if(typeof d.content !== "string") continue;
-    const parsed = parseConllu(d.content);
-    docs.push({ key: `session::${d.name}`, name: d.name, content: d.content, sentences: parsed.sentences });
-  }
-  const maxSents = Math.max(0, ...docs.map(d => d.sentences.length), 0);
-  const currentSent = Math.min(data.currentSent || 0, Math.max(0, maxSents - 1));
-
-  state.projects = [{
-    name:        `${t('project.default')} 1`,
-    docs,
-    custom:      JSON.parse(JSON.stringify(data.custom    || {})),
-    goldPick:    JSON.parse(JSON.stringify(data.goldPick  || {})),
-    confirmed:   data.confirmed || [],
-    notes:       JSON.parse(JSON.stringify(data.notes     || {})),
-    flags:       {},
-    currentSent,
-    maxSents,
-    hiddenCols:  [],
-    undoStack:   data.undo || [],
-    redoStack:   data.redo || [],
-    labels:      (data.labels && typeof data.labels === "object") ? data.labels : null,
-  }];
-  state.activeProjectIdx = 0;
+  state.projects = data.projects.map(p => {
+    const docs = (p.docs || []).filter(d => typeof d.content === "string").map(d => {
+      const parsed = parseConllu(d.content);
+      return { key: `session::${d.name}`, name: d.name, content: d.content, sentences: parsed.sentences };
+    });
+    return {
+      name:        p.name || t('project.default'),
+      docs,
+      custom:      JSON.parse(JSON.stringify(p.custom    || {})),
+      goldPick:    JSON.parse(JSON.stringify(p.goldPick  || {})),
+      confirmed:   p.confirmed || [],
+      notes:       JSON.parse(JSON.stringify(p.notes     || {})),
+      flags:       p.flags || {},
+      currentSent: p.currentSent || 0,
+      maxSents:    Math.max(0, ...docs.map(d => d.sentences.length), 0),
+      hiddenCols:  p.hiddenCols  || [],
+      undoStack:   p.undo  || [],
+      redoStack:   p.redo  || [],
+      labels:      p.labels || null,
+      unlocked:    p.unlocked || false,
+    };
+  });
+  state.activeProjectIdx = Math.min(data.activeProjectIdx || 0, state.projects.length - 1);
   _loadActiveProject();
   renderProjectTabs();
   renderFiles();
   renderSentSelect();
   renderSentence();
-  _showSessionMeta(t('session.loaded', { n: docs.length, s: maxSents, u: data.undo?.length || 0 }));
+  const totalDocs = state.projects.reduce((s, p) => s + p.docs.length, 0);
+  _showSessionMeta(t('session.loaded', { n: totalDocs, s: state.maxSents, u: data.projects[state.activeProjectIdx]?.undo?.length || 0 }));
 }
 
 // Show a transient message in the session meta area, auto-clearing after 4 seconds.
@@ -418,10 +375,9 @@ function _tryAutoSaveRestoreAuto(){
   if(!raw) return;
   let data;
   try { data = JSON.parse(raw); } catch { return; }
-  const isV1 = data?.version === 1 && Array.isArray(data.docs) && data.docs.length > 0;
   const isV2 = data?.version === 2 && Array.isArray(data.projects)
                && data.projects.some(p => Array.isArray(p.docs) && p.docs.length > 0);
-  if(!isV1 && !isV2) return;
+  if(!isV2) return;
   try {
     importSession(raw);
     if(typeof renderConlluEditor === 'function') renderConlluEditor(true);

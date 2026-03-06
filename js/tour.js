@@ -430,31 +430,42 @@ function _tourPositionTip(tip, targetRect) {
 
   requestAnimationFrame(() => {
     if (!document.getElementById('tourTip')) return;
-    const tw  = tip.offsetWidth  || 320;
-    const th  = tip.offsetHeight || 200;
     const vw  = window.innerWidth;
     const vh  = window.innerHeight;
-    const GAP = 16;
+    const GAP = 12;
+
+    // Measure tip size now that it's off-screen but rendered
+    const tw  = Math.min(tip.offsetWidth  || 320, vw - GAP * 2);
+    const th  = tip.offsetHeight || 200;
+
+    // Clamp helper — always keeps value in [lo, hi]; if hi < lo, returns lo
+    const clamp = (v, lo, hi) => Math.max(lo, Math.min(v, Math.max(lo, hi)));
+
     let left, top;
 
     if (!targetRect) {
-      left = Math.round(Math.max(GAP, (vw - tw) / 2));
-      top  = Math.round(Math.max(GAP, (vh - th) / 2));
+      left = Math.round(clamp((vw - tw) / 2, GAP, vw - tw - GAP));
+      top  = Math.round(clamp((vh - th) / 2, GAP, vh - th - GAP));
     } else {
       const r = targetRect;
-      if (r.bottom + th + GAP < vh) {
+      // Prefer below target, then above, then top of screen
+      if (r.bottom + th + GAP <= vh) {
         top = r.bottom + GAP;
-      } else if (r.top - th - GAP > 0) {
+      } else if (r.top - th - GAP >= 0) {
         top = r.top - th - GAP;
       } else {
         top = GAP;
       }
-      left = Math.min(Math.max(GAP, r.left), vw - tw - GAP);
+      // Align left edge with target, but keep fully inside viewport
+      left = clamp(r.left, GAP, vw - tw - GAP);
+      // Ensure bottom edge is also in viewport
+      top  = clamp(top, GAP, vh - th - GAP);
       top  = Math.round(top);
       left = Math.round(left);
     }
 
-    tip.style.left = `${left}px`;
-    tip.style.top  = `${top}px`;
+    tip.style.width = `${tw}px`; // prevent reflow-caused width changes after placement
+    tip.style.left  = `${left}px`;
+    tip.style.top   = `${top}px`;
   });
 }

@@ -291,12 +291,19 @@ Der Titel des Abschnitts wechselt automatisch zwischen **„5) CoNLL-U"** (Lesem
 
 Der **⬇-Button** neben jeder Datei lädt den Original-Inhalt der Datei als `.conllu` herunter.
 
-### Alle Sätze (Gold-Annotation)
+### Aktives Projekt
 
 | Button | Inhalt |
 |--------|--------|
-| **Gold CoNLL-U herunterladen** | Alle Sätze mit aktuellen Gold-Annotationen (HEAD, DEPREL, UPOS, XPOS); LEMMA/FEATS/DEPS/MISC aus Quelldatei |
-| **Baumansicht herunterladen** | Alle Sätze als Text-Bäume mit Gold-Baum und Diff-Bäumen pro Datei |
+| **Gold CoNLL-U herunterladen** | Alle Sätze des aktiven Projekts mit aktuellen Gold-Annotationen (HEAD, DEPREL, UPOS, XPOS); LEMMA/FEATS/DEPS/MISC aus Quelldatei |
+| **Baumansicht (alle Sätze) herunterladen** | Alle Sätze als Text-Bäume mit Gold-Baum und Diff-Bäumen pro Datei |
+
+### Alle Projekte
+
+| Button | Inhalt |
+|--------|--------|
+| **Alle Projekte CoNLL-U herunterladen** | Exportiert Gold-CoNLL-U für jedes Projekt als separate Datei (`gold_Projektname.conllu`) |
+| **Alle Projekte Baumansicht herunterladen** | Exportiert Baumansichten für jedes Projekt als separate Datei |
 
 Tastaturkürzel: `e` → CoNLL-U · `E` → Baumansicht · `c` → aktuellen Satz in Zwischenablage
 
@@ -316,7 +323,7 @@ Der **Session-Mechanismus** sichert den vollständigen Arbeitsstand aller Projek
 | **📂 Session laden** | Importiert eine gespeicherte Session-Datei |
 | **Drag & Drop** | `.json`-Datei auf die Seite ziehen → wird automatisch als Session erkannt |
 
-Das Session-Format ist versioniert (`version: 2`) und als JSON lesbar. Ältere Sessions (`version: 1`) werden automatisch als einzelnes Projekt importiert.
+Das Session-Format ist versioniert (`version: 2`) und als JSON lesbar.
 
 ### Autosave
 
@@ -362,7 +369,7 @@ Der **🎓 Guided Tour**-Button oben rechts startet eine interaktive Einführung
 | `1`–`9` | Datei N als Gold-Quelle für fokussierte Zeile wählen |
 | `Ctrl+1`–`9` | Custom aus Datei N laden |
 | `Ctrl+Z` | Undo |
-| `Ctrl+Y` | Redo |
+| `Ctrl+Y` / `Ctrl+Shift+Z` | Redo |
 | `Del` / `Backspace` | Custom des aktuellen Satzes löschen |
 | `c` | Aktuellen Satz als CoNLL-U in Zwischenablage kopieren |
 | `e` | Gold CoNLL-U exportieren |
@@ -589,7 +596,7 @@ HTML_Editor/
 | `js/state.js` | Zentraler Zustandsspeicher; `LABEL_COLS` und `DEP_COLS` steuern die Spalten-Konfiguration |
 | `js/projects.js` | Projekt-Verwaltung; Snapshot-Swap beim Tab-Wechsel; Auto-Zuweisung bei unterschiedlicher Satzzahl |
 | `js/arcview.js` | SVG-Arc-Diagramm mit Drag & Drop und Zyklus-Erkennung |
-| `js/export.js` | Session-Format v2 (multi-project); abwärtskompatibel zu v1 |
+| `js/export.js` | Session-Format v2 (multi-project); Import/Export, Autosave |
 | `bundler.py` | Bündelt alle Ressourcen in `dist/index.html` für offline/eingebetteten Einsatz |
 | `make_readme_js.py` | Wandelt `README.md` → `generated/readme_content.js` (für Hilfe-Modal) |
 

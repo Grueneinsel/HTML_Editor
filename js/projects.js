@@ -83,6 +83,7 @@ function _loadActiveProject(){
   buildDeprelOptionsCache();
   if(typeof _resetPopup       === "function") _resetPopup();
   if(typeof _updateTagsetMeta === "function") _updateTagsetMeta();
+  if(typeof renderTagsetList  === "function") renderTagsetList();
 }
 
 // ── Public API ────────────────────────────────────────────────────────────────

@@ -291,12 +291,19 @@ The section title switches automatically between **"5) CoNLL-U"** (read-only) an
 
 The **⬇ button** next to each file downloads the original file content as `.conllu`.
 
-### All Sentences (Gold Annotation)
+### Active Project
 
 | Button | Content |
 |--------|---------|
-| **Download Gold CoNLL-U** | All sentences with current Gold annotations (HEAD, DEPREL, UPOS, XPOS); LEMMA/FEATS/DEPS/MISC from source file |
-| **Download tree view** | All sentences as plain-text trees with Gold tree and diff trees per file |
+| **Download Gold CoNLL-U** | All sentences of the active project with current Gold annotations (HEAD, DEPREL, UPOS, XPOS); LEMMA/FEATS/DEPS/MISC from source file |
+| **Download tree view (all sentences)** | All sentences as plain-text trees with Gold tree and diff trees per file |
+
+### All Projects
+
+| Button | Content |
+|--------|---------|
+| **Download all projects CoNLL-U** | Exports Gold CoNLL-U for each project as a separate file (`gold_ProjectName.conllu`) |
+| **Download all projects tree view** | Exports tree views for each project as a separate file |
 
 Keyboard shortcuts: `e` → CoNLL-U · `E` → tree view · `c` → copy current sentence to clipboard
 
@@ -316,7 +323,7 @@ The **session mechanism** saves the complete working state of all projects:
 | **📂 Load session** | Imports a saved session file |
 | **Drag & Drop** | Drop a `.json` file onto the page → automatically recognised as a session |
 
-The session format is versioned (`version: 2`) and human-readable JSON. Older sessions (`version: 1`) are automatically imported as a single project.
+The session format is versioned (`version: 2`) and human-readable JSON.
 
 ### Autosave
 
@@ -362,7 +369,7 @@ The **🎓 Guided Tour** button in the top-right corner starts an interactive in
 | `1`–`9` | Select file N as Gold source for focused row |
 | `Ctrl+1`–`9` | Load custom from file N |
 | `Ctrl+Z` | Undo |
-| `Ctrl+Y` | Redo |
+| `Ctrl+Y` / `Ctrl+Shift+Z` | Redo |
 | `Del` / `Backspace` | Delete custom for current sentence |
 | `c` | Copy current sentence as CoNLL-U to clipboard |
 | `e` | Export Gold CoNLL-U |
@@ -589,7 +596,7 @@ HTML_Editor/
 | `js/state.js` | Central state store; `LABEL_COLS` and `DEP_COLS` control column configuration |
 | `js/projects.js` | Project management; snapshot-swap on tab switch; auto-assignment for different sentence counts |
 | `js/arcview.js` | SVG arc diagram with drag & drop and cycle detection |
-| `js/export.js` | Session format v2 (multi-project); backward-compatible with v1 |
+| `js/export.js` | Session format v2 (multi-project); import/export, autosave |
 | `bundler.py` | Bundles all resources into `dist/index.html` for offline/embedded use |
 | `make_readme_js.py` | Converts `README.md` + `README.en.md` → `generated/readme_content.js` (for help modal) |
 

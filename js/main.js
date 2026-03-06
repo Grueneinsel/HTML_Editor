@@ -1192,6 +1192,7 @@ _initAutoAdvance();   // restore auto-advance checkbox from localStorage
 renderFiles();
 renderSentSelect();
 renderSentence();
+if(typeof renderTagsetList === 'function') renderTagsetList();
 renderConlluEditor(true);
 _updateSectionVisibility();
 // ?dev in URL → force-enable dev mode (persisted to localStorage)
