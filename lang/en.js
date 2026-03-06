@@ -6,8 +6,6 @@ window.LANG_EN = {
   'sec.compare': '4) Comparison',
   'sec.conllu':    '5) Edit CoNLL-U',
   'footer.author': 'Developed by Frederik Konopka',
-  'conllu.open':       '▾ Open',
-  'conllu.close':      '▴ Close',
   'conllu.structured': '📝 Structured Editor',
   'conllu.raw':        '📄 Raw Text Editor',
   'sec.export':  '6) Export',

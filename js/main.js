@@ -455,7 +455,6 @@ function _sentToConlluLines(sent){
 
 // ── CoNLL-U editor section ─────────────────────────────────────────────────────
 
-let _conlluEditorOpen = localStorage.getItem('conllu-editor-open') === 'true';
 let _conlluEditorMode = localStorage.getItem('conllu-editor-mode') || 'struct'; // 'struct' | 'raw'
 
 // Build a read-only structured table for one doc's current sentence (no inputs).
@@ -640,20 +639,14 @@ function _docToConlluText(d){
 // Render (or update) the CoNLL-U editor section.
 // If force=true, always rebuild textareas (used after external data change).
 function renderConlluEditor(force){
-  const wrap   = document.getElementById('conlluEditorWrap');
-  const toggle = document.getElementById('conlluEditorToggle');
+  const wrap = document.getElementById('conlluEditorWrap');
   if(!wrap) return;
-  if(toggle){
-    toggle.textContent = _conlluEditorOpen ? t('conllu.close') : t('conllu.open');
-    toggle.classList.toggle('open', _conlluEditorOpen);
-    toggle.setAttribute('aria-expanded', String(_conlluEditorOpen));
-  }
   // Always wipe stale content when there are no docs.
   if(state.docs.length === 0){ wrap.innerHTML = ''; wrap.hidden = true; return; }
   wrap.hidden = false;
 
-  if(!_conlluEditorOpen){
-    // Collapsed state: show read-only table for quick reference, no editing controls.
+  if(!state.unlocked){
+    // Project locked: show read-only table, no editing controls.
     if(!force && wrap.querySelector('.conlluStructBlock') && !wrap.querySelector('.conlluTab')) return;
     wrap.innerHTML = '';
     for(let i = 0; i < state.docs.length; i++){
@@ -742,25 +735,8 @@ function renderConlluEditor(force){
     btnRow.appendChild(saveBtn);
   }
 
-  const cancelBtn = document.createElement('button');
-  cancelBtn.textContent = t('sent.editSentCancel');
-  cancelBtn.addEventListener('click', () => {
-    _conlluEditorOpen = false;
-    localStorage.setItem('conllu-editor-open', 'false');
-    renderConlluEditor(false);
-  });
-  btnRow.appendChild(cancelBtn);
-
   wrap.appendChild(btnRow);
 }
-
-// Global toggle function — also called via onclick attribute in index.html for mobile tap reliability.
-function toggleConlluEditor(){
-  _conlluEditorOpen = !_conlluEditorOpen;
-  localStorage.setItem('conllu-editor-open', String(_conlluEditorOpen));
-  renderConlluEditor(true);
-}
-// Toggle button uses inline onclick="toggleConlluEditor()" in HTML — no addEventListener needed.
 
 // ── Clipboard copy ─────────────────────────────────────────────────────────────
 

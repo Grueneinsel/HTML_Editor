@@ -1212,21 +1212,6 @@ td:hover .fileEditBtn { display: inline-block; }
   align-items: center;
   gap: 8px;
 }
-.conlluEditorToggle {
-  margin-left: auto;
-  padding: 5px 14px;
-  font-size: 13px;
-  font-weight: 600;
-  border: 1px solid var(--accent);
-  border-radius: 6px;
-  background: var(--bg-control);
-  color: var(--accent);
-  cursor: pointer;
-  touch-action: manipulation;
-  min-height: 34px;
-}
-.conlluEditorToggle:hover { background: var(--bg-focus-soft); }
-.conlluEditorToggle.open { background: var(--accent); color: var(--bg); }
 /* The hidden attribute alone is not enough because display:flex would override it */
 .conlluEditorWrap[hidden] { display: none; }
 .conlluEditorWrap {
