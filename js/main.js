@@ -50,6 +50,9 @@ if(sentNote){
     const val = sentNote.value;
     if(val.trim()) state.notes[state.currentSent] = val;
     else           delete state.notes[state.currentSent];
+    // Live-update note indicator
+    const indicator = document.getElementById("sentNoteIndicator");
+    if(indicator) indicator.style.display = val.trim() ? "" : "none";
   });
 }
 
@@ -271,9 +274,14 @@ function renderFiles(){
 
   renderProjectLock();
 
+  const hadWarn = !!textWarn.innerHTML;
   textWarn.innerHTML = warnedIndices.size > 0
     ? `<div class="textWarnBanner">${escapeHtml(t('files.warnBanner'))}</div>`
     : "";
+  if(!hadWarn && textWarn.innerHTML){
+    textWarn.classList.add("textWarnPulse");
+    textWarn.addEventListener("animationend", () => textWarn.classList.remove("textWarnPulse"), { once: true });
+  }
 
   _updateSectionVisibility();
   renderConlluEditor(true);
@@ -415,6 +423,11 @@ function renderSentence(){
   sentMeta.textContent = t('sent.label', { cur: state.currentSent + 1, max: state.maxSents });
   sentText.classList.toggle("sentTextConfirmed", state.confirmed.has(state.currentSent));
   sentText.classList.toggle("sentTextUnlocked", state.unlocked && !!s0);
+  // Fade-in animation on sentence change
+  sentText.classList.remove("sentFadeIn");
+  void sentText.offsetWidth;
+  sentText.classList.add("sentFadeIn");
+  sentText.addEventListener("animationend", () => sentText.classList.remove("sentFadeIn"), { once: true });
 
   renderColToggleBar();
   renderCompareTable();
@@ -838,7 +851,12 @@ function renderConlluEditor(force){
   if(!wrap) return;
   // Always wipe stale content when there are no docs.
   if(state.docs.length === 0){ wrap.innerHTML = ''; wrap.hidden = true; return; }
+  const wasHidden = wrap.hidden;
   wrap.hidden = false;
+  if(wasHidden){
+    wrap.classList.add("conlluFadeIn");
+    wrap.addEventListener("animationend", () => wrap.classList.remove("conlluFadeIn"), { once: true });
+  }
 
   // Update section heading to reflect current mode
   const titleEl = document.getElementById('conlluSectionTitle');
@@ -989,10 +1007,12 @@ function copySentenceConllu(){
 
   const text = lines.join("\n");
   navigator.clipboard.writeText(text).then(() => {
-    if(!copyConlluBtn) return;
-    copyConlluBtn.textContent = t('copy.done');
-    setTimeout(() => { if(copyConlluBtn) copyConlluBtn.textContent = t('copy.btn'); }, 1500);
-  }).catch(() => {});
+    _showToast(t('copy.done'), 'success');
+    if(copyConlluBtn){
+      copyConlluBtn.textContent = t('copy.done');
+      setTimeout(() => { if(copyConlluBtn) copyConlluBtn.textContent = t('copy.btn'); }, 1500);
+    }
+  }).catch(() => { _showToast(t('copy.btn') + ' — Fehler', 'error'); });
 }
 
 // ── Demo ───────────────────────────────────────────────────────────────────────
@@ -1076,7 +1096,7 @@ let _ttsActive = false;
 
 // Speak the current sentence text using the Web Speech API.
 function speakSentence(){
-  if(!window.speechSynthesis){ alert(t('tts.noSupport')); return; }
+  if(!window.speechSynthesis){ _showToast(t('tts.noSupport'), 'error'); return; }
   if(_ttsActive){ stopTts(); return; }
   const s0 = state.docs[0]?.sentences?.[state.currentSent];
   if(!s0) return;
@@ -1129,12 +1149,16 @@ function _initAutoAdvance(){
 function confirmAllMatching(){
   if(state.docs.length < 1 || state.maxSents === 0) return;
   pushUndo();
+  let added = 0;
   for(let i = 0; i < state.maxSents; i++){
     if(!state.confirmed.has(i) && _sentStats(i).diffCount === 0){
       state.confirmed.add(i);
+      added++;
     }
   }
   renderSentence();
+  if(added > 0) _showToast(t('bulk.confirmedN', { n: added }), 'success');
+  else          _showToast(t('bulk.confirmedNone'), 'info');
 }
 
 // Flag the first token (id=1) of every sentence that has diffs, so they are
@@ -1142,15 +1166,19 @@ function confirmAllMatching(){
 function flagAllDiffs(){
   if(state.docs.length < 1 || state.maxSents === 0) return;
   pushUndo();
+  let count = 0;
   for(let i = 0; i < state.maxSents; i++){
     if(_sentStats(i).diffCount > 0){
       if(!state.flags[i]) state.flags[i] = new Set();
       // Flag token 1 as a representative marker for the whole sentence.
       const firstId = state.docs[0]?.sentences?.[i]?.tokens?.[0]?.id ?? 1;
       state.flags[i].add(firstId);
+      count++;
     }
   }
   renderSentence();
+  if(count > 0) _showToast(t('bulk.flaggedN', { n: count }), 'info');
+  else          _showToast(t('bulk.flaggedNone'), 'info');
 }
 
 // Remove all manual flags across all sentences.
@@ -1159,6 +1187,7 @@ function unflagAll(){
   pushUndo();
   state.flags = {};
   renderSentence();
+  _showToast(t('bulk.unflagged'), 'info');
 }
 
 if(confirmAllBtn) confirmAllBtn.addEventListener('click', confirmAllMatching);

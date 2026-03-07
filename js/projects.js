@@ -240,6 +240,19 @@ function renderProjectTabs(){
     nameSpan.title = t('project.renameHint');
     tab.appendChild(nameSpan);
 
+    // Progress badge: confirmed / total sentences
+    const tabTotal = idx === state.activeProjectIdx ? state.maxSents : (p.maxSents || 0);
+    if(tabTotal > 0){
+      const tabConfirmed = idx === state.activeProjectIdx
+        ? state.confirmed.size
+        : (Array.isArray(p.confirmed) ? p.confirmed.length : (p.confirmed?.size ?? 0));
+      const badge = document.createElement("span");
+      badge.className = "projectTabBadge" + (tabConfirmed === tabTotal ? " projectTabBadgeDone" : "");
+      badge.textContent = `${tabConfirmed}/${tabTotal}`;
+      badge.title = `${tabConfirmed} von ${tabTotal} Sätzen bestätigt`;
+      tab.appendChild(badge);
+    }
+
     // Rename button
     const renameBtn = document.createElement("button");
     renameBtn.className = "projectTabRenameBtn";

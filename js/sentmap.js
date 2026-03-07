@@ -101,7 +101,10 @@ function renderSentSelectOptions(){
       ? ` ${t(stats.diffCount !== 1 ? 'sent.optDiffs' : 'sent.optDiff', { n: stats.diffCount })}`
       : ` ${t('sent.optOk')}`;
     const flagPart = hasFlags ? t('flag.sentOpt') : '';
-    opt.textContent = `${t('sent.optLabel', { n: i+1 })}${confirmed ? ' ★' : ''}${flagPart}  (${stats.totalTokens} Tok${diffPart})`;
+    // First few words of the sentence as a preview label
+    const sent = state.docs[0]?.sentences[i];
+    const preview = sent ? sent.tokens.slice(0, 6).map(tk => tk.form).join(' ') + (sent.tokens.length > 6 ? '…' : '') : '';
+    opt.textContent = `${t('sent.optLabel', { n: i+1 })}${confirmed ? ' ★' : ''}${flagPart}  (${stats.totalTokens} Tok${diffPart})${preview ? '  ' + preview : ''}`;
     // Color-code options: confirmed (gold), flagged (orange), diff (red), ok (green)
     if(confirmed && hasFlags){
       opt.style.background = '#1a0c00';
@@ -153,6 +156,12 @@ function _updateSentNote(){
     sentNote.value = state.notes[state.currentSent] ?? "";
     sentNote.placeholder = t('note.placeholder');
   }
+  // Note indicator: show when current sentence has a non-empty note
+  const indicator = document.getElementById("sentNoteIndicator");
+  if(indicator){
+    const hasNote = ok && !!state.notes[state.currentSent]?.trim();
+    indicator.style.display = hasNote ? "" : "none";
+  }
 }
 
 // Re-render the minimap of sentence dots below the sentence selector.
@@ -174,9 +183,11 @@ function renderSentMap(){
     if(isCurrent)    cls += " sentDotCurrent";
     if(hasFlags)     cls += " sentDotFlagged";
     dot.className = cls;
+    const dotSent = state.docs[0]?.sentences[i];
+    const dotPreview = dotSent ? dotSent.tokens.slice(0, 6).map(tk => tk.form).join(' ') + (dotSent.tokens.length > 6 ? '…' : '') : '';
     dot.title = t(confirmed ? 'sent.dotTitleConf' : (hasFlags ? 'flag.sentDot' : 'sent.dotTitle'), {
       n: i + 1, toks: stats.totalTokens, diffs: stats.diffCount
-    });
+    }) + (dotPreview ? `\n"${dotPreview}"` : '');
     // Accessibility: text symbol inside dot conveys state independently of color
     if     (confirmed && hasFlags)        dot.textContent = "★!";
     else if(confirmed)                    dot.textContent = "★";

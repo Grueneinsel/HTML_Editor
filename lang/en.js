@@ -249,4 +249,17 @@ window.LANG_EN = {
   'devMode.on':       'active',
   'devMode.off':      'inactive',
   'devMode.reloaded': 'Reloaded at',
+
+  // Toast messages
+  'bulk.confirmedN':    '✓ {n} sentences confirmed',
+  'bulk.confirmedNone': 'All sentences already confirmed',
+  'bulk.flaggedN':      '⚑ {n} sentences flagged',
+  'bulk.flaggedNone':   'No sentences with diffs',
+  'bulk.unflagged':     'All flags removed',
+  'token.inserted':     'Token inserted',
+  'token.deleted':      'Token deleted',
+  'files.resetDone':        '↺ Project reset',
+  'files.globalResetDone':  '↺ All projects reset',
+  'arc.cycle':          '⚠ Cycle detected — not allowed',
+  'session.loadedToast': '✓ Session loaded: {n} file(s)',
 };

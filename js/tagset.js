@@ -9,7 +9,7 @@ function _isSessionJson(data){
 /** Apply a parsed tagset object (LABELS) to the active project only. */
 function applyTagsetJson(data){
   if(typeof data !== "object" || Array.isArray(data) || !data){
-    alert(t("tagset.errFormat")); return;
+    _showToast(t("tagset.errFormat"), 'error'); return;
   }
   LABELS = data;
   buildDeprelOptionsCache();
@@ -20,6 +20,14 @@ function applyTagsetJson(data){
   renderSentence();
   _updateTagsetMeta();
   renderTagsetList();
+  // Count total tags to confirm what was loaded
+  const cols = LABELS["__cols__"] || [];
+  const depCols = LABELS["__dep_cols__"] || [];
+  const tagCount = cols.reduce((s, c) => s + (c.values?.length || 0), 0);
+  const depCount = depCols.reduce((s, dc) => s + Object.values(dc.groups || {}).flat().length, 0);
+  if(tagCount > 0 || depCount > 0){
+    _showToast(`✓ Tagset geladen (${tagCount} Tags, ${depCount} DepRels)`, 'info');
+  }
 }
 
 // Update the tagset-meta display line with counts from the currently active LABELS.
@@ -45,7 +53,7 @@ function _updateTagsetMeta(){
 function _smartDispatchJson(jsonText){
   let data;
   try { data = JSON.parse(jsonText); }
-  catch { alert(t("tagset.errJson")); return; }
+  catch { _showToast(t("tagset.errJson"), 'error'); return; }
   if(_isSessionJson(data)) importSession(jsonText);
   else                     applyTagsetJson(data);
 }
@@ -89,6 +97,7 @@ async function _dispatchFiles(files){
       a.download = "tagset.json";
       a.click();
       URL.revokeObjectURL(a.href);
+      if(typeof _showToast === "function") _showToast("✓ tagset.json");
     });
   }
 }
@@ -166,6 +175,29 @@ const _TAGSET_EXAMPLE = JSON.stringify({
 
 // ── Per-project tagset list ────────────────────────────────────────────────────
 
+/** Collect all tag values actually used in the active project's docs, keyed by column key. */
+function _collectUsedTagValues(){
+  const used = {}; // { colKey: Set<string> }
+  for(const d of (state?.docs || [])){
+    for(const s of d.sentences){
+      for(const tk of s.tokens){
+        for(const col of (LABEL_COLS || [])){
+          const v = tk[col.key];
+          if(v && v !== "_"){
+            if(!used[col.key]) used[col.key] = new Set();
+            used[col.key].add(v);
+          }
+        }
+        if(tk.deprel && tk.deprel !== "_"){
+          if(!used["__deprel__"]) used["__deprel__"] = new Set();
+          used["__deprel__"].add(tk.deprel);
+        }
+      }
+    }
+  }
+  return used;
+}
+
 /** Render the active project's tagset content into the detail panel. */
 function renderTagsetList(){
   const panel = document.getElementById("tagsetListPanel");
@@ -180,6 +212,10 @@ function renderTagsetList(){
   const xposArr = lbl["__xpos__"] || [];
   const oldGroups = Object.entries(lbl).filter(([k]) => !k.startsWith("__"));
 
+  // Collect which values are actually used in the current data
+  const usedVals = _collectUsedTagValues();
+  const hasData  = (state?.docs?.length || 0) > 0;
+
   const sections = [];
 
   // Label columns (__cols__ or __upos__/__xpos__)
@@ -188,23 +224,32 @@ function renderTagsetList(){
     ...(xposArr.length ? [{ key:"xpos", name:"XPOS",        values: xposArr }] : []),
   ];
   for(const col of labelArr){
-    const vals = col.values || [];
+    const vals    = col.values || [];
+    const colUsed = usedVals[col.key] || new Set();
+    const tagHtml = vals.map(v => {
+      const isUsed = hasData && colUsed.has(v);
+      return `<span class="tagsetTag${isUsed ? ' tagsetTagUsed' : ''}" title="${isUsed ? '✓ im Projekt verwendet' : ''}">${escapeHtml(v)}</span>`;
+    }).join("");
     sections.push(`<div class="tagsetSection">
       <div class="tagsetSectionHead">${escapeHtml(col.name || col.key)} <span class="muted">(${vals.length})</span></div>
-      <div class="tagsetSectionBody">${vals.map(v => `<span class="tagsetTag">${escapeHtml(v)}</span>`).join("")}</div>
+      <div class="tagsetSectionBody">${tagHtml}</div>
     </div>`);
   }
 
   // Dep columns (__dep_cols__ or old group format)
   const depArr = depCols.length ? depCols
     : (oldGroups.length ? [{ key:"dep", name:"DepRel", groups: Object.fromEntries(oldGroups) }] : []);
+  const depUsed = usedVals["__deprel__"] || new Set();
   for(const dc of depArr){
     const groups  = dc.groups || {};
     const total   = Object.values(groups).reduce((s, a) => s + a.length, 0);
     const groupHtml = Object.entries(groups).map(([gname, tags]) =>
       `<div class="tagsetGroup">
         <span class="tagsetGroupName">${escapeHtml(gname)}</span>
-        ${tags.map(v => `<span class="tagsetTag">${escapeHtml(v)}</span>`).join("")}
+        ${tags.map(v => {
+          const isUsed = hasData && depUsed.has(v);
+          return `<span class="tagsetTag${isUsed ? ' tagsetTagUsed' : ''}" title="${isUsed ? '✓ im Projekt verwendet' : ''}">${escapeHtml(v)}</span>`;
+        }).join("")}
       </div>`
     ).join("");
     sections.push(`<div class="tagsetSection tagsetSection--dep">

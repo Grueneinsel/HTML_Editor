@@ -149,6 +149,7 @@ window.addEventListener('pointerup', e => {
     if (_arcWouldCycle(drag.depId, newHeadId, drag.toks)) {
       // Reject the drop: shake-flash the target token and give haptic buzz
       navigator.vibrate?.([40, 20, 40]);
+      _showToast(t('arc.cycle'), 'error');
       if (drag.svg.isConnected) {
         const el = drag.svg.querySelector(`[data-arctokid="${newHeadId}"]`);
         if (el) {

@@ -60,6 +60,7 @@ function _insertToken(beforeId){
     if(d === state.docs[0]){ _remapAnnotations(si, map); newId = pos + 1; }
   }
   renderSentence();
+  _showToast(t('token.inserted'), 'success');
   // Focus the new token's input after the DOM has been repainted
   setTimeout(() => {
     const inp = sentText.querySelector(`.sentFormInput[data-id="${newId}"]`);
@@ -83,6 +84,7 @@ function _deleteToken(tokId){
     if(d === state.docs[0]) _remapAnnotations(si, map);
   }
   renderSentence();
+  _showToast(t('token.deleted'), 'info');
 }
 
 // ── Sentence management ────────────────────────────────────────────────────────

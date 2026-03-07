@@ -191,6 +191,7 @@ function resetProject(){
   renderFiles();
   renderSentSelect();
   renderSentence();
+  _showToast(t('files.resetDone'), 'info');
 }
 
 /** Reset ALL projects — full application reset. */
@@ -213,6 +214,7 @@ function resetAll(){
   renderFiles();
   renderSentSelect();
   renderSentence();
+  _showToast(t('files.globalResetDone'), 'info');
 }
 
 // Recompute state.maxSents as the length of the longest loaded document.

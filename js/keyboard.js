@@ -11,7 +11,8 @@ function setKeyFocus(tokId){
   if(tokId === null) return;
   const tr = cmpTable.querySelector(`tr[data-id="${tokId}"]`);
   if(tr){
-    tr.classList.add("keyFocus");
+    tr.classList.add("keyFocus", "keyFocusPulse");
+    tr.addEventListener("animationend", () => tr.classList.remove("keyFocusPulse"), { once: true });
     tr.scrollIntoView({ block:"nearest", behavior:"smooth" });
   }
   sentText?.querySelector(`.sentToken[data-id="${tokId}"]`)?.classList.add("sentTokenActive");
@@ -137,6 +138,12 @@ document.addEventListener("keydown", (e) => {
           state.currentSent = idx;
           keyFocusTokId = null;
           renderSentence();
+          // Flash the first diff cell to guide the eye
+          const firstDiff = cmpTable.querySelector("tr.rowDiff td");
+          if(firstDiff){
+            firstDiff.classList.add("diffCellFlash");
+            firstDiff.addEventListener("animationend", () => firstDiff.classList.remove("diffCellFlash"), { once: true });
+          }
           found = true;
           break;
         }

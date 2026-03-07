@@ -33,6 +33,26 @@ function updateExportButtons(){
 
 // ── Download helper ────────────────────────────────────────────────────────────
 
+// Show a brief toast notification anchored to the bottom-right corner.
+// type: 'success' (green, default) | 'error' (red) | 'info' (blue)
+let _toastTimer = null;
+function _showToast(msg, type = 'success'){
+  let toast = document.getElementById("downloadToast");
+  if(!toast){
+    toast = document.createElement("div");
+    toast.id = "downloadToast";
+    document.body.appendChild(toast);
+  }
+  toast.className = `downloadToast downloadToast--${type}`;
+  toast.textContent = msg;
+  toast.classList.remove("downloadToastVisible");
+  void toast.offsetWidth;
+  toast.classList.add("downloadToastVisible");
+  clearTimeout(_toastTimer);
+  const dur = type === 'error' ? 4000 : 2500;
+  _toastTimer = setTimeout(() => toast.classList.remove("downloadToastVisible"), dur);
+}
+
 // Trigger a browser file download for arbitrary text content.
 function downloadText(content, filename){
   const blob = new Blob([content], { type:"text/plain;charset=utf-8" });
@@ -42,6 +62,7 @@ function downloadText(content, filename){
   a.download = filename;
   a.click();
   URL.revokeObjectURL(url);
+  _showToast(`✓ ${filename}`);
 }
 
 // ── Gold CoNLL-U core logic ────────────────────────────────────────────────────
@@ -195,10 +216,10 @@ function exportSession(){
 function importSession(jsonText){
   let data;
   try { data = JSON.parse(jsonText); }
-  catch { alert(t('session.errJson')); return; }
+  catch { _showToast(t('session.errJson'), 'error'); return; }
 
   if(data.version !== 2 || !Array.isArray(data.projects) || !data.projects.length){
-    alert(t('session.errFormat')); return;
+    _showToast(t('session.errFormat'), 'error'); return;
   }
 
   state.projects = data.projects.map(p => {
@@ -231,6 +252,7 @@ function importSession(jsonText){
   renderSentence();
   const totalDocs = state.projects.reduce((s, p) => s + p.docs.length, 0);
   _showSessionMeta(t('session.loaded', { n: totalDocs, s: state.maxSents, u: data.projects[state.activeProjectIdx]?.undo?.length || 0 }));
+  _showToast(t('session.loadedToast', { n: totalDocs }), 'success');
 }
 
 // Show a transient message in the session meta area, auto-clearing after 4 seconds.

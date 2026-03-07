@@ -133,7 +133,7 @@ html[data-theme="light"] .dropOverlayInner{
 }
 html[data-theme="light"] .goldPopup{ box-shadow:0 8px 40px var(--shadow); }
 html[data-theme="light"] .colVisible{ background:#ddeef8; border-color:#a8c8e8; color:var(--accent); }
-html[data-theme="light"] .colHidden{ background:#eff4f8; border-color:#c8d8e8; color:#6a8898; }
+html[data-theme="light"] .colHidden{ background:#f5f8fc; border-color:#c8d8e8; color:#8aA0b0; text-decoration:line-through; }
 html[data-theme="light"] .helpModal{ background:rgba(180,210,240,.88); }
 html[data-theme="light"] .helpContent .helpCode{ background:#f2f6fc; border-color:var(--line); }
 html[data-theme="light"] .helpContent .helpInlineCode{ background:#e0eaf8; }
@@ -216,6 +216,79 @@ kbd{ display:inline-block; padding:1px 5px; border-radius:4px; border:1px solid 
 /* Generic button press feedback */
 button:not(:disabled):active,
 .btnLike:active { transform: scale(0.96); transition: transform 0.05s; }
+
+/* Sentence text fade-in on navigation */
+@keyframes sentFadeIn {
+  from { opacity:0; transform:translateY(4px); }
+  to   { opacity:1; transform:translateY(0);   }
+}
+.sentFadeIn { animation: sentFadeIn 0.18s ease-out; }
+
+/* Diff cell highlight after n/N jump */
+@keyframes diffCellFlash {
+  0%   { background: rgba(255,160,40,0.55); }
+  100% { background: transparent; }
+}
+.diffCellFlash { animation: diffCellFlash 0.9s ease-out; }
+
+/* Table row focus pulse on first focus */
+@keyframes keyFocusPulse {
+  0%   { box-shadow: inset 0 0 0 2px rgba(74,158,255,0.85); }
+  100% { box-shadow: inset 0 0 0 2px rgba(74,158,255,0.00); }
+}
+.keyFocusPulse { animation: keyFocusPulse 0.5s ease-out; }
+
+/* Flag button bounce */
+@keyframes flagBounce {
+  0%   { transform: scale(1);    }
+  35%  { transform: scale(1.55); }
+  65%  { transform: scale(0.82); }
+  100% { transform: scale(1);    }
+}
+.flagBounce { animation: flagBounce 0.32s ease-out; }
+
+/* Gold popup scale-in */
+@keyframes popupIn {
+  from { opacity:0; transform:scale(0.93) translateY(-5px); }
+  to   { opacity:1; transform:scale(1)    translateY(0);    }
+}
+.goldPopup.active { animation: popupIn 0.15s ease-out; }
+
+/* CoNLL-U editor fade-in */
+@keyframes conlluFadeIn {
+  from { opacity:0; transform:translateY(-6px); }
+  to   { opacity:1; transform:translateY(0);    }
+}
+.conlluFadeIn { animation: conlluFadeIn 0.2s ease-out; }
+
+/* File item slide-in */
+@keyframes fileItemIn {
+  from { opacity:0; transform:translateX(-8px); }
+  to   { opacity:1; transform:translateX(0);    }
+}
+.fileItem { animation: fileItemIn 0.18s ease-out; }
+
+/* Active project tab fade-in */
+@keyframes tabActivate {
+  from { opacity:0.4; }
+  to   { opacity:1;   }
+}
+.projectTabActive { animation: tabActivate 0.2s ease-out; }
+
+/* textWarn pulse on appearance */
+@keyframes warnPulse {
+  0%   { box-shadow: 0 0 0 0   rgba(230,120,0,0.55); }
+  50%  { box-shadow: 0 0 0 6px rgba(230,120,0,0.20); }
+  100% { box-shadow: 0 0 0 0   rgba(230,120,0,0.00); }
+}
+.textWarnPulse .textWarnBanner { animation: warnPulse 0.9s ease-out; }
+
+/* sentDot color transitions */
+.sentDot { transition: background 0.3s, border-color 0.3s, opacity 0.2s; }
+
+/* Card hover lift */
+.card { transition: box-shadow 0.2s; }
+.card:hover { box-shadow: 0 6px 28px rgba(0,0,0,0.28); }
 
 /* ── Layout ──────────────────────────────────────────────────────────────────── */
 .wrap{ max-width:1440px; margin:0 auto; padding:14px; display:grid; gap:10px }
@@ -328,6 +401,13 @@ button.danger:hover:not(:disabled){ border-color:#ff5f5f; background:#1e0e0e }
 }
 .sentTokenEdit:hover .sentDeleteBtn{ opacity:.8; }
 .sentDeleteBtn:hover{ opacity:1 !important; background:color-mix(in srgb,#ff5f5f 18%,transparent); border-color:#ff5f5f; }
+
+/* Note indicator in sentNavRow */
+.sentNoteIndicator{
+  font-size:14px; color:var(--gold); cursor:default;
+  opacity:.85; transition:opacity .15s;
+}
+.sentNoteIndicator:hover{ opacity:1; }
 
 /* Sentence note */
 .sentNoteRow{ display:flex; align-items:flex-start; gap:8px; margin-top:8px; }
@@ -607,8 +687,12 @@ tr.keyFocus > td:first-child{ border-left:2px solid var(--accent) }
 }
 .tagsetTag{
   display:inline-block; font-size:11px; font-family:monospace;
-  background:var(--border); border-radius:3px; padding:1px 4px;
-  color:var(--fg);
+  background:var(--card2); border-radius:3px; padding:1px 4px;
+  color:var(--muted); border:1px solid transparent;
+}
+.tagsetTagUsed{
+  color:var(--text); border-color:rgba(61,232,154,.35);
+  background:rgba(61,232,154,.07);
 }
 
 /* File list + Drop zone */
@@ -833,8 +917,13 @@ html[data-theme="light"] .treeSingleBtn:hover{ background:#b8dcf0; }
 }
 .colVisible{ border-color:#2a4a6a; color:var(--accent); background:#0d1f33 }
 .colVisible:hover{ border-color:var(--accent) }
-.colHidden{ border-color:#2a2a3a; color:#556; background:#0c0f16; opacity:.6 }
-.colHidden:hover{ opacity:1; border-color:#445 }
+.colVisible::before{ content:"✓ "; font-size:10px; opacity:.7 }
+.colHidden{
+  border-style:dashed; border-color:#2a2a3a; color:#556;
+  background:#0c0f16; text-decoration:line-through; opacity:.55;
+}
+.colHidden:hover{ opacity:.85; border-color:#445 }
+.colHidden::before{ content:"✕ "; font-size:10px; opacity:.7 }
 
 /* File input hidden */
 .fileHidden{
@@ -971,6 +1060,21 @@ html[data-theme="light"] .treeSingleBtn:hover{ background:#b8dcf0; }
 .appFooterSep{ opacity:.4; }
 .appFooter strong{ color:var(--text); }
 
+/* Download toast */
+.downloadToast{
+  position:fixed; bottom:20px; right:20px; z-index:9100;
+  background:var(--card); border:1px solid var(--line); border-radius:8px;
+  padding:8px 16px; font-size:13px;
+  box-shadow:0 4px 16px var(--shadow);
+  opacity:0; transform:translateY(8px);
+  pointer-events:none; transition:opacity 0.2s, transform 0.2s;
+  max-width:320px;
+}
+.downloadToastVisible{ opacity:1; transform:translateY(0); }
+.downloadToast--success{ border-color:var(--ok);     color:var(--ok);     }
+.downloadToast--error  { border-color:var(--bad);    color:var(--bad);    }
+.downloadToast--info   { border-color:var(--accent); color:var(--accent); }
+
 /* Autosave restore banner */
 .autosaveBanner{
   position:fixed; bottom:16px; left:50%; transform:translateX(-50%);
@@ -1000,6 +1104,15 @@ html[data-theme="light"] .autosaveBanner{ background:#fffbe8; border-color:#c090
   border-bottom:2px solid var(--card); margin-bottom:-2px;
 }
 .projectTabName{ max-width:160px; overflow:hidden; text-overflow:ellipsis; }
+.projectTabBadge{
+  font-size:10px; padding:1px 5px; border-radius:9px;
+  background:rgba(122,150,181,.18); color:var(--muted);
+  border:1px solid rgba(122,150,181,.22); flex-shrink:0; white-space:nowrap;
+}
+.projectTabBadgeDone{
+  background:rgba(61,232,154,.18); color:var(--ok);
+  border-color:rgba(61,232,154,.3);
+}
 .projectTabMoveBtn,.projectTabRenameBtn,.projectTabClose{
   padding:0 3px; border:none; background:transparent;
   color:var(--muted); font-size:11px; line-height:1; cursor:pointer; flex-shrink:0;
@@ -1116,6 +1229,14 @@ html[data-theme="light"] .globalResetBtn:hover{ background:rgba(200,50,50,0.1) !
 .posCustom {
   color: var(--accent);
   font-weight: 700;
+}
+
+/* Diff tokens — subtle underline connecting sentence text to table */
+.sentTokenDiff {
+  text-decoration: underline;
+  text-decoration-color: var(--bad);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
 }
 
 /* Flagged tokens — colored differently everywhere */
@@ -1677,6 +1798,7 @@ document.addEventListener('DOMContentLoaded', _syncThemeBtn);
           <input type="checkbox" id="autoAdvanceCb"> <span data-i18n="sent.autoAdvance">Auto-weiter</span>
         </label>
         <span id="sentMeta" class="muted"></span>
+        <span id="sentNoteIndicator" class="sentNoteIndicator" title="Diese Satz hat eine Notiz" style="display:none">✎</span>
       </div>
       <details class="disclosureDetails">
         <summary data-i18n="sent.bulkTitle">Massenaktionen</summary>
@@ -2043,6 +2165,19 @@ window.LANG_DE = {
   'devMode.on':       'aktiv',
   'devMode.off':      'inaktiv',
   'devMode.reloaded': 'Neu geladen um',
+
+  // Toast-Meldungen
+  'bulk.confirmedN':    '✓ {n} Sätze bestätigt',
+  'bulk.confirmedNone': 'Alle Sätze bereits bestätigt',
+  'bulk.flaggedN':      '⚑ {n} Sätze markiert',
+  'bulk.flaggedNone':   'Keine Sätze mit Diffs',
+  'bulk.unflagged':     'Alle Markierungen entfernt',
+  'token.inserted':     'Token eingefügt',
+  'token.deleted':      'Token gelöscht',
+  'files.resetDone':        '↺ Projekt zurückgesetzt',
+  'files.globalResetDone':  '↺ Alles zurückgesetzt',
+  'arc.cycle':          '⚠ Kreisreferenz — nicht erlaubt',
+  'session.loadedToast': '✓ Session geladen: {n} Datei(en)',
 };
 
 </script>
@@ -2298,6 +2433,19 @@ window.LANG_EN = {
   'devMode.on':       'active',
   'devMode.off':      'inactive',
   'devMode.reloaded': 'Reloaded at',
+
+  // Toast messages
+  'bulk.confirmedN':    '✓ {n} sentences confirmed',
+  'bulk.confirmedNone': 'All sentences already confirmed',
+  'bulk.flaggedN':      '⚑ {n} sentences flagged',
+  'bulk.flaggedNone':   'No sentences with diffs',
+  'bulk.unflagged':     'All flags removed',
+  'token.inserted':     'Token inserted',
+  'token.deleted':      'Token deleted',
+  'files.resetDone':        '↺ Project reset',
+  'files.globalResetDone':  '↺ All projects reset',
+  'arc.cycle':          '⚠ Cycle detected — not allowed',
+  'session.loadedToast': '✓ Session loaded: {n} file(s)',
 };
 
 </script>
@@ -3088,6 +3236,7 @@ function resetProject(){
   renderFiles();
   renderSentSelect();
   renderSentence();
+  _showToast(t('files.resetDone'), 'info');
 }
 
 /** Reset ALL projects — full application reset. */
@@ -3110,6 +3259,7 @@ function resetAll(){
   renderFiles();
   renderSentSelect();
   renderSentence();
+  _showToast(t('files.globalResetDone'), 'info');
 }
 
 // Recompute state.maxSents as the length of the longest loaded document.
@@ -3192,8 +3342,11 @@ function _syncUndoBtns(){
   const r = document.getElementById("redoBtn");
   if(u) u.disabled = _undoStack.length === 0;
   if(r) r.disabled = _redoStack.length === 0;
-  if(u) u.title = t('undo.title', { n: _undoStack.length, s: tpSuffix(_undoStack.length, 'undo') });
-  if(r) r.title = t('redo.title', { n: _redoStack.length, s: tpSuffix(_redoStack.length, 'undo') });
+  const topUndo = _undoStack[_undoStack.length - 1];
+  const topRedo = _redoStack[_redoStack.length - 1];
+  const sentSuffix = snap => snap?.sentIndex != null ? ` (S${snap.sentIndex + 1})` : '';
+  if(u) u.title = t('undo.title', { n: _undoStack.length, s: tpSuffix(_undoStack.length, 'undo') }) + sentSuffix(topUndo);
+  if(r) r.title = t('redo.title', { n: _redoStack.length, s: tpSuffix(_redoStack.length, 'undo') }) + sentSuffix(topRedo);
 }
 
 // ── Session serialisation helpers ─────────────────────────────────────────────
@@ -3476,6 +3629,19 @@ function renderProjectTabs(){
     nameSpan.textContent = p.name;
     nameSpan.title = t('project.renameHint');
     tab.appendChild(nameSpan);
+
+    // Progress badge: confirmed / total sentences
+    const tabTotal = idx === state.activeProjectIdx ? state.maxSents : (p.maxSents || 0);
+    if(tabTotal > 0){
+      const tabConfirmed = idx === state.activeProjectIdx
+        ? state.confirmed.size
+        : (Array.isArray(p.confirmed) ? p.confirmed.length : (p.confirmed?.size ?? 0));
+      const badge = document.createElement("span");
+      badge.className = "projectTabBadge" + (tabConfirmed === tabTotal ? " projectTabBadgeDone" : "");
+      badge.textContent = `${tabConfirmed}/${tabTotal}`;
+      badge.title = `${tabConfirmed} von ${tabTotal} Sätzen bestätigt`;
+      tab.appendChild(badge);
+    }
 
     // Rename button
     const renameBtn = document.createElement("button");
@@ -3837,6 +4003,15 @@ function renderCompareTable(){
     const goldCell = cmpTable.querySelector(`tr[data-id="${_popupTokId}"] td[data-col='gold']`);
     if(goldCell){ _populatePopup(_popupTokId); _positionPopup(goldCell); }
   }
+
+  // Sync diff underline to sentText token spans so the sentence text reflects diffs
+  const diffIds = new Set(
+    Array.from(cmpTable.querySelectorAll("tr.rowDiff[data-id]"))
+      .map(tr => parseInt(tr.dataset.id, 10))
+  );
+  for(const span of sentText.querySelectorAll(".sentToken, .sentTokenEdit")){
+    span.classList.toggle("sentTokenDiff", diffIds.has(parseInt(span.dataset.id, 10)));
+  }
 }
 
 // ── Gold-cell popup ───────────────────────────────────────────────────────────
@@ -3956,6 +4131,19 @@ function _ensurePopup(){
         focusable[idx <= 0 ? focusable.length - 1 : idx - 1].focus();
       } else {
         focusable[(idx + 1) % focusable.length].focus();
+      }
+    }
+
+    // Arrow left/right: navigate to previous/next token
+    if((e.key === "ArrowLeft" || e.key === "ArrowRight") && document.activeElement?.tagName !== "INPUT"){
+      e.preventDefault(); e.stopPropagation();
+      const dir = e.key === "ArrowRight" ? 1 : -1;
+      const curIdx = _lastIdList.indexOf(_popupTokId);
+      const nextIdx = curIdx + dir;
+      if(nextIdx >= 0 && nextIdx < _lastIdList.length){
+        const nextId = _lastIdList[nextIdx];
+        const nextGoldCell = cmpTable.querySelector(`tr[data-id="${nextId}"] td[data-col='gold']`);
+        if(nextGoldCell){ _openPopup(nextId, nextGoldCell); }
       }
     }
   }, true);
@@ -4105,6 +4293,10 @@ cmpTable.addEventListener("click", (e) => {
   if(!tr) return;
   e.stopPropagation();
   toggleFlag(state.currentSent, parseInt(tr.dataset.id, 10));
+  btn.classList.remove("flagBounce");
+  void btn.offsetWidth;
+  btn.classList.add("flagBounce");
+  btn.addEventListener("animationend", () => btn.classList.remove("flagBounce"), { once: true });
 });
 
 // Click on Gold cell → open or close the annotation popup for that token.
@@ -4472,6 +4664,7 @@ window.addEventListener('pointerup', e => {
     if (_arcWouldCycle(drag.depId, newHeadId, drag.toks)) {
       // Reject the drop: shake-flash the target token and give haptic buzz
       navigator.vibrate?.([40, 20, 40]);
+      _showToast(t('arc.cycle'), 'error');
       if (drag.svg.isConnected) {
         const el = drag.svg.querySelector(`[data-arctokid="${newHeadId}"]`);
         if (el) {
@@ -5536,7 +5729,7 @@ function _isSessionJson(data){
 /** Apply a parsed tagset object (LABELS) to the active project only. */
 function applyTagsetJson(data){
   if(typeof data !== "object" || Array.isArray(data) || !data){
-    alert(t("tagset.errFormat")); return;
+    _showToast(t("tagset.errFormat"), 'error'); return;
   }
   LABELS = data;
   buildDeprelOptionsCache();
@@ -5547,6 +5740,14 @@ function applyTagsetJson(data){
   renderSentence();
   _updateTagsetMeta();
   renderTagsetList();
+  // Count total tags to confirm what was loaded
+  const cols = LABELS["__cols__"] || [];
+  const depCols = LABELS["__dep_cols__"] || [];
+  const tagCount = cols.reduce((s, c) => s + (c.values?.length || 0), 0);
+  const depCount = depCols.reduce((s, dc) => s + Object.values(dc.groups || {}).flat().length, 0);
+  if(tagCount > 0 || depCount > 0){
+    _showToast(`✓ Tagset geladen (${tagCount} Tags, ${depCount} DepRels)`, 'info');
+  }
 }
 
 // Update the tagset-meta display line with counts from the currently active LABELS.
@@ -5572,7 +5773,7 @@ function _updateTagsetMeta(){
 function _smartDispatchJson(jsonText){
   let data;
   try { data = JSON.parse(jsonText); }
-  catch { alert(t("tagset.errJson")); return; }
+  catch { _showToast(t("tagset.errJson"), 'error'); return; }
   if(_isSessionJson(data)) importSession(jsonText);
   else                     applyTagsetJson(data);
 }
@@ -5616,6 +5817,7 @@ async function _dispatchFiles(files){
       a.download = "tagset.json";
       a.click();
       URL.revokeObjectURL(a.href);
+      if(typeof _showToast === "function") _showToast("✓ tagset.json");
     });
   }
 }
@@ -5693,6 +5895,29 @@ const _TAGSET_EXAMPLE = JSON.stringify({
 
 // ── Per-project tagset list ────────────────────────────────────────────────────
 
+/** Collect all tag values actually used in the active project's docs, keyed by column key. */
+function _collectUsedTagValues(){
+  const used = {}; // { colKey: Set<string> }
+  for(const d of (state?.docs || [])){
+    for(const s of d.sentences){
+      for(const tk of s.tokens){
+        for(const col of (LABEL_COLS || [])){
+          const v = tk[col.key];
+          if(v && v !== "_"){
+            if(!used[col.key]) used[col.key] = new Set();
+            used[col.key].add(v);
+          }
+        }
+        if(tk.deprel && tk.deprel !== "_"){
+          if(!used["__deprel__"]) used["__deprel__"] = new Set();
+          used["__deprel__"].add(tk.deprel);
+        }
+      }
+    }
+  }
+  return used;
+}
+
 /** Render the active project's tagset content into the detail panel. */
 function renderTagsetList(){
   const panel = document.getElementById("tagsetListPanel");
@@ -5707,6 +5932,10 @@ function renderTagsetList(){
   const xposArr = lbl["__xpos__"] || [];
   const oldGroups = Object.entries(lbl).filter(([k]) => !k.startsWith("__"));
 
+  // Collect which values are actually used in the current data
+  const usedVals = _collectUsedTagValues();
+  const hasData  = (state?.docs?.length || 0) > 0;
+
   const sections = [];
 
   // Label columns (__cols__ or __upos__/__xpos__)
@@ -5715,23 +5944,32 @@ function renderTagsetList(){
     ...(xposArr.length ? [{ key:"xpos", name:"XPOS",        values: xposArr }] : []),
   ];
   for(const col of labelArr){
-    const vals = col.values || [];
+    const vals    = col.values || [];
+    const colUsed = usedVals[col.key] || new Set();
+    const tagHtml = vals.map(v => {
+      const isUsed = hasData && colUsed.has(v);
+      return `<span class="tagsetTag${isUsed ? ' tagsetTagUsed' : ''}" title="${isUsed ? '✓ im Projekt verwendet' : ''}">${escapeHtml(v)}</span>`;
+    }).join("");
     sections.push(`<div class="tagsetSection">
       <div class="tagsetSectionHead">${escapeHtml(col.name || col.key)} <span class="muted">(${vals.length})</span></div>
-      <div class="tagsetSectionBody">${vals.map(v => `<span class="tagsetTag">${escapeHtml(v)}</span>`).join("")}</div>
+      <div class="tagsetSectionBody">${tagHtml}</div>
     </div>`);
   }
 
   // Dep columns (__dep_cols__ or old group format)
   const depArr = depCols.length ? depCols
     : (oldGroups.length ? [{ key:"dep", name:"DepRel", groups: Object.fromEntries(oldGroups) }] : []);
+  const depUsed = usedVals["__deprel__"] || new Set();
   for(const dc of depArr){
     const groups  = dc.groups || {};
     const total   = Object.values(groups).reduce((s, a) => s + a.length, 0);
     const groupHtml = Object.entries(groups).map(([gname, tags]) =>
       `<div class="tagsetGroup">
         <span class="tagsetGroupName">${escapeHtml(gname)}</span>
-        ${tags.map(v => `<span class="tagsetTag">${escapeHtml(v)}</span>`).join("")}
+        ${tags.map(v => {
+          const isUsed = hasData && depUsed.has(v);
+          return `<span class="tagsetTag${isUsed ? ' tagsetTagUsed' : ''}" title="${isUsed ? '✓ im Projekt verwendet' : ''}">${escapeHtml(v)}</span>`;
+        }).join("")}
       </div>`
     ).join("");
     sections.push(`<div class="tagsetSection tagsetSection--dep">
@@ -5855,7 +6093,10 @@ function renderSentSelectOptions(){
       ? ` ${t(stats.diffCount !== 1 ? 'sent.optDiffs' : 'sent.optDiff', { n: stats.diffCount })}`
       : ` ${t('sent.optOk')}`;
     const flagPart = hasFlags ? t('flag.sentOpt') : '';
-    opt.textContent = `${t('sent.optLabel', { n: i+1 })}${confirmed ? ' ★' : ''}${flagPart}  (${stats.totalTokens} Tok${diffPart})`;
+    // First few words of the sentence as a preview label
+    const sent = state.docs[0]?.sentences[i];
+    const preview = sent ? sent.tokens.slice(0, 6).map(tk => tk.form).join(' ') + (sent.tokens.length > 6 ? '…' : '') : '';
+    opt.textContent = `${t('sent.optLabel', { n: i+1 })}${confirmed ? ' ★' : ''}${flagPart}  (${stats.totalTokens} Tok${diffPart})${preview ? '  ' + preview : ''}`;
     // Color-code options: confirmed (gold), flagged (orange), diff (red), ok (green)
     if(confirmed && hasFlags){
       opt.style.background = '#1a0c00';
@@ -5907,6 +6148,12 @@ function _updateSentNote(){
     sentNote.value = state.notes[state.currentSent] ?? "";
     sentNote.placeholder = t('note.placeholder');
   }
+  // Note indicator: show when current sentence has a non-empty note
+  const indicator = document.getElementById("sentNoteIndicator");
+  if(indicator){
+    const hasNote = ok && !!state.notes[state.currentSent]?.trim();
+    indicator.style.display = hasNote ? "" : "none";
+  }
 }
 
 // Re-render the minimap of sentence dots below the sentence selector.
@@ -5928,9 +6175,11 @@ function renderSentMap(){
     if(isCurrent)    cls += " sentDotCurrent";
     if(hasFlags)     cls += " sentDotFlagged";
     dot.className = cls;
+    const dotSent = state.docs[0]?.sentences[i];
+    const dotPreview = dotSent ? dotSent.tokens.slice(0, 6).map(tk => tk.form).join(' ') + (dotSent.tokens.length > 6 ? '…' : '') : '';
     dot.title = t(confirmed ? 'sent.dotTitleConf' : (hasFlags ? 'flag.sentDot' : 'sent.dotTitle'), {
       n: i + 1, toks: stats.totalTokens, diffs: stats.diffCount
-    });
+    }) + (dotPreview ? `\n"${dotPreview}"` : '');
     // Accessibility: text symbol inside dot conveys state independently of color
     if     (confirmed && hasFlags)        dot.textContent = "★!";
     else if(confirmed)                    dot.textContent = "★";
@@ -6036,6 +6285,7 @@ function _insertToken(beforeId){
     if(d === state.docs[0]){ _remapAnnotations(si, map); newId = pos + 1; }
   }
   renderSentence();
+  _showToast(t('token.inserted'), 'success');
   // Focus the new token's input after the DOM has been repainted
   setTimeout(() => {
     const inp = sentText.querySelector(`.sentFormInput[data-id="${newId}"]`);
@@ -6059,6 +6309,7 @@ function _deleteToken(tokId){
     if(d === state.docs[0]) _remapAnnotations(si, map);
   }
   renderSentence();
+  _showToast(t('token.deleted'), 'info');
 }
 
 // ── Sentence management ────────────────────────────────────────────────────────
@@ -6349,6 +6600,9 @@ if(sentNote){
     const val = sentNote.value;
     if(val.trim()) state.notes[state.currentSent] = val;
     else           delete state.notes[state.currentSent];
+    // Live-update note indicator
+    const indicator = document.getElementById("sentNoteIndicator");
+    if(indicator) indicator.style.display = val.trim() ? "" : "none";
   });
 }
 
@@ -6570,9 +6824,14 @@ function renderFiles(){
 
   renderProjectLock();
 
+  const hadWarn = !!textWarn.innerHTML;
   textWarn.innerHTML = warnedIndices.size > 0
     ? `<div class="textWarnBanner">${escapeHtml(t('files.warnBanner'))}</div>`
     : "";
+  if(!hadWarn && textWarn.innerHTML){
+    textWarn.classList.add("textWarnPulse");
+    textWarn.addEventListener("animationend", () => textWarn.classList.remove("textWarnPulse"), { once: true });
+  }
 
   _updateSectionVisibility();
   renderConlluEditor(true);
@@ -6714,6 +6973,11 @@ function renderSentence(){
   sentMeta.textContent = t('sent.label', { cur: state.currentSent + 1, max: state.maxSents });
   sentText.classList.toggle("sentTextConfirmed", state.confirmed.has(state.currentSent));
   sentText.classList.toggle("sentTextUnlocked", state.unlocked && !!s0);
+  // Fade-in animation on sentence change
+  sentText.classList.remove("sentFadeIn");
+  void sentText.offsetWidth;
+  sentText.classList.add("sentFadeIn");
+  sentText.addEventListener("animationend", () => sentText.classList.remove("sentFadeIn"), { once: true });
 
   renderColToggleBar();
   renderCompareTable();
@@ -7137,7 +7401,12 @@ function renderConlluEditor(force){
   if(!wrap) return;
   // Always wipe stale content when there are no docs.
   if(state.docs.length === 0){ wrap.innerHTML = ''; wrap.hidden = true; return; }
+  const wasHidden = wrap.hidden;
   wrap.hidden = false;
+  if(wasHidden){
+    wrap.classList.add("conlluFadeIn");
+    wrap.addEventListener("animationend", () => wrap.classList.remove("conlluFadeIn"), { once: true });
+  }
 
   // Update section heading to reflect current mode
   const titleEl = document.getElementById('conlluSectionTitle');
@@ -7288,10 +7557,12 @@ function copySentenceConllu(){
 
   const text = lines.join("\n");
   navigator.clipboard.writeText(text).then(() => {
-    if(!copyConlluBtn) return;
-    copyConlluBtn.textContent = t('copy.done');
-    setTimeout(() => { if(copyConlluBtn) copyConlluBtn.textContent = t('copy.btn'); }, 1500);
-  }).catch(() => {});
+    _showToast(t('copy.done'), 'success');
+    if(copyConlluBtn){
+      copyConlluBtn.textContent = t('copy.done');
+      setTimeout(() => { if(copyConlluBtn) copyConlluBtn.textContent = t('copy.btn'); }, 1500);
+    }
+  }).catch(() => { _showToast(t('copy.btn') + ' — Fehler', 'error'); });
 }
 
 // ── Demo ───────────────────────────────────────────────────────────────────────
@@ -7375,7 +7646,7 @@ let _ttsActive = false;
 
 // Speak the current sentence text using the Web Speech API.
 function speakSentence(){
-  if(!window.speechSynthesis){ alert(t('tts.noSupport')); return; }
+  if(!window.speechSynthesis){ _showToast(t('tts.noSupport'), 'error'); return; }
   if(_ttsActive){ stopTts(); return; }
   const s0 = state.docs[0]?.sentences?.[state.currentSent];
   if(!s0) return;
@@ -7428,12 +7699,16 @@ function _initAutoAdvance(){
 function confirmAllMatching(){
   if(state.docs.length < 1 || state.maxSents === 0) return;
   pushUndo();
+  let added = 0;
   for(let i = 0; i < state.maxSents; i++){
     if(!state.confirmed.has(i) && _sentStats(i).diffCount === 0){
       state.confirmed.add(i);
+      added++;
     }
   }
   renderSentence();
+  if(added > 0) _showToast(t('bulk.confirmedN', { n: added }), 'success');
+  else          _showToast(t('bulk.confirmedNone'), 'info');
 }
 
 // Flag the first token (id=1) of every sentence that has diffs, so they are
@@ -7441,15 +7716,19 @@ function confirmAllMatching(){
 function flagAllDiffs(){
   if(state.docs.length < 1 || state.maxSents === 0) return;
   pushUndo();
+  let count = 0;
   for(let i = 0; i < state.maxSents; i++){
     if(_sentStats(i).diffCount > 0){
       if(!state.flags[i]) state.flags[i] = new Set();
       // Flag token 1 as a representative marker for the whole sentence.
       const firstId = state.docs[0]?.sentences?.[i]?.tokens?.[0]?.id ?? 1;
       state.flags[i].add(firstId);
+      count++;
     }
   }
   renderSentence();
+  if(count > 0) _showToast(t('bulk.flaggedN', { n: count }), 'info');
+  else          _showToast(t('bulk.flaggedNone'), 'info');
 }
 
 // Remove all manual flags across all sentences.
@@ -7458,6 +7737,7 @@ function unflagAll(){
   pushUndo();
   state.flags = {};
   renderSentence();
+  _showToast(t('bulk.unflagged'), 'info');
 }
 
 if(confirmAllBtn) confirmAllBtn.addEventListener('click', confirmAllMatching);
@@ -7542,6 +7822,26 @@ function updateExportButtons(){
 
 // ── Download helper ────────────────────────────────────────────────────────────
 
+// Show a brief toast notification anchored to the bottom-right corner.
+// type: 'success' (green, default) | 'error' (red) | 'info' (blue)
+let _toastTimer = null;
+function _showToast(msg, type = 'success'){
+  let toast = document.getElementById("downloadToast");
+  if(!toast){
+    toast = document.createElement("div");
+    toast.id = "downloadToast";
+    document.body.appendChild(toast);
+  }
+  toast.className = `downloadToast downloadToast--${type}`;
+  toast.textContent = msg;
+  toast.classList.remove("downloadToastVisible");
+  void toast.offsetWidth;
+  toast.classList.add("downloadToastVisible");
+  clearTimeout(_toastTimer);
+  const dur = type === 'error' ? 4000 : 2500;
+  _toastTimer = setTimeout(() => toast.classList.remove("downloadToastVisible"), dur);
+}
+
 // Trigger a browser file download for arbitrary text content.
 function downloadText(content, filename){
   const blob = new Blob([content], { type:"text/plain;charset=utf-8" });
@@ -7551,6 +7851,7 @@ function downloadText(content, filename){
   a.download = filename;
   a.click();
   URL.revokeObjectURL(url);
+  _showToast(`✓ ${filename}`);
 }
 
 // ── Gold CoNLL-U core logic ────────────────────────────────────────────────────
@@ -7704,10 +8005,10 @@ function exportSession(){
 function importSession(jsonText){
   let data;
   try { data = JSON.parse(jsonText); }
-  catch { alert(t('session.errJson')); return; }
+  catch { _showToast(t('session.errJson'), 'error'); return; }
 
   if(data.version !== 2 || !Array.isArray(data.projects) || !data.projects.length){
-    alert(t('session.errFormat')); return;
+    _showToast(t('session.errFormat'), 'error'); return;
   }
 
   state.projects = data.projects.map(p => {
@@ -7740,6 +8041,7 @@ function importSession(jsonText){
   renderSentence();
   const totalDocs = state.projects.reduce((s, p) => s + p.docs.length, 0);
   _showSessionMeta(t('session.loaded', { n: totalDocs, s: state.maxSents, u: data.projects[state.activeProjectIdx]?.undo?.length || 0 }));
+  _showToast(t('session.loadedToast', { n: totalDocs }), 'success');
 }
 
 // Show a transient message in the session meta area, auto-clearing after 4 seconds.
@@ -7909,7 +8211,8 @@ function setKeyFocus(tokId){
   if(tokId === null) return;
   const tr = cmpTable.querySelector(`tr[data-id="${tokId}"]`);
   if(tr){
-    tr.classList.add("keyFocus");
+    tr.classList.add("keyFocus", "keyFocusPulse");
+    tr.addEventListener("animationend", () => tr.classList.remove("keyFocusPulse"), { once: true });
     tr.scrollIntoView({ block:"nearest", behavior:"smooth" });
   }
   sentText?.querySelector(`.sentToken[data-id="${tokId}"]`)?.classList.add("sentTokenActive");
@@ -8035,6 +8338,12 @@ document.addEventListener("keydown", (e) => {
           state.currentSent = idx;
           keyFocusTokId = null;
           renderSentence();
+          // Flash the first diff cell to guide the eye
+          const firstDiff = cmpTable.querySelector("tr.rowDiff td");
+          if(firstDiff){
+            firstDiff.classList.add("diffCellFlash");
+            firstDiff.addEventListener("animationend", () => firstDiff.classList.remove("diffCellFlash"), { once: true });
+          }
           found = true;
           break;
         }

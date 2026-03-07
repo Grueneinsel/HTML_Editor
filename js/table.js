@@ -208,6 +208,15 @@ function renderCompareTable(){
     const goldCell = cmpTable.querySelector(`tr[data-id="${_popupTokId}"] td[data-col='gold']`);
     if(goldCell){ _populatePopup(_popupTokId); _positionPopup(goldCell); }
   }
+
+  // Sync diff underline to sentText token spans so the sentence text reflects diffs
+  const diffIds = new Set(
+    Array.from(cmpTable.querySelectorAll("tr.rowDiff[data-id]"))
+      .map(tr => parseInt(tr.dataset.id, 10))
+  );
+  for(const span of sentText.querySelectorAll(".sentToken, .sentTokenEdit")){
+    span.classList.toggle("sentTokenDiff", diffIds.has(parseInt(span.dataset.id, 10)));
+  }
 }
 
 // ── Gold-cell popup ───────────────────────────────────────────────────────────
@@ -327,6 +336,19 @@ function _ensurePopup(){
         focusable[idx <= 0 ? focusable.length - 1 : idx - 1].focus();
       } else {
         focusable[(idx + 1) % focusable.length].focus();
+      }
+    }
+
+    // Arrow left/right: navigate to previous/next token
+    if((e.key === "ArrowLeft" || e.key === "ArrowRight") && document.activeElement?.tagName !== "INPUT"){
+      e.preventDefault(); e.stopPropagation();
+      const dir = e.key === "ArrowRight" ? 1 : -1;
+      const curIdx = _lastIdList.indexOf(_popupTokId);
+      const nextIdx = curIdx + dir;
+      if(nextIdx >= 0 && nextIdx < _lastIdList.length){
+        const nextId = _lastIdList[nextIdx];
+        const nextGoldCell = cmpTable.querySelector(`tr[data-id="${nextId}"] td[data-col='gold']`);
+        if(nextGoldCell){ _openPopup(nextId, nextGoldCell); }
       }
     }
   }, true);
@@ -476,6 +498,10 @@ cmpTable.addEventListener("click", (e) => {
   if(!tr) return;
   e.stopPropagation();
   toggleFlag(state.currentSent, parseInt(tr.dataset.id, 10));
+  btn.classList.remove("flagBounce");
+  void btn.offsetWidth;
+  btn.classList.add("flagBounce");
+  btn.addEventListener("animationend", () => btn.classList.remove("flagBounce"), { once: true });
 });
 
 // Click on Gold cell → open or close the annotation popup for that token.

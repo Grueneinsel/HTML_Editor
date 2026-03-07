@@ -126,7 +126,7 @@ html[data-theme="light"] .dropOverlayInner{
 }
 html[data-theme="light"] .goldPopup{ box-shadow:0 8px 40px var(--shadow); }
 html[data-theme="light"] .colVisible{ background:#ddeef8; border-color:#a8c8e8; color:var(--accent); }
-html[data-theme="light"] .colHidden{ background:#eff4f8; border-color:#c8d8e8; color:#6a8898; }
+html[data-theme="light"] .colHidden{ background:#f5f8fc; border-color:#c8d8e8; color:#8aA0b0; text-decoration:line-through; }
 html[data-theme="light"] .helpModal{ background:rgba(180,210,240,.88); }
 html[data-theme="light"] .helpContent .helpCode{ background:#f2f6fc; border-color:var(--line); }
 html[data-theme="light"] .helpContent .helpInlineCode{ background:#e0eaf8; }
@@ -209,6 +209,79 @@ kbd{ display:inline-block; padding:1px 5px; border-radius:4px; border:1px solid 
 /* Generic button press feedback */
 button:not(:disabled):active,
 .btnLike:active { transform: scale(0.96); transition: transform 0.05s; }
+
+/* Sentence text fade-in on navigation */
+@keyframes sentFadeIn {
+  from { opacity:0; transform:translateY(4px); }
+  to   { opacity:1; transform:translateY(0);   }
+}
+.sentFadeIn { animation: sentFadeIn 0.18s ease-out; }
+
+/* Diff cell highlight after n/N jump */
+@keyframes diffCellFlash {
+  0%   { background: rgba(255,160,40,0.55); }
+  100% { background: transparent; }
+}
+.diffCellFlash { animation: diffCellFlash 0.9s ease-out; }
+
+/* Table row focus pulse on first focus */
+@keyframes keyFocusPulse {
+  0%   { box-shadow: inset 0 0 0 2px rgba(74,158,255,0.85); }
+  100% { box-shadow: inset 0 0 0 2px rgba(74,158,255,0.00); }
+}
+.keyFocusPulse { animation: keyFocusPulse 0.5s ease-out; }
+
+/* Flag button bounce */
+@keyframes flagBounce {
+  0%   { transform: scale(1);    }
+  35%  { transform: scale(1.55); }
+  65%  { transform: scale(0.82); }
+  100% { transform: scale(1);    }
+}
+.flagBounce { animation: flagBounce 0.32s ease-out; }
+
+/* Gold popup scale-in */
+@keyframes popupIn {
+  from { opacity:0; transform:scale(0.93) translateY(-5px); }
+  to   { opacity:1; transform:scale(1)    translateY(0);    }
+}
+.goldPopup.active { animation: popupIn 0.15s ease-out; }
+
+/* CoNLL-U editor fade-in */
+@keyframes conlluFadeIn {
+  from { opacity:0; transform:translateY(-6px); }
+  to   { opacity:1; transform:translateY(0);    }
+}
+.conlluFadeIn { animation: conlluFadeIn 0.2s ease-out; }
+
+/* File item slide-in */
+@keyframes fileItemIn {
+  from { opacity:0; transform:translateX(-8px); }
+  to   { opacity:1; transform:translateX(0);    }
+}
+.fileItem { animation: fileItemIn 0.18s ease-out; }
+
+/* Active project tab fade-in */
+@keyframes tabActivate {
+  from { opacity:0.4; }
+  to   { opacity:1;   }
+}
+.projectTabActive { animation: tabActivate 0.2s ease-out; }
+
+/* textWarn pulse on appearance */
+@keyframes warnPulse {
+  0%   { box-shadow: 0 0 0 0   rgba(230,120,0,0.55); }
+  50%  { box-shadow: 0 0 0 6px rgba(230,120,0,0.20); }
+  100% { box-shadow: 0 0 0 0   rgba(230,120,0,0.00); }
+}
+.textWarnPulse .textWarnBanner { animation: warnPulse 0.9s ease-out; }
+
+/* sentDot color transitions */
+.sentDot { transition: background 0.3s, border-color 0.3s, opacity 0.2s; }
+
+/* Card hover lift */
+.card { transition: box-shadow 0.2s; }
+.card:hover { box-shadow: 0 6px 28px rgba(0,0,0,0.28); }
 
 /* ── Layout ──────────────────────────────────────────────────────────────────── */
 .wrap{ max-width:1440px; margin:0 auto; padding:14px; display:grid; gap:10px }
@@ -321,6 +394,13 @@ button.danger:hover:not(:disabled){ border-color:#ff5f5f; background:#1e0e0e }
 }
 .sentTokenEdit:hover .sentDeleteBtn{ opacity:.8; }
 .sentDeleteBtn:hover{ opacity:1 !important; background:color-mix(in srgb,#ff5f5f 18%,transparent); border-color:#ff5f5f; }
+
+/* Note indicator in sentNavRow */
+.sentNoteIndicator{
+  font-size:14px; color:var(--gold); cursor:default;
+  opacity:.85; transition:opacity .15s;
+}
+.sentNoteIndicator:hover{ opacity:1; }
 
 /* Sentence note */
 .sentNoteRow{ display:flex; align-items:flex-start; gap:8px; margin-top:8px; }
@@ -600,8 +680,12 @@ tr.keyFocus > td:first-child{ border-left:2px solid var(--accent) }
 }
 .tagsetTag{
   display:inline-block; font-size:11px; font-family:monospace;
-  background:var(--border); border-radius:3px; padding:1px 4px;
-  color:var(--fg);
+  background:var(--card2); border-radius:3px; padding:1px 4px;
+  color:var(--muted); border:1px solid transparent;
+}
+.tagsetTagUsed{
+  color:var(--text); border-color:rgba(61,232,154,.35);
+  background:rgba(61,232,154,.07);
 }
 
 /* File list + Drop zone */
@@ -826,8 +910,13 @@ html[data-theme="light"] .treeSingleBtn:hover{ background:#b8dcf0; }
 }
 .colVisible{ border-color:#2a4a6a; color:var(--accent); background:#0d1f33 }
 .colVisible:hover{ border-color:var(--accent) }
-.colHidden{ border-color:#2a2a3a; color:#556; background:#0c0f16; opacity:.6 }
-.colHidden:hover{ opacity:1; border-color:#445 }
+.colVisible::before{ content:"✓ "; font-size:10px; opacity:.7 }
+.colHidden{
+  border-style:dashed; border-color:#2a2a3a; color:#556;
+  background:#0c0f16; text-decoration:line-through; opacity:.55;
+}
+.colHidden:hover{ opacity:.85; border-color:#445 }
+.colHidden::before{ content:"✕ "; font-size:10px; opacity:.7 }
 
 /* File input hidden */
 .fileHidden{
@@ -964,6 +1053,21 @@ html[data-theme="light"] .treeSingleBtn:hover{ background:#b8dcf0; }
 .appFooterSep{ opacity:.4; }
 .appFooter strong{ color:var(--text); }
 
+/* Download toast */
+.downloadToast{
+  position:fixed; bottom:20px; right:20px; z-index:9100;
+  background:var(--card); border:1px solid var(--line); border-radius:8px;
+  padding:8px 16px; font-size:13px;
+  box-shadow:0 4px 16px var(--shadow);
+  opacity:0; transform:translateY(8px);
+  pointer-events:none; transition:opacity 0.2s, transform 0.2s;
+  max-width:320px;
+}
+.downloadToastVisible{ opacity:1; transform:translateY(0); }
+.downloadToast--success{ border-color:var(--ok);     color:var(--ok);     }
+.downloadToast--error  { border-color:var(--bad);    color:var(--bad);    }
+.downloadToast--info   { border-color:var(--accent); color:var(--accent); }
+
 /* Autosave restore banner */
 .autosaveBanner{
   position:fixed; bottom:16px; left:50%; transform:translateX(-50%);
@@ -993,6 +1097,15 @@ html[data-theme="light"] .autosaveBanner{ background:#fffbe8; border-color:#c090
   border-bottom:2px solid var(--card); margin-bottom:-2px;
 }
 .projectTabName{ max-width:160px; overflow:hidden; text-overflow:ellipsis; }
+.projectTabBadge{
+  font-size:10px; padding:1px 5px; border-radius:9px;
+  background:rgba(122,150,181,.18); color:var(--muted);
+  border:1px solid rgba(122,150,181,.22); flex-shrink:0; white-space:nowrap;
+}
+.projectTabBadgeDone{
+  background:rgba(61,232,154,.18); color:var(--ok);
+  border-color:rgba(61,232,154,.3);
+}
 .projectTabMoveBtn,.projectTabRenameBtn,.projectTabClose{
   padding:0 3px; border:none; background:transparent;
   color:var(--muted); font-size:11px; line-height:1; cursor:pointer; flex-shrink:0;
@@ -1109,6 +1222,14 @@ html[data-theme="light"] .globalResetBtn:hover{ background:rgba(200,50,50,0.1) !
 .posCustom {
   color: var(--accent);
   font-weight: 700;
+}
+
+/* Diff tokens — subtle underline connecting sentence text to table */
+.sentTokenDiff {
+  text-decoration: underline;
+  text-decoration-color: var(--bad);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
 }
 
 /* Flagged tokens — colored differently everywhere */

@@ -249,4 +249,17 @@ window.LANG_DE = {
   'devMode.on':       'aktiv',
   'devMode.off':      'inaktiv',
   'devMode.reloaded': 'Neu geladen um',
+
+  // Toast-Meldungen
+  'bulk.confirmedN':    '✓ {n} Sätze bestätigt',
+  'bulk.confirmedNone': 'Alle Sätze bereits bestätigt',
+  'bulk.flaggedN':      '⚑ {n} Sätze markiert',
+  'bulk.flaggedNone':   'Keine Sätze mit Diffs',
+  'bulk.unflagged':     'Alle Markierungen entfernt',
+  'token.inserted':     'Token eingefügt',
+  'token.deleted':      'Token gelöscht',
+  'files.resetDone':        '↺ Projekt zurückgesetzt',
+  'files.globalResetDone':  '↺ Alles zurückgesetzt',
+  'arc.cycle':          '⚠ Kreisreferenz — nicht erlaubt',
+  'session.loadedToast': '✓ Session geladen: {n} Datei(en)',
 };
