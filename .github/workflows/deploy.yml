@@ -21,16 +21,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.x"
-
-      - name: Build readme_content.js
-        run: python make_readme_js.py
-
       - name: Build dist/index.html
-        run: python bundler.py
+        run: python3 bundler.py
 
       - name: Prepare Pages artifact
         uses: actions/upload-pages-artifact@v3
