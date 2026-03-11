@@ -77,7 +77,7 @@ function _syncUndoBtns(){
   const topRedo = _redoStack[_redoStack.length - 1];
   const sentSuffix = snap => snap?.sentIndex != null ? ` (S${snap.sentIndex + 1})` : '';
   if(u) u.title = t('undo.title', { n: _undoStack.length, s: tpSuffix(_undoStack.length, 'undo') }) + sentSuffix(topUndo);
-  if(r) r.title = t('redo.title', { n: _redoStack.length, s: tpSuffix(_redoStack.length, 'undo') }) + sentSuffix(topRedo);
+  if(r) r.title = t('redo.title', { n: _redoStack.length, s: tpSuffix(_redoStack.length, 'redo') }) + sentSuffix(topRedo);
 }
 
 // ── Session serialisation helpers ─────────────────────────────────────────────

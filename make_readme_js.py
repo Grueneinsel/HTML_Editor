@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Converts README.md (German) and README.en.md (English) into a single
+Converts README.md (English, primary) and README.de.md (German) into a single
 JavaScript file so the help modal works without a local HTTP server
 (file:// protocol).
 
@@ -9,8 +9,8 @@ Usage:
 
 Output:
     generated/readme_content.js
-        window.README_CONTENT_DE = `...`;   // German
-        window.README_CONTENT_EN = `...`;   // English (falls back to DE if missing)
+        window.README_CONTENT_EN = `...`;   // English (primary)
+        window.README_CONTENT_DE = `...`;   // German (falls back to EN if missing)
 
 The generated file is already referenced in index.html:
     <script src="generated/readme_content.js"></script>
@@ -24,8 +24,8 @@ OUT_DIR = ROOT / "generated"
 OUT     = OUT_DIR / "readme_content.js"
 
 SOURCES = [
-    ("README.md",               "README_CONTENT_DE"),
-    ("README.en.md",            "README_CONTENT_EN"),
+    ("README.md",               "README_CONTENT_EN"),
+    ("README.de.md",            "README_CONTENT_DE"),
     ("testdata/template.json",  "TAGSET_TEMPLATE"),
 ]
 

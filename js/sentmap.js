@@ -76,6 +76,7 @@ function toggleConfirm(){
   }
   updateConfirmBtn();
   renderSentSelectOptions();
+  if(typeof renderProjectTabs === "function") renderProjectTabs();
   // Green flash on sentText when confirming (not unconfirming)
   if(!wasConfirmed){
     const st = document.getElementById('sentText');

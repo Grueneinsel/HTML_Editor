@@ -1,4 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;800&display=swap');
 
 :root{
   --bg:#090d12;
@@ -14,7 +13,7 @@
   --gold:#ff9f43;
   --file:#5b9fff;
   --accent:#4a9eff;
-  --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Courier New', monospace;
   --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
   /* Semantic tokens — overridden per theme */
   --bg-control:#0c1420;
@@ -812,6 +811,20 @@ tr.keyFocus > td:first-child{ border-left:2px solid var(--accent) }
   border-radius:6px; flex-shrink:0; font-weight:700;
 }
 .treeSubtreeBtn:hover{ border-color:#ffb94e; background:#ffb94e }
+/* Side-by-side body: embedding tree (left) + arc diagram (right) */
+.treeSectionBody{
+  display:flex;
+  flex-direction:row;
+  align-items:flex-start;
+}
+.treeSectionBody .treePre{
+  flex:0 0 auto;
+  border-right:1px solid var(--line);
+}
+.treeSectionBody .arcDiagramWrap{
+  flex:1 1 auto;
+  min-width:0;
+}
 .treePre{
   margin:0; padding:10px 12px;
   font-family:var(--mono); font-size:12px;

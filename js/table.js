@@ -281,7 +281,7 @@ function _ensurePopup(){
   }
 
   // "Reset" button clears all custom overrides for the current token.
-  document.getElementById("gpClear").addEventListener("click", () => {
+  document.getElementById("gpClear")?.addEventListener("click", () => {
     if(_popupTokId === null) return;
     const si = state.currentSent;
     const s  = state.custom[si];
@@ -672,7 +672,7 @@ function _openFilePopup(docIdx, tokId, cellEl){
 
   const si  = state.currentSent;
   const s   = state.docs[docIdx]?.sentences[si];
-  const tok = s?.tokens.find(t => t.id === tokId);
+  const tok = s?.tokens?.find(t => t.id === tokId);
 
   document.getElementById('fpNum').textContent      = tokId;
   document.getElementById('fpForm').textContent     = tok?.form ?? '?';

@@ -219,7 +219,7 @@ function hasSubtreeDiff(rootId, goldMap, otherMap){
  *   opts.arcEdgeColors                 — Map<depId, cssColorVar> for arc coloring
  */
 function buildTreeSection(title, sub, text, opts = {}){
-  const { onAdoptSubtree, subtreeDiffCheck, onAdoptToken, tokenList,
+  const { onAdoptSubtree, subtreeDiffCheck, onAdoptToken,
           arcMap, arcOnSetHead, arcOnDeleteArc, arcOnSetDeprel, arcEdgeColors } = opts;
 
   const section = document.createElement("div");
@@ -234,18 +234,6 @@ function buildTreeSection(title, sub, text, opts = {}){
     </div>
   `;
   section.appendChild(head);
-
-  // ── Arc diagram (SVG, displaCy-style) ─────────────────────────────────────
-  if(arcMap && typeof buildArcDiagram === "function"){
-    const arcWrap = buildArcDiagram(arcMap, {
-      onSetHead:   arcOnSetHead   || null,
-      onDeleteArc: arcOnDeleteArc || null,
-      onSetDeprel: arcOnSetDeprel || null,
-      edgeColors:  arcEdgeColors  || null,
-      scrollToTok: scrollToToken,
-    });
-    if(arcWrap) section.appendChild(arcWrap);
-  }
 
   const pre = document.createElement("pre");
   pre.className = "treePre";
@@ -328,7 +316,23 @@ function buildTreeSection(title, sub, text, opts = {}){
     }
   }
 
-  section.appendChild(pre);
+  // ── Body: embedding (pre) left, arc diagram right ─────────────────────────
+  const body = document.createElement("div");
+  body.className = "treeSectionBody";
+  body.appendChild(pre);
+
+  if(arcMap && typeof buildArcDiagram === "function"){
+    const arcWrap = buildArcDiagram(arcMap, {
+      onSetHead:   arcOnSetHead   || null,
+      onDeleteArc: arcOnDeleteArc || null,
+      onSetDeprel: arcOnSetDeprel || null,
+      edgeColors:  arcEdgeColors  || null,
+      scrollToTok: scrollToToken,
+    });
+    if(arcWrap) body.appendChild(arcWrap);
+  }
+
+  section.appendChild(body);
   return section;
 }
 
@@ -451,18 +455,14 @@ function renderPreview(){
       } : {}),
       onAdoptSubtree: (rootId) => {
         pushUndo();
-        // Adopt the entire subtree from this file: clear custom overrides and point picks at docIdx
+        // Adopt the entire subtree: wipe ALL custom overrides (head, deprel, upos, xpos, …)
+        // so every field of the adopted doc shows through unobstructed.
         const subIds = new Set([
           ...getSubtreeIds(rootId, goldMap),
           ...getSubtreeIds(rootId, otherMap),
         ]);
         for(const id of subIds){
-          const e = state.custom[sentIndex]?.[id];
-          if(e){
-            e.head   = null;
-            e.deprel = null;
-            if(!getCustomEntry(sentIndex, id)) delete state.custom[sentIndex][id];
-          }
+          if(state.custom[sentIndex]) delete state.custom[sentIndex][id];
           setDocChoice(sentIndex, id, docIdx);
         }
         if(state.custom[sentIndex] && !Object.keys(state.custom[sentIndex]).length)
@@ -472,13 +472,11 @@ function renderPreview(){
       subtreeDiffCheck: (rootId) => hasSubtreeDiff(rootId, goldMap, otherMap),
       onAdoptToken: (tokId) => {
         pushUndo();
-        const e = state.custom[sentIndex]?.[tokId];
-        if(e){
-          e.head   = null;
-          e.deprel = null;
-          if(!getCustomEntry(sentIndex, tokId)) delete state.custom[sentIndex][tokId];
-          if(state.custom[sentIndex] && !Object.keys(state.custom[sentIndex]).length)
-            delete state.custom[sentIndex];
+        // Wipe ALL custom overrides for this token so the adopted doc's values
+        // (including upos, xpos, feats, head, deprel) show through completely.
+        if(state.custom[sentIndex]){
+          delete state.custom[sentIndex][tokId];
+          if(!Object.keys(state.custom[sentIndex]).length) delete state.custom[sentIndex];
         }
         setDocChoice(sentIndex, tokId, docIdx);
         renderSentenceKeepScroll();
@@ -488,4 +486,27 @@ function renderPreview(){
   }
 
   treeGrid.appendChild(wrap);
+
+  // ── Align treePre widths so arc diagrams start at the same x position ─────
+  const pres = Array.from(wrap.querySelectorAll('.treeSectionBody .treePre'));
+  if(pres.length > 1){
+    const maxW = Math.max(...pres.map(p => p.scrollWidth));
+    for(const p of pres) p.style.width = maxW + 'px';
+  }
+
+  // ── Synchronized horizontal scroll across all arc diagrams ────────────────
+  const arcWraps = Array.from(wrap.querySelectorAll('.arcDiagramWrap'));
+  if(arcWraps.length > 1){
+    let _syncScrolling = false;
+    for(const aw of arcWraps){
+      aw.addEventListener('scroll', () => {
+        if(_syncScrolling) return;
+        _syncScrolling = true;
+        for(const other of arcWraps){
+          if(other !== aw) other.scrollLeft = aw.scrollLeft;
+        }
+        _syncScrolling = false;
+      });
+    }
+  }
 }

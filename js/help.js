@@ -10,7 +10,7 @@ function _helpContent(){ return document.getElementById("helpContent"); }
 // Open the help overlay; render README content if the language has changed.
 function openHelp(){
   _helpOverlay().classList.add("open");
-  const lang = (typeof getLang === 'function') ? getLang() : 'de';
+  const lang = (typeof getLang === 'function') ? getLang() : 'en';
   if(_helpLoadedLang === lang) return;
   const content = _readmeContent(lang);
   if(content){
@@ -62,7 +62,8 @@ var _helpLoadedLang = null;
 
 function _readmeContent(lang){
   var w = /** @type {any} */ (window);
-  if(lang === 'en' && typeof w.README_CONTENT_EN !== 'undefined') return w.README_CONTENT_EN;
+  if(lang === 'de' && typeof w.README_CONTENT_DE !== 'undefined') return w.README_CONTENT_DE;
+  if(typeof w.README_CONTENT_EN !== 'undefined') return w.README_CONTENT_EN;
   if(typeof w.README_CONTENT_DE !== 'undefined') return w.README_CONTENT_DE;
   if(typeof w.README_CONTENT    !== 'undefined') return w.README_CONTENT;
   return null;

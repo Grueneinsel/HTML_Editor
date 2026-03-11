@@ -179,26 +179,28 @@ function exportAllProjectsConllu(){
   const origGoldPick = state.goldPick;
   const origLABELS   = LABELS;
 
-  for(const p of state.projects){
-    if(!p.docs.length) continue;
-    // Temporarily swap in this project's state (including its tagset)
-    state.docs     = p.docs;
-    state.maxSents = p.maxSents;
-    state.custom   = p.custom;
-    state.goldPick = p.goldPick;
-    LABELS = p.labels || DEFAULT_LABELS || origLABELS;
+  try {
+    for(const p of state.projects){
+      if(!p.docs.length) continue;
+      // Temporarily swap in this project's state (including its tagset)
+      state.docs     = p.docs;
+      state.maxSents = p.maxSents;
+      state.custom   = p.custom;
+      state.goldPick = p.goldPick;
+      LABELS = p.labels || DEFAULT_LABELS || origLABELS;
+      buildDeprelOptionsCache();
+
+      downloadText(_buildConlluText(), `gold_${p.name}.conllu`);
+    }
+  } finally {
+    // Restore original live state (no re-render needed)
+    state.docs     = origDocs;
+    state.maxSents = origMaxSents;
+    state.custom   = origCustom;
+    state.goldPick = origGoldPick;
+    LABELS = origLABELS;
     buildDeprelOptionsCache();
-
-    downloadText(_buildConlluText(), `gold_${p.name}.conllu`);
   }
-
-  // Restore original live state (no re-render needed)
-  state.docs     = origDocs;
-  state.maxSents = origMaxSents;
-  state.custom   = origCustom;
-  state.goldPick = origGoldPick;
-  LABELS = origLABELS;
-  buildDeprelOptionsCache();
 }
 
 // ── Session Export ─────────────────────────────────────────────────────────────
@@ -326,25 +328,27 @@ function exportAllProjectsTrees(){
   const origGoldPick = state.goldPick;
   const origLABELS   = LABELS;
 
-  for(const p of state.projects){
-    if(!p.docs.length) continue;
-    state.docs     = p.docs;
-    state.maxSents = p.maxSents;
-    state.custom   = p.custom;
-    state.goldPick = p.goldPick;
-    LABELS = p.labels || DEFAULT_LABELS || origLABELS;
+  try {
+    for(const p of state.projects){
+      if(!p.docs.length) continue;
+      state.docs     = p.docs;
+      state.maxSents = p.maxSents;
+      state.custom   = p.custom;
+      state.goldPick = p.goldPick;
+      LABELS = p.labels || DEFAULT_LABELS || origLABELS;
+      buildDeprelOptionsCache();
+
+      downloadText(_buildTreeText(), `trees_${p.name}.txt`);
+    }
+  } finally {
+    // Restore live state
+    state.docs     = origDocs;
+    state.maxSents = origMaxSents;
+    state.custom   = origCustom;
+    state.goldPick = origGoldPick;
+    LABELS = origLABELS;
     buildDeprelOptionsCache();
-
-    downloadText(_buildTreeText(), `trees_${p.name}.txt`);
   }
-
-  // Restore live state
-  state.docs     = origDocs;
-  state.maxSents = origMaxSents;
-  state.custom   = origCustom;
-  state.goldPick = origGoldPick;
-  LABELS = origLABELS;
-  buildDeprelOptionsCache();
 }
 
 // ── LocalStorage Autosave ──────────────────────────────────────────────────────

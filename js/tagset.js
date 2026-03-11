@@ -45,17 +45,129 @@ function _updateTagsetMeta(){
   tagsetMeta.textContent = t("tagset.loaded", { deprel: totalDeprels, upos: col0, xpos: col1 });
 }
 
+/** Returns true if parsed JSON looks like a UD-style tagset (tag_name/tag_description array). */
+function _isUdTagsetJson(data){
+  return data && typeof data === 'object' && !Array.isArray(data) &&
+    Array.isArray(data.tags) && typeof data.tags[0]?.tag_name === 'string';
+}
+
+/**
+ * Apply a UD tag list to a specific column in LABELS.
+ * target: 'col:N' for the N-th label column, 'dep:N' for the N-th dep column.
+ */
+function _applyUdToColumn(target, tagNames, dataName){
+  const base = (LABELS && typeof LABELS === 'object') ? JSON.parse(JSON.stringify(LABELS)) : {};
+  if(target.startsWith('col:')){
+    const idx  = parseInt(target.slice(4), 10);
+    const cols = Array.isArray(base['__cols__']) ? base['__cols__'].slice() : [];
+    while(cols.length <= idx) cols.push({ key:`col${cols.length}`, name:`Col ${cols.length+1}`, values:[] });
+    cols[idx] = { ...cols[idx], values: tagNames };
+    if(cols.length < 2) cols.push({ key:'xpos', name:'XPOS', values:[] });
+    base['__cols__'] = cols;
+  } else {
+    const idx     = parseInt(target.slice(4), 10);
+    const depCols = Array.isArray(base['__dep_cols__']) ? base['__dep_cols__'].slice() : [];
+    while(depCols.length <= idx) depCols.push({ key:`dep${depCols.length}`, name:'DepRel', groups:{} });
+    depCols[idx] = { ...depCols[idx], groups: { [dataName || 'relations']: tagNames } };
+    base['__dep_cols__'] = depCols;
+  }
+  return base;
+}
+
+/**
+ * Show a modal dialog letting the user choose which column to assign UD tagset tags to.
+ * Calls onApply(target, tagNames) where target is 'col:N' or 'dep:N'.
+ */
+function _showUdMappingDialog(data, onApply){
+  const tagNames = data.tags.map(tg => tg.tag_name).filter(Boolean);
+  document.getElementById('udMappingDialog')?.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'udMappingDialog';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;';
+
+  const dlg = document.createElement('div');
+  dlg.style.cssText = 'background:var(--card);border:1px solid var(--accent);border-radius:8px;padding:20px;max-width:420px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,.5);';
+
+  const preview = tagNames.slice(0, 10).map(v => escapeHtml(v)).join(', ')
+    + (tagNames.length > 10 ? ` … (+${tagNames.length - 10})` : '');
+
+  const title    = document.createElement('div');
+  title.style.cssText = 'font-weight:bold;font-size:14px;margin-bottom:6px;';
+  title.textContent = t('tagset.mapTitle');
+
+  const sub = document.createElement('div');
+  sub.style.cssText = 'font-size:12px;color:var(--muted);margin-bottom:6px;';
+  sub.textContent = data.name || '';
+
+  const tagPreview = document.createElement('div');
+  tagPreview.style.cssText = 'font-size:11px;background:var(--bg);padding:6px 8px;border-radius:4px;word-break:break-all;margin-bottom:12px;';
+  tagPreview.innerHTML = preview;
+
+  const question = document.createElement('div');
+  question.style.cssText = 'font-size:13px;margin-bottom:10px;';
+  question.textContent = t('tagset.mapQuestion');
+
+  const btnsRow = document.createElement('div');
+  btnsRow.style.cssText = 'display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;';
+
+  const close = () => overlay.remove();
+
+  // Build choices from current LABEL_COLS and DEP_COLS (populated by buildDeprelOptionsCache)
+  const labelCols = (typeof LABEL_COLS !== 'undefined' && LABEL_COLS.length)
+    ? LABEL_COLS
+    : [{ key:'upos', name:'UPOS' }, { key:'xpos', name:'XPOS' }];
+  const depCols = (typeof DEP_COLS !== 'undefined' && DEP_COLS.length)
+    ? DEP_COLS
+    : [{ key:'deprel', name:'DepRel' }];
+
+  const choices = [
+    ...labelCols.map((c, i) => ({ value:`col:${i}`, label: c.name || `Col ${i+1}` })),
+    ...depCols.map((c, i)   => ({ value:`dep:${i}`, label: c.name || 'DepRel' })),
+  ];
+
+  for(const ch of choices){
+    const btn = document.createElement('button');
+    btn.textContent = ch.label;
+    btn.style.cssText = 'padding:6px 16px;cursor:pointer;border-radius:4px;font-size:13px;border:1px solid var(--accent);background:var(--bg);color:var(--text);';
+    btn.addEventListener('click', () => { close(); onApply(ch.value, tagNames); });
+    btnsRow.appendChild(btn);
+  }
+
+  const cancelBtn = document.createElement('button');
+  cancelBtn.textContent = t('tagset.mapCancel');
+  cancelBtn.style.cssText = 'font-size:12px;padding:4px 12px;cursor:pointer;border-radius:4px;border:1px solid var(--line);background:transparent;color:var(--muted);';
+  cancelBtn.addEventListener('click', close);
+
+  dlg.appendChild(title);
+  dlg.appendChild(sub);
+  dlg.appendChild(tagPreview);
+  dlg.appendChild(question);
+  dlg.appendChild(btnsRow);
+  dlg.appendChild(cancelBtn);
+  overlay.appendChild(dlg);
+  document.body.appendChild(overlay);
+
+  overlay.addEventListener('pointerdown', ev => { if(ev.target === overlay) close(); });
+}
+
 /**
  * Smart dispatch for a JSON text string:
- *  - Session JSON  → importSession()
- *  - Everything else → applyTagsetJson()
+ *  - Session JSON       → importSession()
+ *  - UD tagset format   → show mapping dialog, then applyTagsetJson()
+ *  - Everything else    → applyTagsetJson()
  */
 function _smartDispatchJson(jsonText){
   let data;
   try { data = JSON.parse(jsonText); }
   catch { _showToast(t("tagset.errJson"), 'error'); return; }
-  if(_isSessionJson(data)) importSession(jsonText);
-  else                     applyTagsetJson(data);
+  if(_isSessionJson(data))   importSession(jsonText);
+  else if(_isUdTagsetJson(data)){
+    _showUdMappingDialog(data, (target, tagNames) => {
+      applyTagsetJson(_applyUdToColumn(target, tagNames, data.name));
+    });
+  }
+  else                       applyTagsetJson(data);
 }
 
 /**

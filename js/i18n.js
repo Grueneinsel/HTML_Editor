@@ -7,16 +7,16 @@ const LANGS = {};
 if(window.LANG_DE) LANGS['de'] = window.LANG_DE;
 if(window.LANG_EN) LANGS['en'] = window.LANG_EN;
 
-// Persist the user's language choice across page loads.
-let _currentLang = localStorage.getItem('lang') || 'de';
+// Persist the user's language choice across page loads. Default: English.
+let _currentLang = localStorage.getItem('lang') || 'en';
 
 // ── Translation helpers ────────────────────────────────────────────────────────
 
-// Look up a translation key in the current language, falling back to German, then the key itself.
+// Look up a translation key in the current language, falling back to English, then the key itself.
 // Supports {param} substitution: t('msg', { n: 5 }) replaces {n} with "5".
 function t(key, params = {}){
-  const dict = LANGS[_currentLang] || LANGS['de'] || {};
-  const str  = dict[key] ?? LANGS['de']?.[key] ?? key;
+  const dict = LANGS[_currentLang] || LANGS['en'] || {};
+  const str  = dict[key] ?? LANGS['en']?.[key] ?? key;
   return str.replace(/\{(\w+)\}/g, (_, k) =>
     params[k] !== undefined ? String(params[k]) : `{${k}}`
   );

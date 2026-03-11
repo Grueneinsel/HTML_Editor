@@ -145,13 +145,16 @@ window.addEventListener('pointerup', e => {
   }
   const ni = _arcNearest(mx, my, drag.centers, drag.wordY, drag.cellH);
   if (ni !== null && drag.toks[ni].id !== drag.depId) {
-    const newHeadId = drag.toks[ni].id;
-    if (_arcWouldCycle(drag.depId, newHeadId, drag.toks)) {
+    // Arrow direction: head → dependent.
+    // Dragged-FROM token (drag.depId) = head, dropped-ON token (toks[ni]) = dependent.
+    const newDepId  = drag.toks[ni].id;
+    const newHeadId = drag.depId;
+    if (_arcWouldCycle(newDepId, newHeadId, drag.toks)) {
       // Reject the drop: shake-flash the target token and give haptic buzz
       navigator.vibrate?.([40, 20, 40]);
       _showToast(t('arc.cycle'), 'error');
       if (drag.svg.isConnected) {
-        const el = drag.svg.querySelector(`[data-arctokid="${newHeadId}"]`);
+        const el = drag.svg.querySelector(`[data-arctokid="${newDepId}"]`);
         if (el) {
           el.classList.remove('arcCycleFlash', 'arcBadHover');
           void el.getBoundingClientRect(); // force reflow to restart animation
@@ -164,11 +167,11 @@ window.addEventListener('pointerup', e => {
       }
       return;
     }
-    drag.onSetHead(drag.depId, newHeadId);
+    drag.onSetHead(newDepId, newHeadId);
     // Show deprel listbox immediately after assigning new head
     if (drag.onSetDeprel) {
-      const currentDeprel = drag.toks[drag.tokIdx].deprel ?? '_';
-      _arcShowDeprelPopup(e.clientX, e.clientY, drag.depId, currentDeprel, drag.onSetDeprel);
+      const currentDeprel = drag.toks[ni].deprel ?? '_';
+      _arcShowDeprelPopup(e.clientX, e.clientY, newDepId, currentDeprel, drag.onSetDeprel);
     }
   }
 });
@@ -250,7 +253,7 @@ function _arcHighlightDrop(mx, my) {
     // Use pre-built element cache instead of querySelector on every frame
     const el = _arcDrag._tokElCache?.get(nid) ?? _arcDrag.svg.querySelector(`[data-arctokid="${nid}"]`);
     if (el) {
-      const bad = _arcWouldCycle(_arcDrag.depId, nid, _arcDrag.toks);
+      const bad = _arcWouldCycle(nid, _arcDrag.depId, _arcDrag.toks);
       if (bad) {
         el.classList.add('arcBadHover');
         el.style.fill = '';
@@ -502,6 +505,9 @@ function buildArcDiagram(tokMap, { onSetHead = null, onDeleteArc = null, onSetDe
       const x1   = centers[e.dep];
       const x2   = centers[e.head];
       const apex = wordY - e.h;
+      // The cubic Bezier M x1 y C x1 a x2 a x2 y peaks at t=0.5 at y=0.25*wordY+0.75*apex,
+      // not at the control-point apex. Use the true curve peak for label/button placement.
+      const curveApex = Math.round(0.25 * wordY + 0.75 * apex);
       const mid  = (x1 + x2) / 2;
       const lw   = mc.measureText(e.label).width;
 
@@ -511,11 +517,11 @@ function buildArcDiagram(tokMap, { onSetHead = null, onDeleteArc = null, onSetDe
         stroke:'rgba(128,128,128,0.01)', 'stroke-width':14, fill:'none',
         'pointer-events':'stroke' }));
 
-      // Invisible hit rect covering the label + button area (gap above arc apex)
+      // Invisible hit rect covering the label + button area (at true curve peak)
       const lblHx = mid - lw/2 - 8;
       const lblHw = lw + 10 + (editable ? 30 : 8);
       g.appendChild(mk('rect', {
-        x:lblHx, y:apex-22, width:lblHw, height:22,
+        x:lblHx, y:curveApex-22, width:lblHw, height:22,
         fill:'transparent', 'pointer-events':'all' }));
 
       // Visible cubic Bezier arc curve
@@ -524,20 +530,20 @@ function buildArcDiagram(tokMap, { onSetHead = null, onDeleteArc = null, onSetDe
         stroke:arcColor, 'stroke-width':1.8, fill:'none',
         'stroke-linecap':'round', 'pointer-events':'none' }));
 
-      // Arrowhead at the dependent end
+      // Arrowhead at the dependent end (arrow points from head → dependent)
       g.appendChild(mk('polygon', {
-        points:`${x2-4},${wordY-10} ${x2+4},${wordY-10} ${x2},${wordY-2}`,
+        points:`${x1-4},${wordY-10} ${x1+4},${wordY-10} ${x1},${wordY-2}`,
         fill:arcColor, 'pointer-events':'none' }));
 
       svg.appendChild(g);
 
-      // Arc label group — rendered in top layer
+      // Arc label group — rendered in top layer, at true curve peak
       const labelG = mk('g');
       if (editable && onSetDeprel) labelG.style.cssText = 'cursor:pointer;';
       labelG.appendChild(mk('rect', {
-        x:mid-lw/2-5, y:apex-14, width:lw+10, height:14,
+        x:mid-lw/2-5, y:curveApex-14, width:lw+10, height:14,
         rx:3, fill:'var(--card)', stroke:arcColor, 'stroke-width':0.8 }));
-      const lt = mk('text', { x:mid, y:apex-4, 'text-anchor':'middle',
+      const lt = mk('text', { x:mid, y:curveApex-4, 'text-anchor':'middle',
         'font-size':10, 'font-weight':600, fill:'var(--text)', 'pointer-events':'none' });
       lt.textContent = e.label;
       labelG.appendChild(lt);
@@ -545,7 +551,7 @@ function buildArcDiagram(tokMap, { onSetHead = null, onDeleteArc = null, onSetDe
         labelG.addEventListener('click', ev => {
           ev.stopPropagation();
           const svgR = svg.getBoundingClientRect();
-          _arcShowDeprelPopup(svgR.left + mid, svgR.top + apex - 14, depId, e.label, onSetDeprel);
+          _arcShowDeprelPopup(svgR.left + mid, svgR.top + curveApex - 14, depId, e.label, onSetDeprel);
         });
       }
 
@@ -556,7 +562,7 @@ function buildArcDiagram(tokMap, { onSetHead = null, onDeleteArc = null, onSetDe
         const _bInit = _touch ? 'opacity:0.7; pointer-events:all;' : 'opacity:0; pointer-events:none;';
         btnG.style.cssText = `cursor:pointer; ${_bInit} transition:opacity .12s;`;
         const bx = mid + lw/2 + 14;
-        const by = apex - 7;
+        const by = curveApex - 7;
         // Transparent hit-area circle (large touch target)
         btnG.appendChild(mk('circle', { cx:bx, cy:by, r:18, fill:'transparent' }));
         btnG.appendChild(mk('circle', { cx:bx, cy:by, r:7, fill:'var(--bad)', opacity:0.9 }));

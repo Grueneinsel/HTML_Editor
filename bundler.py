@@ -20,18 +20,47 @@ HREF_RE   = re.compile(r"""href\s*=\s*["']([^"']+)["']""", re.IGNORECASE)
 SCRIPT_RE = re.compile(r"""<script\b([^>]*?)\bsrc\s*=\s*["']([^"']+)["']([^>]*)>\s*</script>""",
                         re.IGNORECASE | re.DOTALL)
 
+MIME_MAP = {
+    ".woff2": "font/woff2",
+    ".woff":  "font/woff",
+    ".ttf":   "font/ttf",
+    ".svg":   "image/svg+xml",
+    ".png":   "image/png",
+    ".jpg":   "image/jpeg",
+    ".jpeg":  "image/jpeg",
+    ".gif":   "image/gif",
+}
+CSS_URL_RE = re.compile(r"""url\(\s*['"]?([^'"\)]+)['"]?\s*\)""")
+
 def is_external(url: str) -> bool:
     return url.strip().lower().startswith(("http://", "https://", "//", "data:"))
 
 def read(p: Path) -> str:
     return p.read_text(encoding="utf-8")
 
+def inline_css_urls(css: str, css_path: Path) -> str:
+    """Replace local url(...) references in CSS with base64 data URIs."""
+    import base64
+    def repl(m: re.Match) -> str:
+        url = m.group(1).strip()
+        if is_external(url):
+            return m.group(0)
+        target = (css_path.parent / url).resolve()
+        if not target.exists():
+            return m.group(0)
+        mime = MIME_MAP.get(target.suffix.lower(), "application/octet-stream")
+        data = base64.b64encode(target.read_bytes()).decode("ascii")
+        return f"url('data:{mime};base64,{data}')"
+    return CSS_URL_RE.sub(repl, css)
+
 def inline_css(html: str, base: Path) -> str:
     def repl(m: re.Match) -> str:
         href_m = HREF_RE.search(m.group(0))
         if not href_m or is_external(href_m.group(1)):
             return m.group(0)
-        css = read((base / href_m.group(1)).resolve())
+        css_path = (base / href_m.group(1)).resolve()
+        css = read(css_path)
+        css = inline_css_urls(css, css_path)
         css = css.replace("</style", "<\\/style")
         return f"<style>\n{css}\n</style>"
     return LINK_RE.sub(repl, html)

@@ -118,6 +118,9 @@ window.LANG_EN = {
   'tagset.noLabels':     'No tagset configured',
   'tagset.errJson':   'Invalid JSON file.',
   'tagset.errFormat': 'Tagset must be a JSON object.',
+  'tagset.mapTitle':    'Tagset assignment',
+  'tagset.mapQuestion': 'Which column should the tags be assigned to?',
+  'tagset.mapCancel':   'Cancel',
 
   // Session
   'session.save':      '💾 Save session',

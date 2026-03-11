@@ -144,6 +144,9 @@ window.LANG_DE = {
   'tagset.noLabels':     'Kein Tagset konfiguriert',
   'tagset.errJson':   'Ungültige JSON-Datei.',
   'tagset.errFormat': 'Tagset muss ein JSON-Objekt sein.',
+  'tagset.mapTitle':    'Tagset-Zuordnung',
+  'tagset.mapQuestion': 'In welche Spalte sollen die Tags eingetragen werden?',
+  'tagset.mapCancel':   'Abbrechen',
 
   // Dropdown-Leerauswahl
   'label.empty': '(leer)',
