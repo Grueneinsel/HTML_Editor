@@ -4715,6 +4715,20 @@ window.addEventListener('pointerup', e => {
   const r  = drag._svgRect ?? drag.svg.getBoundingClientRect();
   const mx = e.clientX - r.left;
   const my = e.clientY - r.top;
+  // Root drag: dragging FROM root zone DOWN onto a token → set that token as root
+  if (drag.isRootDrag) {
+    const ni = _arcNearest(mx, my, drag.centers, drag.wordY, drag.cellH);
+    if (ni !== null && drag.onSetHead) {
+      const tok = drag.toks[ni];
+      if (tok.head !== 0) {
+        drag.onSetHead(tok.id, 0);
+        if (drag.onSetDeprel) {
+          _arcShowDeprelPopup(e.clientX, e.clientY, tok.id, tok.deprel ?? 'root', drag.onSetDeprel);
+        }
+      }
+    }
+    return;
+  }
   // Check for ROOT drop zone: pointer released inside the labeled ROOT strip at the top
   const rootZoneBoundary = drag.rootZoneH > 0 ? drag.rootZoneH + 6 : drag.wordY - drag.rootH;
   if (my < rootZoneBoundary && drag.onSetHead) {
@@ -4769,8 +4783,9 @@ function _arcBeginDrag(e) {
   const NS = 'http://www.w3.org/2000/svg';
   const mk = (tag, a) => { const n = document.createElementNS(NS, tag); for (const [k,v] of Object.entries(a||{})) n.setAttribute(k,String(v)); return n; };
   const r  = pd.svg.getBoundingClientRect();
-  const sx = pd.centers[pd.tokIdx];
-  const sy = pd.wordY + pd.cellH / 2;
+  // Root drag starts from pointer position; token drag starts from token center
+  const sx = pd.isRootDrag ? (pd.startX - r.left) : pd.centers[pd.tokIdx];
+  const sy = pd.isRootDrag ? (pd.startY - r.top)  : pd.wordY + pd.cellH / 2;
   const mx = e.clientX - r.left;
   const my = e.clientY - r.top;
   const line = mk('line', { x1:sx, y1:sy, x2:mx, y2:my,
@@ -4785,9 +4800,12 @@ function _arcBeginDrag(e) {
     const el = pd.svg.querySelector(`[data-arctokid="${t.id}"]`);
     if (el) _tokElCache.set(t.id, el);
   }
-  // Highlight the source token so the user knows the drag is active
-  const srcEl = _tokElCache.get(pd.toks[pd.tokIdx].id);
-  if (srcEl) srcEl.style.fill = 'rgba(255,200,50,0.35)';
+  // Highlight source token (skipped for root drag — no source token)
+  let srcEl = null;
+  if (!pd.isRootDrag) {
+    srcEl = _tokElCache.get(pd.toks[pd.tokIdx].id);
+    if (srcEl) srcEl.style.fill = 'rgba(255,200,50,0.35)';
+  }
   // Short haptic pulse on touch devices to confirm drag start
   if (pd.isTouch) navigator.vibrate?.(12);
   _arcDrag = { ...pd, line, dot, _hovId:null, _hovEl:null, _hovBad:false, _tokElCache, _srcEl:srcEl, _svgRect:null };
@@ -4806,29 +4824,31 @@ function _arcNearest(mx, my, centers, wordY, cellH) {
 }
 
 // Highlight the drop target token during a drag (blue = valid, red = would cycle).
-// Also highlights the ROOT zone when the pointer is above the arc area.
+// Also highlights the ROOT zone when the pointer is above the arc area (token drag only).
 function _arcHighlightDrop(mx, my) {
-  // Root zone highlight — lights up when cursor is in the labeled ROOT strip at top
-  const rootZoneBoundary = _arcDrag.rootZoneH > 0 ? _arcDrag.rootZoneH + 6 : _arcDrag.wordY - _arcDrag.rootH;
-  const inRootZone = my < rootZoneBoundary;
-  const rz = _arcDrag.svg._arcRootZone;
-  if (rz) {
-    const curHead = _arcDrag.toks[_arcDrag.tokIdx]?.head;
-    if (inRootZone && curHead !== 0) {
-      rz.setAttribute('fill', 'rgba(61,232,154,0.22)');
-      rz.setAttribute('stroke', 'var(--ok)');
-      rz.setAttribute('opacity', '1');
-    } else {
-      rz.setAttribute('fill', 'rgba(61,232,154,0.05)');
-      rz.setAttribute('stroke', 'var(--ok)');
-      rz.setAttribute('opacity', '0.55');
+  // Root zone highlight — only for token→root drag, not root→token drag
+  if (!_arcDrag.isRootDrag) {
+    const rootZoneBoundary = _arcDrag.rootZoneH > 0 ? _arcDrag.rootZoneH + 6 : _arcDrag.wordY - _arcDrag.rootH;
+    const inRootZone = my < rootZoneBoundary;
+    const rz = _arcDrag.svg._arcRootZone;
+    if (rz) {
+      const curHead = _arcDrag.toks[_arcDrag.tokIdx]?.head;
+      if (inRootZone && curHead !== 0) {
+        rz.setAttribute('fill', 'rgba(61,232,154,0.22)');
+        rz.setAttribute('stroke', 'var(--ok)');
+        rz.setAttribute('opacity', '1');
+      } else {
+        rz.setAttribute('fill', 'rgba(61,232,154,0.05)');
+        rz.setAttribute('stroke', 'var(--ok)');
+        rz.setAttribute('opacity', '0.55');
+      }
     }
-  }
-  if (inRootZone) {
-    // Only clear the token hover highlight, not the root zone (we just set it above)
-    if (_arcDrag._hovEl) { _arcDrag._hovEl.style.fill = 'transparent'; _arcDrag._hovEl = null; }
-    _arcDrag._hovId = null; _arcDrag._hovBad = false;
-    return;
+    if (inRootZone) {
+      // Only clear the token hover highlight, not the root zone (we just set it above)
+      if (_arcDrag._hovEl) { _arcDrag._hovEl.style.fill = 'transparent'; _arcDrag._hovEl = null; }
+      _arcDrag._hovId = null; _arcDrag._hovBad = false;
+      return;
+    }
   }
   const ni  = _arcNearest(mx, my, _arcDrag.centers, _arcDrag.wordY, _arcDrag.cellH);
   const nid = (ni !== null && _arcDrag.toks[ni].id !== _arcDrag.depId) ? _arcDrag.toks[ni].id : null;
@@ -5278,7 +5298,8 @@ function buildArcDiagram(tokMap, { onSetHead = null, onDeleteArc = null, onSetDe
       x: GAP, y: 2, width: svgW - GAP * 2, height: ROOT_ZONE - 4,
       rx: 5, fill: 'rgba(61,232,154,0.05)', stroke: 'var(--ok)',
       'stroke-dasharray': '5,3', 'stroke-width': 1.2,
-      'pointer-events': 'none', opacity: 0.55 });
+      'pointer-events': 'fill', opacity: 0.55 });
+    rz.style.cursor = 'grab';
     svg.appendChild(rz);
 
     const rzLabel = mk('text', {
@@ -5291,6 +5312,34 @@ function buildArcDiagram(tokMap, { onSetHead = null, onDeleteArc = null, onSetDe
 
     svg._arcRootZone  = rz;
     svg._arcRootLabel = rzLabel;
+
+    // Allow dragging FROM the ROOT zone down onto a token to make it root
+    rz.addEventListener('pointerdown', ev => {
+      if (ev.pointerType === 'mouse' && ev.button !== 0) return;
+      const isTouch = ev.pointerType !== 'mouse';
+      const tokData = {
+        startX: ev.clientX, startY: ev.clientY,
+        pointerId: ev.pointerId,
+        isTouch, isRootDrag: true,
+        tokIdx: null, depId: null,
+        svg, centers, wordY, cellH: CELL_H, rootH: ROOT_H, rootZoneH: ROOT_ZONE, toks,
+        onSetHead, onSetDeprel, onScrollTok: null,
+        _hovId: null, _hovEl: null, _hovBad: false,
+      };
+      rz.setPointerCapture(ev.pointerId);
+      if (isTouch) {
+        _arcPreHold = { ...tokData, overlayEl: rz };
+        _arcHoldTimer = setTimeout(() => {
+          if (!_arcPreHold) return;
+          const ph = _arcPreHold; _arcPreHold = null;
+          navigator.vibrate?.(15);
+          _arcPreDrag = ph;
+        }, _ARC_HOLD_MS);
+      } else {
+        ev.preventDefault();
+        _arcPreDrag = tokData;
+      }
+    });
   }
 
   const wrap = document.createElement('div');
