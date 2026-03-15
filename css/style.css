@@ -1065,8 +1065,8 @@ html[data-theme="light"] .treeSingleBtn:hover{ background:#b8dcf0; }
 }
 .appFooterSep{ opacity:.4; }
 .appFooter strong{ color:var(--text); }
-.footerImpressumLink{ color:var(--muted); text-decoration:underline dotted; cursor:pointer; }
-.footerImpressumLink:hover{ color:var(--text); }
+.footerImpressumLink{ color:inherit; opacity:.7; text-decoration:underline dotted; cursor:pointer; }
+.footerImpressumLink:hover{ opacity:1; }
 
 /* Download toast */
 .downloadToast{

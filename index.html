@@ -159,23 +159,26 @@
     <span class="appFooterSep">·</span>
     <span data-i18n="footer.author">Developed by Frederik Konopka</span>
     <span class="appFooterSep">·</span>
-    <a href="#" class="footerImpressumLink" onclick="document.getElementById('impressumModal').classList.add('active');return false;" data-i18n="footer.impressum">Legal Notice</a>
+    <a href="#" class="footerImpressumLink" onclick="document.getElementById('impressumOverlay').classList.add('open');return false;" data-i18n="footer.impressum">Legal Notice</a>
   </footer>
 
-  <!-- Impressum Modal -->
-  <div id="impressumModal" class="modalOverlay" onclick="if(event.target===this)this.classList.remove('active')">
-    <div class="modalBox" style="max-width:480px">
-      <button class="modalClose" onclick="document.getElementById('impressumModal').classList.remove('active')" title="Close">×</button>
-      <h2 data-i18n="footer.impressum">Legal Notice</h2>
-      <p>
-        <strong>Frederik Konopka</strong><br>
-        ✉️ <a href="mailto:arbonotate@frederik-konopka.de">arbonotate@frederik-konopka.de</a><br>
-        📞 <a href="tel:+4915255385967">+49 1525 5385967</a>
-      </p>
-      <p style="font-size:0.85em;color:var(--text-muted,#888)">
-        Arbonotate is a non-commercial, open-source research tool.<br>
-        No user data is collected or transmitted.
-      </p>
+  <!-- Impressum Overlay (follows helpOverlay pattern) -->
+  <div id="impressumOverlay" class="helpOverlay" onclick="if(event.target===this)this.classList.remove('open')">
+    <div class="helpDialog" style="max-width:420px;margin:auto;margin-top:80px" onclick="event.stopPropagation()">
+      <div class="helpDialogBar">
+        <span class="helpDialogTitle" data-i18n="footer.impressum">Legal Notice</span>
+        <button class="helpDialogClose btn" onclick="document.getElementById('impressumOverlay').classList.remove('open')">✕ Close</button>
+      </div>
+      <div class="helpDialogBody" style="padding:20px 24px;line-height:1.7">
+        <p><strong>Frederik Konopka</strong></p>
+        <p>
+          ✉️ <a href="mailto:arbonotate@frederik-konopka.de">arbonotate@frederik-konopka.de</a>
+        </p>
+        <p style="margin-top:16px;font-size:0.85em;opacity:.6">
+          Arbonotate is a non-commercial, open-source research tool.<br>
+          No user data is collected or transmitted.
+        </p>
+      </div>
     </div>
   </div>
 

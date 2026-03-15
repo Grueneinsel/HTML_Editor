@@ -652,6 +652,5 @@ The six example directories together cover all tool features:
 
 **Frederik Konopka**
 ✉️ arbonotate@frederik-konopka.de
-📞 +49 1525 5385967
 
 Arbonotate is a non-commercial, open-source research tool. No user data is collected or transmitted.

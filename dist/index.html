@@ -1072,8 +1072,8 @@ html[data-theme="light"] .treeSingleBtn:hover{ background:#b8dcf0; }
 }
 .appFooterSep{ opacity:.4; }
 .appFooter strong{ color:var(--text); }
-.footerImpressumLink{ color:var(--muted); text-decoration:underline dotted; cursor:pointer; }
-.footerImpressumLink:hover{ color:var(--text); }
+.footerImpressumLink{ color:inherit; opacity:.7; text-decoration:underline dotted; cursor:pointer; }
+.footerImpressumLink:hover{ opacity:1; }
 
 /* Download toast */
 .downloadToast{
@@ -1906,23 +1906,26 @@ document.addEventListener('DOMContentLoaded', _syncThemeBtn);
     <span class="appFooterSep">·</span>
     <span data-i18n="footer.author">Developed by Frederik Konopka</span>
     <span class="appFooterSep">·</span>
-    <a href="#" class="footerImpressumLink" onclick="document.getElementById('impressumModal').classList.add('active');return false;" data-i18n="footer.impressum">Legal Notice</a>
+    <a href="#" class="footerImpressumLink" onclick="document.getElementById('impressumOverlay').classList.add('open');return false;" data-i18n="footer.impressum">Legal Notice</a>
   </footer>
 
-  <!-- Impressum Modal -->
-  <div id="impressumModal" class="modalOverlay" onclick="if(event.target===this)this.classList.remove('active')">
-    <div class="modalBox" style="max-width:480px">
-      <button class="modalClose" onclick="document.getElementById('impressumModal').classList.remove('active')" title="Close">×</button>
-      <h2 data-i18n="footer.impressum">Legal Notice</h2>
-      <p>
-        <strong>Frederik Konopka</strong><br>
-        ✉️ <a href="mailto:arbonotate@frederik-konopka.de">arbonotate@frederik-konopka.de</a><br>
-        📞 <a href="tel:+4915255385967">+49 1525 5385967</a>
-      </p>
-      <p style="font-size:0.85em;color:var(--text-muted,#888)">
-        Arbonotate is a non-commercial, open-source research tool.<br>
-        No user data is collected or transmitted.
-      </p>
+  <!-- Impressum Overlay (follows helpOverlay pattern) -->
+  <div id="impressumOverlay" class="helpOverlay" onclick="if(event.target===this)this.classList.remove('open')">
+    <div class="helpDialog" style="max-width:420px;margin:auto;margin-top:80px" onclick="event.stopPropagation()">
+      <div class="helpDialogBar">
+        <span class="helpDialogTitle" data-i18n="footer.impressum">Legal Notice</span>
+        <button class="helpDialogClose btn" onclick="document.getElementById('impressumOverlay').classList.remove('open')">✕ Close</button>
+      </div>
+      <div class="helpDialogBody" style="padding:20px 24px;line-height:1.7">
+        <p><strong>Frederik Konopka</strong></p>
+        <p>
+          ✉️ <a href="mailto:arbonotate@frederik-konopka.de">arbonotate@frederik-konopka.de</a>
+        </p>
+        <p style="margin-top:16px;font-size:0.85em;opacity:.6">
+          Arbonotate is a non-commercial, open-source research tool.<br>
+          No user data is collected or transmitted.
+        </p>
+      </div>
     </div>
   </div>
 
@@ -9344,7 +9347,6 @@ The six example directories together cover all tool features:
 
 **Frederik Konopka**
 ✉️ arbonotate@frederik-konopka.de
-📞 +49 1525 5385967
 
 Arbonotate is a non-commercial, open-source research tool. No user data is collected or transmitted.
 `;
@@ -10003,7 +10005,6 @@ Die sechs Beispielverzeichnisse decken gemeinsam alle Funktionen des Tools ab:
 
 **Frederik Konopka**
 ✉️ arbonotate@frederik-konopka.de
-📞 +49 1525 5385967
 
 Arbonotate ist ein nicht-kommerzielles, quelloffenes Forschungstool. Es werden keine Nutzerdaten erhoben oder übertragen.
 `;

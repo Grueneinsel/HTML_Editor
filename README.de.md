@@ -652,6 +652,5 @@ Die sechs Beispielverzeichnisse decken gemeinsam alle Funktionen des Tools ab:
 
 **Frederik Konopka**
 ✉️ arbonotate@frederik-konopka.de
-📞 +49 1525 5385967
 
 Arbonotate ist ein nicht-kommerzielles, quelloffenes Forschungstool. Es werden keine Nutzerdaten erhoben oder übertragen.
