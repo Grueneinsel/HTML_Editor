@@ -2,8 +2,8 @@ name: Release
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches:
+      - main
 
 jobs:
   release:
@@ -23,12 +23,23 @@ jobs:
       - name: Build dist/index.html
         run: python bundler.py
 
+      - name: Get short commit SHA
+        id: sha
+        run: echo "short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Delete existing 'latest' release and tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release delete latest --yes --cleanup-tag 2>/dev/null || true
+
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          name: "Arbonotate ${{ github.ref_name }}"
+          tag_name: latest
+          name: "Arbonotate – latest (${{ steps.sha.outputs.short }})"
           body: |
-            ## Arbonotate ${{ github.ref_name }}
+            Automatically built from the latest commit on `main`.
 
             **Standalone HTML file** — no installation, no server, no internet connection required.
 
@@ -37,7 +48,28 @@ jobs:
             2. Open it in any modern browser
             3. Done — all features work offline
 
-            See [README](https://github.com/Grueneinsel/Arbonotate/blob/main/README.md) for a full feature overview.
+            ---
+
+            ### Features
+
+            | Feature | Description |
+            |---------|-------------|
+            | **Multi-project management** | Any number of projects with their own files, annotations, and undo stack |
+            | **CoNLL-U comparison** | Token-by-token diff of multiple files against a Gold annotation |
+            | **Interactive tree** | Dependency trees with drag-and-drop arcs, relation selector, ROOT drop zone |
+            | **Gold annotation** | Via click, popup, or keyboard shortcuts — custom values override file values |
+            | **CoNLL-U editor** | Structured editor and raw textarea per file |
+            | **Undo/Redo** | Up to 80 steps per project, saved with session |
+            | **Session export** | Save and load complete working state as JSON |
+            | **Autosave** | Working state saved every 30 seconds, restored automatically |
+            | **Tagset configuration** | Custom DEPREL, UPOS/XPOS, and dependency layers via JSON |
+            | **Export** | Gold CoNLL-U and tree view for all projects |
+            | **Guided Tour** | Interactive introduction with spotlight and tooltips |
+            | **Keyboard shortcuts** | Full operation without mouse |
+            | **Multi-language** | English / German — add more via `lang/xx.js` |
+            | **Tablet support** | Touch-optimised, draggable arcs, larger tap targets |
+
+            → [Full documentation](https://github.com/Grueneinsel/Arbonotate/blob/main/README.md)
           files: dist/index.html
           draft: false
           prerelease: false
