@@ -134,11 +134,9 @@ window.addEventListener('pointerup', e => {
     const ni = _arcNearest(mx, my, drag.centers, drag.wordY, drag.cellH);
     if (ni !== null && drag.onSetHead) {
       const tok = drag.toks[ni];
-      if (tok.head !== 0) {
-        drag.onSetHead(tok.id, 0);
-        if (drag.onSetDeprel) {
-          _arcShowDeprelPopup(e.clientX, e.clientY, tok.id, tok.deprel ?? 'root', drag.onSetDeprel);
-        }
+      if (tok.head !== 0) drag.onSetHead(tok.id, 0);
+      if (drag.onSetDeprel) {
+        _arcShowDeprelPopup(e.clientX, e.clientY, tok.id, tok.deprel ?? 'root', drag.onSetDeprel);
       }
     }
     return;
@@ -147,13 +145,11 @@ window.addEventListener('pointerup', e => {
   const rootZoneBoundary = drag.rootZoneH > 0 ? drag.rootZoneH + 6 : drag.wordY - drag.rootH;
   if (my < rootZoneBoundary && drag.onSetHead) {
     const curHead = drag.toks[drag.tokIdx]?.head;
-    if (curHead !== 0) {
-      drag.onSetHead(drag.depId, 0);
-      // Let the user set deprel for the now-root token
-      if (drag.onSetDeprel) {
-        const curDeprel = drag.toks[drag.tokIdx].deprel ?? 'root';
-        _arcShowDeprelPopup(e.clientX, e.clientY, drag.depId, curDeprel, drag.onSetDeprel);
-      }
+    if (curHead !== 0) drag.onSetHead(drag.depId, 0);
+    // Always show deprel popup so the user can set/change the root relation label
+    if (drag.onSetDeprel) {
+      const curDeprel = drag.toks[drag.tokIdx].deprel ?? 'root';
+      _arcShowDeprelPopup(e.clientX, e.clientY, drag.depId, curDeprel, drag.onSetDeprel);
     }
     return;
   }
