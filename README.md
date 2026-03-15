@@ -1,5 +1,7 @@
 # Arbonotate
 
+> **Arbonotate** = *Arbor* (Latin: tree) + *annotate* — a browser-based workbench for annotating and comparing dependency trees.
+
 Browser-based tool for comparing and annotating dependency trees in CoNLL-U files.
 Runs entirely locally without a server — simply open `index.html` in your browser.
 

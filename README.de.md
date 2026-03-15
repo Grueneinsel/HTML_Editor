@@ -1,5 +1,7 @@
 # Arbonotate
 
+> **Arbonotate** = *Arbor* (lateinisch: Baum) + *annotate* (annotieren) — eine browserbasierte Arbeitsumgebung zum Annotieren und Vergleichen von Abhängigkeitsbäumen.
+
 Browserbasiertes Tool zum Vergleichen und Annotieren von Abhängigkeitsbäumen in CoNLL-U-Dateien.
 Läuft vollständig lokal ohne Server — einfach `index.html` im Browser öffnen.
 
