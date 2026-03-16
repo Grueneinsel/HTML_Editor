@@ -93,6 +93,14 @@ def main() -> int:
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     OUT_HTML.write_text(html, encoding="utf-8")
 
+    # Copy static files that must be served alongside index.html
+    for fname in ("sitemap.xml", "robots.txt"):
+        src = ROOT / fname
+        if src.exists():
+            import shutil
+            shutil.copy2(src, OUT_DIR / fname)
+            print(f"OK  {OUT_DIR / fname}")
+
     import time as _time
     (OUT_DIR / "version.txt").write_text(str(int(_time.time())), encoding="utf-8")
     size = OUT_HTML.stat().st_size
