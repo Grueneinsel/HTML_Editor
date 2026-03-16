@@ -1,9 +1,52 @@
 <!doctype html>
-<html lang="de">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Arbonotate</title>
+
+  <!-- ── Primary SEO ──────────────────────────────────────────────────────── -->
+  <title>Arbonotate – CoNLL-U Dependency Tree Annotation &amp; Comparison</title>
+  <meta name="description" content="Browser-based workbench for annotating and comparing CoNLL-U dependency trees. Drag-and-drop arc editor, multi-file diff, gold annotation, undo/redo — runs entirely offline, no server required." />
+  <meta name="author" content="Frederik Konopka" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://grueneinsel.github.io/Arbonotate/" />
+
+  <!-- ── Open Graph (social sharing) ────────────────────────────────────── -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Arbonotate" />
+  <meta property="og:title" content="Arbonotate – CoNLL-U Dependency Tree Annotation &amp; Comparison" />
+  <meta property="og:description" content="Browser-based workbench for annotating and comparing CoNLL-U dependency trees. Drag-and-drop arc editor, multi-file diff, gold annotation — runs entirely offline." />
+  <meta property="og:url" content="https://grueneinsel.github.io/Arbonotate/" />
+  <meta property="og:locale" content="en_US" />
+  <meta property="og:locale:alternate" content="de_DE" />
+
+  <!-- ── Twitter Card ─────────────────────────────────────────────────────── -->
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="Arbonotate – CoNLL-U Dependency Tree Annotation" />
+  <meta name="twitter:description" content="Browser-based workbench for annotating and comparing CoNLL-U dependency trees. Runs entirely offline." />
+
+  <!-- ── Structured Data (JSON-LD) ────────────────────────────────────────── -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "Arbonotate",
+    "alternateName": "Arbonotate CoNLL-U Editor",
+    "description": "Browser-based workbench for annotating and comparing CoNLL-U dependency trees. Features drag-and-drop arc editing, multi-file comparison, gold annotation, undo/redo, session export, and offline use.",
+    "applicationCategory": "DeveloperApplication",
+    "applicationSubCategory": "Linguistics / NLP Annotation Tool",
+    "operatingSystem": "Any (browser-based)",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "EUR" },
+    "author": { "@type": "Person", "name": "Frederik Konopka", "email": "arbonotate@frederik-konopka.de" },
+    "url": "https://grueneinsel.github.io/Arbonotate/",
+    "downloadUrl": "https://github.com/Grueneinsel/Arbonotate/releases/latest",
+    "codeRepository": "https://github.com/Grueneinsel/Arbonotate",
+    "inLanguage": ["en", "de"],
+    "isAccessibleForFree": true,
+    "keywords": "CoNLL-U, dependency tree, annotation, NLP, treebank, linguistic annotation, dependency parsing, gold annotation, arc diagram"
+  }
+  </script>
+
   <link rel="stylesheet" href="css/style.css" />
   <script src="js/theme.js"></script>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2064%2064%22%3E%3Crect%20width%3D%2264%22%20height%3D%2264%22%20rx%3D%2213%22%20fill%3D%22%230b1220%22/%3E%3Ccircle%20cx%3D%2211%22%20cy%3D%2252%22%20r%3D%227%22%20fill%3D%22%2394a3b8%22/%3E%3Ccircle%20cx%3D%2232%22%20cy%3D%2252%22%20r%3D%227%22%20fill%3D%22%2394a3b8%22/%3E%3Ccircle%20cx%3D%2253%22%20cy%3D%2252%22%20r%3D%227%22%20fill%3D%22%2394a3b8%22/%3E%3Cpath%20d%3D%22M11%2045%20C11%2010%2053%2010%2053%2045%22%20stroke%3D%22%23fbbf24%22%20stroke-width%3D%224.5%22%20fill%3D%22none%22%20stroke-linecap%3D%22round%22/%3E%3Cpath%20d%3D%22M12%2046%20C12%2028%2031%2028%2031%2046%22%20stroke%3D%22%233de89a%22%20stroke-width%3D%223.5%22%20fill%3D%22none%22%20stroke-linecap%3D%22round%22/%3E%3Cpath%20d%3D%22M33%2046%20C33%2028%2052%2028%2052%2046%22%20stroke%3D%22%236ab3f8%22%20stroke-width%3D%223.5%22%20fill%3D%22none%22%20stroke-linecap%3D%22round%22/%3E%3C/svg%3E">
