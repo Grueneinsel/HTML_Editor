@@ -157,10 +157,10 @@ body{ margin:0; font-family:var(--sans); background:var(--bg); color:var(--text)
   width:28px; height:28px; padding:0;
   border-radius:6px; font-size:16px;
   border-color:transparent; background:transparent;
-  opacity:.55; transition:opacity .15s, border-color .15s;
+  opacity:.55; transition:opacity .15s;
 }
-.langBtn:hover:not(:disabled){ opacity:1; border-color:var(--line2); background:#0f1a2a; }
-.langBtnActive{ opacity:1 !important; border-color:var(--accent) !important; background:#0d1e33 !important; }
+.langBtn:hover:not(:disabled){ opacity:1; background:#0f1a2a; outline:1px solid var(--line2); }
+.langBtnActive{ opacity:1 !important; background:#0d1e33 !important; outline:2px solid var(--accent) !important; }
 kbd{ display:inline-block; padding:1px 5px; border-radius:4px; border:1px solid var(--line2); background:#0f1a2a; font-family:var(--mono); font-size:10px; color:var(--text) }
 
 /* ── Animations ──────────────────────────────────────────────────────────────── */
