@@ -82,7 +82,7 @@
       <div class="row">
         <label id="addBtn" class="btnLike" for="fileInput" data-i18n="files.add">Dateien hinzufügen</label>
         <button id="resetBtn" class="danger" data-i18n="files.reset">Reset</button>
-        <span id="fileMeta" class="muted"></span>
+        <span id="fileMeta" class="muted" data-i18n="files.none">Keine Dateien geladen</span>
       </div>
       <details id="tagsetDetails" class="disclosureDetails">
         <summary><span data-i18n="tagset.sectionTitle">⚙ Tagset</span><span id="tagsetMeta" class="muted small"></span></summary>
@@ -94,7 +94,10 @@
         </div>
         <div id="tagsetListPanel" class="tagsetListPanel"></div>
       </details>
-      <div id="fileList" class="fileList" style="margin-top:10px"></div>
+      <div id="fileList" class="fileList" style="margin-top:10px">
+        <div class="muted small" data-i18n="files.drop">Dateien hier ablegen oder Schaltfläche nutzen · .conllu / .conll / .txt</div>
+        <div class="demoMenuWrap" style="margin-top:8px"><button class="demoMenuToggle" data-i18n="files.demo">Demo laden</button></div>
+      </div>
       <div id="projectLockBar" class="projectLockBar"></div>
       <div id="textWarn"></div>
     </section>

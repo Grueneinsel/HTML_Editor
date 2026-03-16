@@ -158,15 +158,16 @@ function getWarnedDocIndices(){
 // Re-render the file list panel for the current project.
 function renderFiles(){
   fileList.innerHTML = "";
-  fileMeta.textContent = state.docs.length
-    ? t('files.loaded', { n: state.docs.length })
-    : t('files.none');
   if(state.docs.length === 0){
+    fileMeta.dataset.i18n = 'files.none';
+    fileMeta.textContent = t('files.none');
     fileList.innerHTML = `<div class="muted small">${escapeHtml(t('files.drop'))}</div>`;
     fileList.appendChild(_buildDemoMenu());
     _updateSectionVisibility();
     return;
   }
+  delete fileMeta.dataset.i18n;
+  fileMeta.textContent = t('files.loaded', { n: state.docs.length });
   const warnedIndices = getWarnedDocIndices();
   state.docs.forEach((d, idx) => {
     const wrapper = document.createElement("div");
