@@ -15,13 +15,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.x'
-
       - name: Build dist/index.html
-        run: python bundler.py
+        run: python3 bundler.py
 
       - name: Get short commit SHA and date
         id: meta
