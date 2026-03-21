@@ -221,7 +221,7 @@ function _tourRemoveProject() {
   _tourProjIdx = -1;
 
   // Switch back to the original project (its index is unchanged because we appended)
-  state.activeProjectIdx = Math.min(_tourOrigIdx, state.projects.length - 2);
+  state.activeProjectIdx = Math.max(0, Math.min(_tourOrigIdx, state.projects.length - 2));
   _tourOrigIdx = -1;
 
   state.projects.splice(idx, 1);

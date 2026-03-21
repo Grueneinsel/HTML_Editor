@@ -192,8 +192,8 @@ window.LANG_DE = {
   'note.indicator':   'Dieser Satz hat eine Notiz',
 
   // Zwischenablage
-  'copy.btn':  'CoNLL-U kopieren',
-  'copy.done': '✓ Kopiert!',
+  'copy.btn':  'Gold CoNLL-U kopieren',
+  'copy.done': '✓ Gold CoNLL-U kopiert!',
   'copy.err':  'Kopieren fehlgeschlagen',
   'kbd.copy':  'Kopieren',
 

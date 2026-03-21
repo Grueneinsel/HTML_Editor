@@ -29,7 +29,7 @@ function _restore(snap){
   // still sitting in the undo/redo stack.
   state.custom    = JSON.parse(JSON.stringify(snap.custom));
   state.goldPick  = JSON.parse(JSON.stringify(snap.goldPick));
-  state.confirmed = snap.confirmed;
+  state.confirmed = new Set(snap.confirmed);
   // Annotations for any sentence may have changed — wipe the entire stats cache.
   _invalidateStatsCache();
   if(snap.docTokens != null){

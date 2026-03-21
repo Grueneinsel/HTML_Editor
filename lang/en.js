@@ -192,8 +192,8 @@ window.LANG_EN = {
   'note.indicator':   'This sentence has a note',
 
   // Clipboard
-  'copy.btn':  'Copy CoNLL-U',
-  'copy.done': '✓ Copied!',
+  'copy.btn':  'Copy Gold CoNLL-U',
+  'copy.done': '✓ Gold CoNLL-U copied!',
   'copy.err':  'Copy failed',
   'kbd.copy':  'Copy',
 
