@@ -107,6 +107,12 @@ Läuft vollständig lokal ohne Server (index.html im Browser öffnen).
   - __dep_cols__: beliebig viele Dependency-Schichten (key, name, groups)
 - Tagset hochladen: JSON per Datei-Dialog oder Drag & Drop
 - Tagset herunterladen: aktuelle Konfiguration als tagset.json
+- Tagset intern bearbeiten (✏ Tagset bearbeiten):
+  - Label-Spalten anlegen, umbenennen, löschen
+  - Dependency-Spalten mit Gruppen anlegen, umbenennen, löschen
+  - Werte direkt im Dialog bearbeiten (eine pro Zeile)
+  - Validierung: kein leerer Schlüssel, keine Duplikate
+  - Automatische Konvertierung von klassischem Format beim Öffnen
 - Vorlage herunterladen: leere tagset_template.json als Einstiegspunkt
 - Beispiel herunterladen: ausgefülltes tagset_example.json mit UD-Schema
 - Projekttagset-Liste: aufklappbare Übersicht aller Projekte mit Tagset-Zusammenfassung

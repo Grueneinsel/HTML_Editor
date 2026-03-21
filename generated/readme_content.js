@@ -507,6 +507,16 @@ Click **"📥 Download tagset"** to export the current configuration as \`tagset
 
 The downloaded JSON can be edited directly and re-uploaded.
 
+### Edit inline
+
+Click **"✏ Edit tagset"** to open the built-in editor — no external JSON file needed:
+
+- **Label columns** (UPOS / XPOS / …): add, rename, remove; values one per line
+- **Dependency columns**: add groups with names and one relation per line
+- Classic format (\`__upos__\`, \`__xpos__\`, top-level groups) is automatically converted when the editor opens
+- Validation prevents empty or duplicate column keys
+- Changes take effect immediately after clicking **Apply**
+
 ---
 
 ## Help Modal
@@ -1165,6 +1175,16 @@ Das Tagset (Label- und Dependency-Konfiguration) kann zur Laufzeit ausgetauscht 
 Schaltfläche **„📥 Tagset herunterladen"** exportiert die aktuelle Konfiguration als \`tagset.json\` — inklusive aller manuell geladenen Anpassungen.
 
 Das heruntergeladene JSON kann direkt bearbeitet und wieder hochgeladen werden.
+
+### Intern bearbeiten
+
+Schaltfläche **„✏ Tagset bearbeiten"** öffnet den eingebauten Editor — kein externes JSON nötig:
+
+- **Label-Spalten** (UPOS / XPOS / …): anlegen, umbenennen, löschen; Werte einzeilig eingeben
+- **Dependency-Spalten**: Gruppen mit Namen und eine Relation pro Zeile
+- Klassisches Format (\`__upos__\`, \`__xpos__\`, Gruppen als Top-Level-Keys) wird beim Öffnen automatisch konvertiert
+- Validierung verhindert leere oder doppelte Spalten-Schlüssel
+- Änderungen werden sofort nach „Übernehmen" aktiv
 
 ---
 

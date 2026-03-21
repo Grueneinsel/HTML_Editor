@@ -1078,6 +1078,7 @@ function _loadDemoProject(idx){
   renderFiles();
   renderSentSelect();
   renderSentence();
+  _showToast(t('files.demoLoaded', { name: projectData.name }), 'info');
 }
 
 // Build the demo-picker button with an expandable per-project menu.

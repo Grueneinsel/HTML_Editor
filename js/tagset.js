@@ -459,6 +459,7 @@ function _showTagsetEditor(){
 
     const valLbl  = el('div', S.valLabel, t('tagset.values'));
     const valArea = makeAutoTa(S.ta);
+    valArea.placeholder = t('tagset.valuesPlaceholder');
     valArea.value = (col.values || []).join('\n');
     requestAnimationFrame(() => autoResize(valArea));
 
@@ -483,6 +484,7 @@ function _showTagsetEditor(){
 
     const valLbl  = el('div', S.valLabel, t('tagset.values'));
     const valArea = makeAutoTa(S.taSmall);
+    valArea.placeholder = t('tagset.valuesPlaceholder');
     valArea.value = (tags || []).join('\n');
     requestAnimationFrame(() => autoResize(valArea));
 
@@ -558,7 +560,23 @@ function _showTagsetEditor(){
   saveBtn.addEventListener('click', () => {
     const newCols    = Array.from(colsCont.children).filter(e => e._getData).map(e => e._getData());
     const newDepCols = Array.from(depCont.children).filter(e => e._getData).map(e => e._getData());
+
+    // Validate: no empty keys
+    const allKeys = [...newCols.map(c => c.key), ...newDepCols.map(c => c.key)];
+    const emptyKey = newCols.some(c => !c.key) || newDepCols.some(c => !c.key);
+    if(emptyKey){ _showToast(t('tagset.errEmptyKey'), 'error'); return; }
+
+    // Validate: no duplicate keys
+    const seen = new Set();
+    for(const k of allKeys){
+      if(seen.has(k)){ _showToast(t('tagset.errDupKey', { key: k }), 'error'); return; }
+      seen.add(k);
+    }
+
     close();
+    if(newCols.length === 0 && newDepCols.length === 0){
+      _showToast(t('tagset.warnEmpty'), 'info');
+    }
     applyTagsetJson({ '__cols__': newCols, '__dep_cols__': newDepCols });
   });
   footer.append(cancelBtn, saveBtn);

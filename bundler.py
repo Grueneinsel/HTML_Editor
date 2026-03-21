@@ -100,8 +100,10 @@ def main() -> int:
         print("Running make_readme_js.py …")
         subprocess.run([sys.executable, str(MAKE_README_JS)], cwd=str(ROOT), check=False)
 
-    from datetime import date as _date
-    build_date = _date.today().isoformat()   # e.g. 2026-03-21
+    from datetime import datetime as _datetime
+    _now       = _datetime.now()
+    build_date = _now.strftime("%Y-%m-%d")           # for footer: 2026-03-21
+    build_ts   = _now.strftime("%Y-%m-%dT%H:%M:%S")  # for version.txt: 2026-03-21T15:30:45
 
     html = read(ENTRY)
     html = html.replace("__BUILD_DATE__", build_date)
@@ -119,8 +121,7 @@ def main() -> int:
             shutil.copy2(src, OUT_DIR / fname)
             print(f"OK  {OUT_DIR / fname}")
 
-    import time as _time
-    (OUT_DIR / "version.txt").write_text(str(int(_time.time())), encoding="utf-8")
+    (OUT_DIR / "version.txt").write_text(build_ts, encoding="utf-8")
     size = OUT_HTML.stat().st_size
     print(f"OK  {OUT_HTML}  ({size:,} bytes)")
     return 0

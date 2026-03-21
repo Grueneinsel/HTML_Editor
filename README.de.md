@@ -504,6 +504,16 @@ Schaltfläche **„📥 Tagset herunterladen"** exportiert die aktuelle Konfigur
 
 Das heruntergeladene JSON kann direkt bearbeitet und wieder hochgeladen werden.
 
+### Intern bearbeiten
+
+Schaltfläche **„✏ Tagset bearbeiten"** öffnet den eingebauten Editor — kein externes JSON nötig:
+
+- **Label-Spalten** (UPOS / XPOS / …): anlegen, umbenennen, löschen; Werte einzeilig eingeben
+- **Dependency-Spalten**: Gruppen mit Namen und eine Relation pro Zeile
+- Klassisches Format (`__upos__`, `__xpos__`, Gruppen als Top-Level-Keys) wird beim Öffnen automatisch konvertiert
+- Validierung verhindert leere oder doppelte Spalten-Schlüssel
+- Änderungen werden sofort nach „Übernehmen" aktiv
+
 ---
 
 ## Hilfe-Modal

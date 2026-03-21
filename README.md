@@ -504,6 +504,16 @@ Click **"📥 Download tagset"** to export the current configuration as `tagset.
 
 The downloaded JSON can be edited directly and re-uploaded.
 
+### Edit inline
+
+Click **"✏ Edit tagset"** to open the built-in editor — no external JSON file needed:
+
+- **Label columns** (UPOS / XPOS / …): add, rename, remove; values one per line
+- **Dependency columns**: add groups with names and one relation per line
+- Classic format (`__upos__`, `__xpos__`, top-level groups) is automatically converted when the editor opens
+- Validation prevents empty or duplicate column keys
+- Changes take effect immediately after clicking **Apply**
+
 ---
 
 ## Help Modal

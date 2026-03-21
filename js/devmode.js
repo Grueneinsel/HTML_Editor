@@ -53,7 +53,9 @@ function _devModeUpdateBadge(ver){
   const badge = document.getElementById('devVersionBadge');
   if(!badge) return;
   if(!ver){ badge.hidden = true; return; }
-  const ts = new Date(parseInt(ver, 10) * 1000).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+  // ver is ISO datetime "2026-03-21T15:30:45" — parse directly (no Unix timestamp)
+  const dt = new Date(ver);
+  const ts = isNaN(dt) ? ver : dt.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'});
   badge.innerHTML =
     `<span class="devBadgeLabel">🔨 ${ts}</span>` +
     `<button class="devBadgeClose" title="Dev-Modus beenden">✕</button>`;
