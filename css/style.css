@@ -1041,7 +1041,7 @@ html[data-theme="light"] .treeSingleBtn:hover{ background:#b8dcf0; }
   background:#1a2535; padding:1px 5px; border-radius:4px;
 }
 .helpContent .helpTable{
-  width:100%; table-layout:fixed;
+  width:100%; table-layout:auto;
   border-collapse:collapse; margin:8px 0 14px; font-size:12px;
 }
 .helpContent .helpTable th{
