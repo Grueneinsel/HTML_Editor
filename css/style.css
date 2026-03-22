@@ -1040,9 +1040,12 @@ html[data-theme="light"] .treeSingleBtn:hover{ background:#b8dcf0; }
   font-family:var(--mono); font-size:11px;
   background:#1a2535; padding:1px 5px; border-radius:4px;
 }
+.helpContent .helpTableWrap{
+  overflow-x:auto; max-width:100%; margin:8px 0 14px;
+}
 .helpContent .helpTable{
-  width:auto; max-width:100%; table-layout:auto;
-  border-collapse:collapse; margin:8px 0 14px; font-size:12px;
+  width:auto; table-layout:auto;
+  border-collapse:collapse; font-size:12px;
 }
 .helpContent .helpTable th{
   background:#0d1a2a; color:var(--muted); font-size:11px; letter-spacing:.3px;

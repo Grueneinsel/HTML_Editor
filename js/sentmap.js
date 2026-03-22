@@ -125,7 +125,9 @@ function renderSentSelectOptions(){
     // First few words of the sentence as a preview label
     const sent = state.docs[0]?.sentences[i];
     const preview = sent ? sent.tokens.slice(0, 6).map(tk => tk.form).join(' ') + (sent.tokens.length > 6 ? '…' : '') : '';
-    opt.textContent = `${t('sent.optLabel', { n: i+1 })}${confirmed ? ' ★' : ''}${flagPart}  (${stats.totalTokens} Tok${diffPart})${preview ? '  ' + preview : ''}`;
+    const note = state.notes[i]?.trim();
+    const noteHint = note ? `  📝${note.length > 20 ? note.slice(0,20) + '…' : note}` : '';
+    opt.textContent = `${t('sent.optLabel', { n: i+1 })}${confirmed ? ' ★' : ''}${flagPart}  (${stats.totalTokens} Tok${diffPart})${preview ? '  ' + preview : ''}${noteHint}`;
     // Color-code options: confirmed (gold), flagged (orange), diff (red), ok (green)
     if(confirmed && hasFlags){
       opt.style.background = '#1a0c00';

@@ -38,7 +38,7 @@ function _devModeStart(){
   if(_devModeTimer) return;
   _devModeVersion = null;
   _devModeFails   = 0;
-  _devModeTimer = setInterval(_devModePoll, 2000);
+  _devModeTimer = setInterval(() => { if(!document.hidden) _devModePoll(); }, 2000);
   _devModePoll(); // immediate first check to set baseline version
 }
 

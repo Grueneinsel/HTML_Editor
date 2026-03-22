@@ -8,7 +8,8 @@ if(window.LANG_DE) LANGS['de'] = window.LANG_DE;
 if(window.LANG_EN) LANGS['en'] = window.LANG_EN;
 
 // Persist the user's language choice across page loads. Default: English.
-let _currentLang = localStorage.getItem('lang') || 'en';
+let _currentLang = localStorage.getItem('lang') || ((navigator.language || '').toLowerCase().startsWith('de') ? 'de' : 'en');
+if(!localStorage.getItem('lang')) localStorage.setItem('lang', _currentLang);
 
 // ── Translation helpers ────────────────────────────────────────────────────────
 

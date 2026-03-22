@@ -80,7 +80,7 @@ function mdToHtml(md){
     if(inOList) { out.push("</ol>"); inOList = false; }
     if(inTable) {
       if(tableHdrDone) out.push("</tbody>");
-      out.push("</table>");
+      out.push("</table></div>");
       inTable = false; tableHdrDone = false;
     }
   }
@@ -102,7 +102,7 @@ function mdToHtml(md){
     if(inCode){ out.push(esc(line)); continue; }
 
     if(line.charAt(0) === '|'){
-      if(!inTable){ flushBlocks(); out.push('<table class="helpTable">'); inTable = true; tableHdrDone = false; }
+      if(!inTable){ flushBlocks(); out.push('<div class="helpTableWrap"><table class="helpTable">'); inTable = true; tableHdrDone = false; }
       if(/^\|[\s|:-]+\|$/.test(line)){
         if(!tableHdrDone){ out.push("<tbody>"); tableHdrDone = true; }
         continue;
@@ -114,7 +114,7 @@ function mdToHtml(md){
       else              out.push("<tr>"         + cells.map(function(c){ return "<td>" + c + "</td>"; }).join("") + "</tr>");
       continue;
     }
-    if(inTable){ if(tableHdrDone) out.push("</tbody>"); out.push("</table>"); inTable = false; tableHdrDone = false; }
+    if(inTable){ if(tableHdrDone) out.push("</tbody>"); out.push("</table></div>"); inTable = false; tableHdrDone = false; }
 
     if(/^---+$/.test(line)){ flushBlocks(); out.push('<hr class="helpHr">'); continue; }
 

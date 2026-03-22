@@ -5,8 +5,9 @@
 // IIFE runs immediately (before DOMContentLoaded) to apply the saved theme before
 // the first paint, preventing a flash of the wrong theme on page load.
 (function(){
-  const saved = localStorage.getItem('theme') || 'dark';
+  const saved = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
   document.documentElement.dataset.theme = saved;
+  if(!localStorage.getItem('theme')) localStorage.setItem('theme', saved);
 })();
 
 // ── Theme API ──────────────────────────────────────────────────────────────────
@@ -29,3 +30,8 @@ function _syncThemeBtn(){
 }
 
 document.addEventListener('DOMContentLoaded', _syncThemeBtn);
+
+// Follow system theme changes during the session (only if user hasn't manually overridden)
+window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', e => {
+  if(!localStorage.getItem('theme')) setTheme(e.matches ? 'light' : 'dark');
+});
