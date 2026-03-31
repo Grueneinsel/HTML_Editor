@@ -391,6 +391,10 @@ function _autoSave(){
 
 // Run autosave every 30 seconds.
 setInterval(_autoSave, 30_000);
+// Also save immediately before the page unloads (covers reload, tab-close, navigation).
+// 'pagehide' fires on iOS/Safari where 'beforeunload' is unreliable.
+window.addEventListener('pagehide',    _autoSave);
+window.addEventListener('beforeunload', _autoSave);
 
 // Auto-restore the last session silently on page load (called by main.js after init).
 // Only restores if no docs are currently loaded (e.g., not after a dev-mode reload).

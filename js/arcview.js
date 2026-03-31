@@ -129,7 +129,7 @@ window.addEventListener('pointerup', e => {
   const r  = drag._svgRect ?? drag.svg.getBoundingClientRect();
   const mx = e.clientX - r.left;
   const my = e.clientY - r.top;
-  const ni = _arcNearest(mx, my, drag.centers, drag.wordY, drag.cellH);
+  const ni = _arcNearest(mx, my, drag.centers, drag.wordYs, drag.cellH);
   if (ni === 0 && drag.depId !== 0 && drag.onSetHead) {
     // Drop on ROOT box (from a real token) → set drag.depId as root (head=0)
     if (drag.toks[drag.tokIdx]?.head !== 0) drag.onSetHead(drag.depId, 0);
@@ -184,7 +184,7 @@ function _arcBeginDrag(e) {
   const mk = (tag, a) => { const n = document.createElementNS(NS, tag); for (const [k,v] of Object.entries(a||{})) n.setAttribute(k,String(v)); return n; };
   const r  = pd.svg.getBoundingClientRect();
   const sx = pd.centers[pd.tokIdx];
-  const sy = pd.wordY + pd.cellH / 2;
+  const sy = pd.wordYs[pd.tokIdx] + pd.cellH / 2;
   const mx = e.clientX - r.left;
   const my = e.clientY - r.top;
   const line = mk('line', { x1:sx, y1:sy, x2:mx, y2:my,
@@ -208,11 +208,13 @@ function _arcBeginDrag(e) {
 }
 
 // Find the nearest token center within a vertical hit band around the word row.
+// wordYs is a per-token array (each token may be on a different row in multi-row mode).
 // Returns the token index or null if the cursor is too far from any token.
-function _arcNearest(mx, my, centers, wordY, cellH) {
-  if (my < wordY - 10 || my > wordY + cellH + 10) return null;
+function _arcNearest(mx, my, centers, wordYs, cellH) {
   let best = null, bestD = 64;
   for (let i = 0; i < centers.length; i++) {
+    const wy = wordYs[i];
+    if (my < wy - 10 || my > wy + cellH + 10) continue;
     const d = Math.abs(mx - centers[i]);
     if (d < bestD) { best = i; bestD = d; }
   }
@@ -222,7 +224,7 @@ function _arcNearest(mx, my, centers, wordY, cellH) {
 // Highlight the drop target token during a drag (blue = valid, red = would cycle).
 // Dropping on the ROOT box (index 0) is always valid (green).
 function _arcHighlightDrop(mx, my) {
-  const ni  = _arcNearest(mx, my, _arcDrag.centers, _arcDrag.wordY, _arcDrag.cellH);
+  const ni  = _arcNearest(mx, my, _arcDrag.centers, _arcDrag.wordYs, _arcDrag.cellH);
   const nid = (ni !== null && _arcDrag.toks[ni].id !== _arcDrag.depId) ? _arcDrag.toks[ni].id : null;
   if (nid === _arcDrag._hovId) return;
   _arcClearHighlight(_arcDrag);
@@ -338,205 +340,355 @@ function _arcShowDeprelPopup(anchorX, anchorY, depId, currentDeprel, onSetDeprel
 
 // ── Main builder ──────────────────────────────────────────────────────────────
 // Build and return a displaCy-style SVG arc diagram wrapped in a div.
+// For long sentences (> 20 real tokens) tokens are wrapped into multiple rows.
+// Cross-row arcs are shown as stub indicators at both endpoints.
 // Pass onSetHead/onDeleteArc/onSetDeprel to make the diagram editable.
 function buildArcDiagram(tokMap, { onSetHead = null, onDeleteArc = null, onSetDeprel = null, scrollToTok = null, edgeColors = null } = {}) {
-  const NS      = 'http://www.w3.org/2000/svg';
+  const NS       = 'http://www.w3.org/2000/svg';
   const realToks = Array.from(tokMap.values()).sort((a, b) => a.id - b.id);
   if (!realToks.length) return null;
   // Prepend virtual ROOT token so it appears as position 0 in the word row
   const toks = [{ id: 0, form: 'ROOT', head: null }, ...realToks];
 
-  const editable  = !!onSetHead;
-  const _touch    = window.matchMedia('(pointer: coarse)').matches;
+  const editable = !!onSetHead;
+  const _touch   = window.matchMedia('(pointer: coarse)').matches;
 
-  // ── Layout constants (larger on touch/tablet for easier tap targets) ──────
-  const HPAD      = _touch ? 18 : 14;  // horizontal padding inside word box
-  const CELL_H    = _touch ? 48 : 34;  // word box height
-  const GAP       = _touch ? 22 : 18;  // gap between word boxes
-  const FONT_SZ   = _touch ? 14 : 12;  // token label font size
-  const MIN_W     = _touch ? 66 : 52;  // minimum word box width
-  const ARC_U     = 36;   // px per token-distance unit (controls arc height scaling)
-  const ARC_MX    = 210;  // maximum arc height cap
-  const ROOT_ZONE = 0; // ROOT is now shown as token 0 in the word row
-  const PTOP      = ROOT_ZONE + 6; // top SVG padding (includes root zone height)
-  const PBOT      = 8;    // bottom SVG padding
-  const FONT_M = "'JetBrains Mono', ui-monospace, Consolas, monospace";
+  // ── Layout constants ───────────────────────────────────────────────────────
+  const HPAD    = _touch ? 18 : 14;
+  const CELL_H  = _touch ? 48 : 34;
+  const GAP     = _touch ? 22 : 18;
+  const FONT_SZ = _touch ? 14 : 12;
+  const MIN_W   = _touch ? 66 : 52;
+  const ARC_U   = 36;
+  const ARC_MX  = 210;
+  const PTOP    = 6;
+  const PBOT    = 8;
+  const FONT_M  = "'JetBrains Mono', ui-monospace, Consolas, monospace";
+  const ROW_GAP = 18;  // vertical gap between rows
+  const MIN_ARC = 20;  // minimum arc-area height per row
 
   // Measure text widths via an offscreen canvas for accurate box sizing
   const mc = document.createElement('canvas').getContext('2d');
   mc.font = `bold ${FONT_SZ}px ${FONT_M}`;
   const cellW = toks.map(t => Math.max(MIN_W, mc.measureText(t.form).width + HPAD * 2));
+  mc.font = '10px sans-serif';
 
-  // Compute the x-center of each token box
-  let xo = GAP;
-  const centers = toks.map((_, i) => { const c = xo + cellW[i] / 2; xo += cellW[i] + GAP; return c; });
-  const svgW = xo;
+  // ── Row layout ─────────────────────────────────────────────────────────────
+  // Short sentences (≤ 20 real tokens) stay on a single row.
+  // Longer sentences: wrap at WRAP_AT tokens per row, size based on viewport.
+  const n = realToks.length;
+  // Estimate available panel width (arc diagram panel is ~58% of viewport)
+  const panelEst = Math.max(400, Math.floor(window.innerWidth * 0.58));
+  const WRAP_AT = n <= 20 ? toks.length
+    : Math.min(25, Math.max(10, Math.floor((panelEst - GAP) / (MIN_W + GAP))));
 
-  // Build edge descriptors from token head fields
+  // Each token gets a row index; ROOT always shares row 0 with first real tokens
+  const rowOfTok   = toks.map((_, i) => Math.floor(i / WRAP_AT));
+  const nRows      = rowOfTok[toks.length - 1] + 1;
+  const rowTokIdxs = Array.from({ length: nRows }, (_, r) =>
+    toks.reduce((a, _, i) => { if (rowOfTok[i] === r) a.push(i); return a; }, []));
+
+  // Per-token x-centers: every row is left-aligned starting from x=GAP.
+  // The SVG is set to min-width:100% so it always fills its container;
+  // wider rows can scroll horizontally.
+  const flatCenters = new Array(toks.length);
+  const rowWidths = [];
+  for (let r = 0; r < nRows; r++) {
+    const idxs = rowTokIdxs[r];
+    let xo = GAP;
+    for (const i of idxs) { flatCenters[i] = xo + cellW[i] / 2; xo += cellW[i] + GAP; }
+    rowWidths.push(xo);
+  }
+  const svgW = Math.max(...rowWidths);
+
+  // ── Edge descriptors ───────────────────────────────────────────────────────
   const idxOf = new Map(toks.map((t, i) => [t.id, i]));
-  const edges  = [];
-  // Start at 1: ROOT (index 0) has no head, real tokens start at index 1
+  const allEdges = [];
   for (let i = 1; i < toks.length; i++) {
     const t = toks[i];
     if (t.head == null) continue;
     const hi = idxOf.get(t.head);
     if (hi == null) continue;
-    // Arc height scales with token distance, capped at ARC_MX
-    edges.push({ dep:i, head:hi, label:t.deprel??'_',
-      h: Math.min(ARC_U * Math.abs(hi - i), ARC_MX) });
+    allEdges.push({ dep: i, head: hi, label: t.deprel ?? '_', depId: t.id,
+      h: Math.min(ARC_U * Math.abs(hi - i), ARC_MX),
+      rowDep: rowOfTok[i], rowHead: rowOfTok[hi] });
   }
-  // Draw shorter arcs first so longer arcs appear behind them
-  edges.sort((a, b) => a.h - b.h);
+  allEdges.sort((a, b) => a.h - b.h);
 
-  const arcArea = Math.max(0, ...edges.map(e => e.h));
-  const wordY   = PTOP + arcArea + 14;
-  const svgH    = wordY + CELL_H + PBOT;
+  // Split into intra-row and cross-row edge sets
+  const intraByRow = Array.from({ length: nRows }, () => []);
+  const crossEdges = [];
+  for (const e of allEdges) {
+    if (e.rowDep === e.rowHead) intraByRow[e.rowDep].push(e);
+    else crossEdges.push(e);
+  }
+
+  // ── Row geometry ───────────────────────────────────────────────────────────
+  const arcAreaH = Array.from({ length: nRows }, (_, r) => {
+    const intraH = intraByRow[r].length ? Math.max(...intraByRow[r].map(e => e.h)) : 0;
+    return Math.max(intraH, MIN_ARC);
+  });
+
+  // Stack rows: compute wordY (y of token box row) for each row
+  const rowWordY = new Array(nRows);
+  let yo = PTOP;
+  for (let r = 0; r < nRows; r++) {
+    rowWordY[r] = yo + arcAreaH[r] + 14;
+    yo += arcAreaH[r] + 14 + CELL_H + (r < nRows - 1 ? ROW_GAP : 0);
+  }
+  const svgH = yo + PBOT;
+
+  // Per-token flat arrays for the drag system
+  const flatWordYs = toks.map((_, i) => rowWordY[rowOfTok[i]]);
 
   const mk = (tag, attrs = {}) => {
     const el = document.createElementNS(NS, tag);
     for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, String(v));
     return el;
   };
-  // On touch/tablet (coarse pointer) show delete buttons permanently instead of hover-only.
 
-  const svg = mk('svg', { width:svgW, height:svgH });
-  // Allow vertical page-scroll over the diagram; touch-action:none is applied
-  // only on token boxes so drags still work reliably on tablets.
-  svg.style.cssText = 'display:block; overflow:visible; cursor:default; touch-action:pan-y;';
+  const svg = mk('svg', { width: svgW, height: svgH });
+  svg.style.cssText = 'display:block; overflow:visible; cursor:default; touch-action:pan-y; min-width:100%;';
 
-  mc.font = '10px sans-serif';
+  // ── Row separator lines ────────────────────────────────────────────────────
+  for (let r = 1; r < nRows; r++) {
+    svg.appendChild(mk('line', {
+      x1: 0, y1: rowWordY[r - 1] + CELL_H + ROW_GAP / 2, x2: svgW, y2: rowWordY[r - 1] + CELL_H + ROW_GAP / 2,
+      stroke: 'var(--line2)', 'stroke-width': 0.5, 'stroke-dasharray': '4,4', 'pointer-events': 'none',
+    }));
+  }
 
-  // ── Draw edges — two passes ───────────────────────────────────────────────
-  // Pass 1: arc path curves appended in sorted order (short arcs behind long arcs).
-  // Pass 2: arc labels + ✕ buttons collected here; appended last so they always
-  //         render on top of all arc paths regardless of arc length ordering.
+  // ── Two-pass edge rendering ────────────────────────────────────────────────
+  // Pass 1 appends arc path curves (short arcs first → longer arcs rendered on top).
+  // Pass 2 (edgeLabelGroups) appends labels + buttons after all token boxes so they
+  // render on top of everything.
   const edgeLabelGroups = [];
 
-  for (const e of edges) {
-    const g      = mk('g');
-    const depId  = toks[e.dep].id;
-    const arcColor = edgeColors?.get(depId) ?? 'var(--ok)';
+  // Label collision avoidance: track occupied x-ranges per y-slot per row.
+  // Returns a y position bumped downward until it doesn't overlap existing labels.
+  const LBL_H = 15; // label height including a small padding
+  const _labelSlots = new Map(); // key = row, value = [{x0,x1,y}]
+  function _placeLabel(row, x, w) {
+    if (!_labelSlots.has(row)) _labelSlots.set(row, []);
+    const slots = _labelSlots.get(row);
+    const x0 = x - w / 2 - 6, x1 = x + w / 2 + 6;
+    // Find lowest y (highest on screen = most negative) that doesn't overlap
+    // Existing slots are stored as y (top of label). We try slots from innermost outward.
+    const taken = slots.filter(s => s.x1 > x0 && s.x0 < x1).map(s => s.y).sort((a, b) => b - a);
+    let y = taken.length ? taken[0] - LBL_H : null;
+    if (y !== null) {
+      slots.push({ x0, x1, y });
+      return y;
+    }
+    return null; // will use default curveApex
+  }
 
-    {
-      const x1   = centers[e.dep];
-      const x2   = centers[e.head];
-      const apex = wordY - e.h;
-      // The cubic Bezier M x1 y C x1 a x2 a x2 y peaks at t=0.5 at y=0.25*wordY+0.75*apex,
-      // not at the control-point apex. Use the true curve peak for label/button placement.
-      const curveApex = Math.round(0.25 * wordY + 0.75 * apex);
-      const mid  = (x1 + x2) / 2;
-      const lw   = mc.measureText(e.label).width;
+  for (const e of allEdges) {
+    const arcColor = edgeColors?.get(e.depId) ?? 'var(--ok)';
 
-      // Fat invisible stroke along the arc curve — for hover detection
+    if (e.rowDep === e.rowHead) {
+      // ── Intra-row arc: standard cubic Bezier curve ──────────────────────
+      const wY        = rowWordY[e.rowDep];
+      const x1        = flatCenters[e.dep];
+      const x2        = flatCenters[e.head];
+      const apex      = wY - e.h;
+      let   curveApex = Math.round(0.25 * wY + 0.75 * apex);
+      const mid       = (x1 + x2) / 2;
+      const lw        = mc.measureText(e.label).width;
+
+      // Push label up if it overlaps another label in the same arc-area row
+      const bumped = _placeLabel(e.rowDep, mid, lw);
+      if (bumped !== null) curveApex = bumped;
+      else _labelSlots.get(e.rowDep)?.push({ x0: mid - lw/2 - 6, x1: mid + lw/2 + 6, y: curveApex });
+      // Clamp: label must not overlap the token boxes (stay above wY - CELL_H / 2)
+      curveApex = Math.min(curveApex, wY - 16);
+
+      const g = mk('g');
+      // Fat invisible stroke for hover/click detection along the arc
       g.appendChild(mk('path', {
-        d:`M ${x1} ${wordY} C ${x1} ${apex} ${x2} ${apex} ${x2} ${wordY}`,
-        stroke:'rgba(128,128,128,0.01)', 'stroke-width':14, fill:'none',
-        'pointer-events':'stroke' }));
-
-      // Invisible hit rect covering the label + button area (at true curve peak)
-      const lblHx = mid - lw/2 - 8;
-      const lblHw = lw + 10 + (editable ? 30 : 8);
+        d: `M ${x1} ${wY} C ${x1} ${apex} ${x2} ${apex} ${x2} ${wY}`,
+        stroke: 'rgba(128,128,128,0.01)', 'stroke-width': 14, fill: 'none', 'pointer-events': 'stroke',
+      }));
+      // Invisible hit rect at the label/button area (true curve peak)
       g.appendChild(mk('rect', {
-        x:lblHx, y:curveApex-22, width:lblHw, height:22,
-        fill:'transparent', 'pointer-events':'all' }));
-
-      // Visible cubic Bezier arc curve
+        x: mid - lw/2 - 8, y: curveApex - 22,
+        width: lw + 10 + (editable ? 30 : 8), height: 22,
+        fill: 'transparent', 'pointer-events': 'all',
+      }));
+      // Visible Bezier curve
       g.appendChild(mk('path', {
-        d:`M ${x1} ${wordY} C ${x1} ${apex} ${x2} ${apex} ${x2} ${wordY}`,
-        stroke:arcColor, 'stroke-width':1.8, fill:'none',
-        'stroke-linecap':'round', 'pointer-events':'none' }));
-
-      // Arrowhead at the dependent end (arrow points from head → dependent)
+        d: `M ${x1} ${wY} C ${x1} ${apex} ${x2} ${apex} ${x2} ${wY}`,
+        stroke: arcColor, 'stroke-width': 1.8, fill: 'none',
+        'stroke-linecap': 'round', 'pointer-events': 'none',
+      }));
+      // Arrowhead at the dependent end (head → dependent direction)
       g.appendChild(mk('polygon', {
-        points:`${x1-4},${wordY-10} ${x1+4},${wordY-10} ${x1},${wordY-2}`,
-        fill:arcColor, 'pointer-events':'none' }));
-
+        points: `${x1-4},${wY-10} ${x1+4},${wY-10} ${x1},${wY-2}`,
+        fill: arcColor, 'pointer-events': 'none',
+      }));
       svg.appendChild(g);
 
-      // Arc label group — rendered in top layer, at true curve peak
+      // Arc label group (rendered in top layer)
       const labelG = mk('g');
       if (editable && onSetDeprel) labelG.style.cssText = 'cursor:pointer;';
       labelG.appendChild(mk('rect', {
-        x:mid-lw/2-5, y:curveApex-14, width:lw+10, height:14,
-        rx:3, fill:'var(--card)', stroke:arcColor, 'stroke-width':0.8 }));
-      const lt = mk('text', { x:mid, y:curveApex-4, 'text-anchor':'middle',
-        'font-size':10, 'font-weight':600, fill:'var(--text)', 'pointer-events':'none' });
+        x: mid - lw/2 - 5, y: curveApex - 14, width: lw + 10, height: 14,
+        rx: 3, fill: 'var(--card)', stroke: arcColor, 'stroke-width': 0.8,
+      }));
+      const lt = mk('text', { x: mid, y: curveApex - 4, 'text-anchor': 'middle',
+        'font-size': 10, 'font-weight': 600, fill: 'var(--text)', 'pointer-events': 'none' });
       lt.textContent = e.label;
       labelG.appendChild(lt);
       if (editable && onSetDeprel) {
         labelG.addEventListener('click', ev => {
           ev.stopPropagation();
           const svgR = svg.getBoundingClientRect();
-          _arcShowDeprelPopup(svgR.left + mid, svgR.top + curveApex - 14, depId, e.label, onSetDeprel);
+          _arcShowDeprelPopup(svgR.left + mid, svgR.top + curveApex - 14, e.depId, e.label, onSetDeprel);
         });
       }
 
-      // ✕ delete button — rendered in top layer; hover-only on mouse, always visible on touch
+      // ✕ delete button — hover-only on mouse, always visible on touch
       let btnG = null;
       if (editable && onDeleteArc) {
         btnG = mk('g');
         const _bInit = _touch ? 'opacity:0.7; pointer-events:all;' : 'opacity:0; pointer-events:none;';
         btnG.style.cssText = `cursor:pointer; ${_bInit} transition:opacity .12s;`;
-        const bx = mid + lw/2 + 14;
-        const by = curveApex - 7;
-        // Transparent hit-area circle (large touch target)
-        btnG.appendChild(mk('circle', { cx:bx, cy:by, r:18, fill:'transparent' }));
-        btnG.appendChild(mk('circle', { cx:bx, cy:by, r:7, fill:'var(--bad)', opacity:0.9 }));
-        const xt = mk('text', { x:bx, y:by+4, 'text-anchor':'middle',
-          'font-size':11, 'font-weight':900, fill:'#fff', 'pointer-events':'none' });
+        const bx = mid + lw/2 + 14, by = curveApex - 7;
+        btnG.appendChild(mk('circle', { cx: bx, cy: by, r: 18, fill: 'transparent' }));
+        btnG.appendChild(mk('circle', { cx: bx, cy: by, r: 7, fill: 'var(--bad)', opacity: 0.9 }));
+        const xt = mk('text', { x: bx, y: by + 4, 'text-anchor': 'middle',
+          'font-size': 11, 'font-weight': 900, fill: '#fff', 'pointer-events': 'none' });
         xt.textContent = '×';
         btnG.appendChild(xt);
-        btnG.addEventListener('click', ev => { ev.stopPropagation(); onDeleteArc(depId); });
+        btnG.addEventListener('click', ev => { ev.stopPropagation(); onDeleteArc(e.depId); });
       }
 
-      // Hover on path group OR label → show ✕ button; pointer-events toggled to avoid
-      // invisible button accidentally blocking clicks when hidden.
       if (btnG) {
         let hideTimer = null;
-        const show = () => {
-          clearTimeout(hideTimer);
-          btnG.style.opacity = '1';
-          btnG.style.pointerEvents = '';
-        };
-        const hide = () => {
-          hideTimer = setTimeout(() => {
-            btnG.style.opacity = '0';
-            btnG.style.pointerEvents = 'none';
-          }, 300);
-        };
-        g.addEventListener('pointerenter', show);
-        g.addEventListener('pointerleave', hide);
-        labelG.addEventListener('pointerenter', show);
-        labelG.addEventListener('pointerleave', hide);
+        const show = () => { clearTimeout(hideTimer); btnG.style.opacity = '1'; btnG.style.pointerEvents = ''; };
+        const hide = () => { hideTimer = setTimeout(() => { btnG.style.opacity = '0'; btnG.style.pointerEvents = 'none'; }, 300); };
+        g.addEventListener('pointerenter', show); g.addEventListener('pointerleave', hide);
+        labelG.addEventListener('pointerenter', show); labelG.addEventListener('pointerleave', hide);
         btnG.addEventListener('pointerenter', () => clearTimeout(hideTimer));
         btnG.addEventListener('pointerleave', hide);
       }
+      edgeLabelGroups.push(labelG);
+      if (btnG) edgeLabelGroups.push(btnG);
 
+    } else {
+      // ── Cross-row arc: S-curve Bezier connecting head to dep across rows ──
+      // The curve rises ARC_U pixels above the head token, crosses through the
+      // inter-row space, and arrives ARC_U pixels above the dep token.
+      // Drawn before token boxes so boxes render on top (long arcs pass "behind"
+      // intermediate rows).
+      const x_h  = flatCenters[e.head];
+      const x_d  = flatCenters[e.dep];
+      const rowH = e.rowHead < e.rowDep ? e.rowHead : e.rowDep; // upper row
+      const y_h  = rowWordY[e.rowHead];
+      const y_d  = rowWordY[e.rowDep];
+      const peak = ARC_U;
+      // S-curve: rise above head, curve to dep, descend to dep
+      const pathD = `M ${x_h} ${y_h} C ${x_h} ${y_h - peak} ${x_d} ${y_d - peak} ${x_d} ${y_d}`;
+      // Place label in the inter-row gap between the two rows it spans
+      const gapCenterY = rowWordY[rowH] + CELL_H + ROW_GAP / 2;
+      // x at t=0.5 of the Bezier
+      const lx = (x_h + x_d) / 2;
+      const lw = mc.measureText(e.label).width;
+      const mid = lx;
+      // Anchor label in gap; offset slightly per arc to avoid stacking
+      const crossIdx = crossEdges.indexOf(e);
+      const ly = gapCenterY - 6 + (crossIdx % 2) * 13;
+
+      const g = mk('g');
+      g.appendChild(mk('path', {
+        d: pathD, stroke: 'rgba(128,128,128,0.01)', 'stroke-width': 14,
+        fill: 'none', 'pointer-events': 'stroke',
+      }));
+      g.appendChild(mk('rect', {
+        x: mid - lw/2 - 8, y: ly - 22,
+        width: lw + 10 + (editable ? 30 : 8), height: 22,
+        fill: 'transparent', 'pointer-events': 'all',
+      }));
+      g.appendChild(mk('path', {
+        d: pathD, stroke: arcColor, 'stroke-width': 1.8, fill: 'none',
+        'stroke-linecap': 'round', 'pointer-events': 'none',
+        'stroke-dasharray': '6,3',
+      }));
+      // Arrowhead at dep (arc arrives from above — tangent is downward)
+      g.appendChild(mk('polygon', {
+        points: `${x_d-4},${y_d-10} ${x_d+4},${y_d-10} ${x_d},${y_d-2}`,
+        fill: arcColor, 'pointer-events': 'none',
+      }));
+      svg.appendChild(g);
+
+      // Label at Bezier midpoint
+      const labelG = mk('g');
+      if (editable && onSetDeprel) labelG.style.cssText = 'cursor:pointer;';
+      labelG.appendChild(mk('rect', {
+        x: mid - lw/2 - 5, y: ly - 14, width: lw + 10, height: 14,
+        rx: 3, fill: 'var(--card)', stroke: arcColor, 'stroke-width': 0.8,
+      }));
+      const lt = mk('text', { x: mid, y: ly - 4, 'text-anchor': 'middle',
+        'font-size': 10, 'font-weight': 600, fill: 'var(--text)', 'pointer-events': 'none' });
+      lt.textContent = e.label;
+      labelG.appendChild(lt);
+      if (editable && onSetDeprel) {
+        labelG.addEventListener('click', ev => {
+          ev.stopPropagation();
+          const svgR = svg.getBoundingClientRect();
+          _arcShowDeprelPopup(svgR.left + mid, svgR.top + ly - 14, e.depId, e.label, onSetDeprel);
+        });
+      }
+
+      let btnG = null;
+      if (editable && onDeleteArc) {
+        btnG = mk('g');
+        const _bInit = _touch ? 'opacity:0.7; pointer-events:all;' : 'opacity:0; pointer-events:none;';
+        btnG.style.cssText = `cursor:pointer; ${_bInit} transition:opacity .12s;`;
+        const bx = mid + lw/2 + 14, by = ly - 7;
+        btnG.appendChild(mk('circle', { cx: bx, cy: by, r: 18, fill: 'transparent' }));
+        btnG.appendChild(mk('circle', { cx: bx, cy: by, r: 7, fill: 'var(--bad)', opacity: 0.9 }));
+        const xt = mk('text', { x: bx, y: by + 4, 'text-anchor': 'middle',
+          'font-size': 11, 'font-weight': 900, fill: '#fff', 'pointer-events': 'none' });
+        xt.textContent = '×';
+        btnG.appendChild(xt);
+        btnG.addEventListener('click', ev => { ev.stopPropagation(); onDeleteArc(e.depId); });
+      }
+
+      if (btnG) {
+        let hideTimer = null;
+        const show = () => { clearTimeout(hideTimer); btnG.style.opacity = '1'; btnG.style.pointerEvents = ''; };
+        const hide = () => { hideTimer = setTimeout(() => { btnG.style.opacity = '0'; btnG.style.pointerEvents = 'none'; }, 300); };
+        g.addEventListener('pointerenter', show); g.addEventListener('pointerleave', hide);
+        labelG.addEventListener('pointerenter', show); labelG.addEventListener('pointerleave', hide);
+        btnG.addEventListener('pointerenter', () => clearTimeout(hideTimer));
+        btnG.addEventListener('pointerleave', hide);
+      }
       edgeLabelGroups.push(labelG);
       if (btnG) edgeLabelGroups.push(btnG);
     }
   }
 
-  // ── Draw token boxes ───────────────────────────────────────────────────────
+  // ── Token boxes ────────────────────────────────────────────────────────────
   for (let i = 0; i < toks.length; i++) {
     const t   = toks[i];
-    const cxi = centers[i];
+    const cxi = flatCenters[i];
     const bw  = cellW[i];
     const bx  = cxi - bw / 2;
+    const wY  = flatWordYs[i];
 
     if (i === 0) {
-      // ── ROOT box: dashed green border, draggable in edit mode ────────────
-      svg.appendChild(mk('rect', { x:bx, y:wordY, width:bw, height:CELL_H,
-        rx:6, fill:'rgba(61,232,154,0.06)', stroke:'var(--ok)', 'stroke-width':1.5,
-        'stroke-dasharray':'5,3' }));
-      const fmT = mk('text', { x:cxi, y:wordY+CELL_H/2+5,
+      // ── ROOT box: dashed green border ────────────────────────────────────
+      svg.appendChild(mk('rect', { x:bx, y:wY, width:bw, height:CELL_H,
+        rx:6, fill:'rgba(61,232,154,0.06)', stroke:'var(--ok)',
+        'stroke-width':1.5, 'stroke-dasharray':'5,3' }));
+      const fmT = mk('text', { x:cxi, y:wY+CELL_H/2+5,
         'text-anchor':'middle', 'font-size':FONT_SZ, 'font-weight':700,
         fill:'var(--ok)', 'font-family':FONT_M, 'letter-spacing':'1px' });
       fmT.textContent = 'ROOT';
       svg.appendChild(fmT);
       if (editable && onSetHead) {
-        // Both drag-from ROOT (to assign root) and drop-on ROOT (to receive arcs)
-        const ov = mk('rect', { x:bx, y:wordY, width:bw, height:CELL_H,
+        const ov = mk('rect', { x:bx, y:wY, width:bw, height:CELL_H,
           rx:6, fill:'transparent', cursor:'grab' });
         ov.dataset.arctokid = '0';
         ov.style.touchAction = 'pan-y';
@@ -547,10 +699,9 @@ function buildArcDiagram(tokMap, { onSetHead = null, onDeleteArc = null, onSetDe
           const isTouch = ev.pointerType !== 'mouse';
           const tokData = {
             startX: ev.clientX, startY: ev.clientY,
-            pointerId: ev.pointerId,
-            isTouch,
+            pointerId: ev.pointerId, isTouch,
             tokIdx: 0, depId: 0,
-            svg, centers, wordY, cellH: CELL_H, toks,
+            svg, centers: flatCenters, wordYs: flatWordYs, cellH: CELL_H, toks,
             onSetHead, onSetDeprel, onScrollTok: null,
             _hovId: null, _hovEl: null, _hovBad: false,
           };
@@ -574,62 +725,47 @@ function buildArcDiagram(tokMap, { onSetHead = null, onDeleteArc = null, onSetDe
       continue;
     }
 
-    svg.appendChild(mk('rect', { x:bx, y:wordY, width:bw, height:CELL_H,
+    // ── Regular token box ─────────────────────────────────────────────────
+    svg.appendChild(mk('rect', { x:bx, y:wY, width:bw, height:CELL_H,
       rx:6, fill:'var(--card)', stroke:'var(--line2)', 'stroke-width':1 }));
-    // Token ID in small text at top-left corner of the box
-    const idT = mk('text', { x:bx+5, y:wordY+11, 'font-size':9,
-      fill:'var(--muted)', 'font-weight':600 });
+    const idT = mk('text', { x:bx+5, y:wY+11,
+      'font-size':9, fill:'var(--muted)', 'font-weight':600 });
     idT.textContent = t.id;
     svg.appendChild(idT);
-    // Token form centered in the box
-    const fmT = mk('text', { x:cxi, y:wordY+CELL_H/2+5,
+    const fmT = mk('text', { x:cxi, y:wY+CELL_H/2+5,
       'text-anchor':'middle', 'font-size':FONT_SZ, 'font-weight':700,
       fill:'var(--text)', 'font-family':FONT_M });
     fmT.textContent = t.form;
     svg.appendChild(fmT);
 
-    // Transparent overlay acts as the drag source (editable) or click target (read-only)
-    const overlay = mk('rect', { x:bx, y:wordY, width:bw, height:CELL_H,
+    const overlay = mk('rect', { x:bx, y:wY, width:bw, height:CELL_H,
       rx:6, fill:'transparent',
       cursor: editable ? 'grab' : (scrollToTok ? 'pointer' : 'default') });
     overlay.dataset.arctokid = t.id;
     if (editable) {
-      // Touch: allow vertical scroll (pan-y) — hold timer decides if it's a drag.
-      // Mouse: block all default pointer actions (none) so drag starts immediately.
       overlay.style.touchAction = 'pan-y';
-
       overlay.addEventListener('pointerdown', ev => {
-        // Ignore right-clicks on mouse; accept all buttons for stylus/touch
         if (ev.pointerType === 'mouse' && ev.button !== 0) return;
-
         const isTouch = ev.pointerType !== 'mouse';
         const tokData = {
           startX: ev.clientX, startY: ev.clientY,
-          pointerId: ev.pointerId,
-          isTouch,
+          pointerId: ev.pointerId, isTouch,
           tokIdx: i, depId: t.id,
-          svg, centers, wordY, cellH: CELL_H, toks,
+          svg, centers: flatCenters, wordYs: flatWordYs, cellH: CELL_H, toks,
           onSetHead, onSetDeprel, onScrollTok: scrollToTok,
           _hovId: null, _hovEl: null, _hovBad: false,
         };
-
         if (isTouch) {
-          // Hold-to-drag: capture pointer early so we track movement reliably,
-          // but don't enter drag mode until hold timer fires.
-          // If the user moves > _ARC_HOLD_CANCEL px before the timer, we release
-          // capture and let the browser handle the gesture (e.g. vertical scroll).
           overlay.setPointerCapture(ev.pointerId);
           _arcPreHold = { ...tokData, overlayEl: overlay };
           _arcHoldTimer = setTimeout(() => {
             if (!_arcPreHold) return;
             const ph = _arcPreHold; _arcPreHold = null;
-            // Hold confirmed — enter pre-drag mode with visual + haptic feedback
             ph.overlayEl.style.fill = 'rgba(255,200,50,0.35)';
             navigator.vibrate?.(15);
             _arcPreDrag = ph;
           }, _ARC_HOLD_MS);
         } else {
-          // Mouse: immediate pre-drag (existing behaviour)
           ev.preventDefault();
           overlay.setPointerCapture(ev.pointerId);
           _arcPreDrag = tokData;
@@ -645,9 +781,8 @@ function buildArcDiagram(tokMap, { onSetHead = null, onDeleteArc = null, onSetDe
     svg.appendChild(overlay);
   }
 
-  // ── Render arc labels + buttons on top of all arc paths ───────────────────
-  // Appended after token boxes so they are always visible above overlapping paths.
-  for (const lg of edgeLabelGroups) svg.appendChild(lg);
+  // ── Arc labels + buttons on top of all arc paths and token boxes ──────────
+  for (const g of edgeLabelGroups) svg.appendChild(g);
 
   const wrap = document.createElement('div');
   wrap.className = 'arcDiagramWrap';
