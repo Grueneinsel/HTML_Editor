@@ -234,6 +234,7 @@ function renderSentMap(){
 
 // Toggle the flag for a single token and update the row, minimap, and selector in place.
 function toggleFlag(sentIdx, tokId){
+  pushUndo();
   if(!state.flags[sentIdx]) state.flags[sentIdx] = new Set();
   const s = state.flags[sentIdx];
   if(s.has(tokId)){

@@ -89,6 +89,29 @@ function _deleteToken(tokId){
 
 // ── Sentence management ────────────────────────────────────────────────────────
 
+// Shift all sentence-indexed state buckets by +delta for keys >= fromIdx.
+function _shiftSentenceIndexedState(fromIdx, delta){
+  const shiftObj = (obj) => {
+    const out = {};
+    for(const [k, v] of Object.entries(obj || {})){
+      const i = parseInt(k, 10);
+      if(Number.isNaN(i)) continue;
+      out[i >= fromIdx ? i + delta : i] = v;
+    }
+    return out;
+  };
+  state.custom = shiftObj(state.custom);
+  state.goldPick = shiftObj(state.goldPick);
+  state.notes = shiftObj(state.notes);
+  state.flags = shiftObj(state.flags);
+
+  const nextConfirmed = new Set();
+  for(const i of state.confirmed){
+    nextConfirmed.add(i >= fromIdx ? i + delta : i);
+  }
+  state.confirmed = nextConfirmed;
+}
+
 // Render sentence add/delete controls + sentence list into #sentManageBar.
 function renderSentManage(){
   const bar = document.getElementById("sentManageBar");
@@ -103,10 +126,14 @@ function renderSentManage(){
   addBtn.textContent = t('sent.addSentBtn');
   addBtn.addEventListener("click", () => {
     pushUndo();
+    const insertAt = state.currentSent + 1;
     const newSent = { text: "", tokens: [], comments: [], extras: [] };
-    for(const d of state.docs) d.sentences.splice(state.currentSent + 1, 0, JSON.parse(JSON.stringify(newSent)));
+    for(const d of state.docs) d.sentences.splice(insertAt, 0, JSON.parse(JSON.stringify(newSent)));
+    _shiftSentenceIndexedState(insertAt, +1);
+    _invalidateStatsCache();
     recomputeMaxSents();
-    state.currentSent = state.currentSent + 1;
+    state.currentSent = insertAt;
+    if(typeof renderProjectTabs === "function") renderProjectTabs();
     renderSentSelect();
     renderSentence();
     renderConlluEditor(true);
@@ -120,9 +147,19 @@ function renderSentManage(){
   delBtn.addEventListener("click", () => {
     if(!confirm(t('sent.delSentConfirm'))) return;
     pushUndo();
-    for(const d of state.docs) d.sentences.splice(state.currentSent, 1);
+    const delAt = state.currentSent;
+    for(const d of state.docs) d.sentences.splice(delAt, 1);
+    // Drop deleted sentence buckets, then shift everything after it left by one.
+    delete state.custom[delAt];
+    delete state.goldPick[delAt];
+    delete state.notes[delAt];
+    delete state.flags[delAt];
+    state.confirmed.delete(delAt);
+    _shiftSentenceIndexedState(delAt + 1, -1);
+    _invalidateStatsCache();
     recomputeMaxSents();
     state.currentSent = Math.min(state.currentSent, Math.max(0, state.maxSents - 1));
+    if(typeof renderProjectTabs === "function") renderProjectTabs();
     renderSentSelect();
     renderSentence();
     renderConlluEditor(true);

@@ -292,6 +292,8 @@ window.LANG_EN = {
   'bulk.unflagged':     'All flags removed',
   'token.inserted':     'Token inserted',
   'token.deleted':      'Token deleted',
+  'token.insertWordTitle': 'Insert token',
+  'token.deleteWordTitle': 'Delete token',
   'files.resetDone':        '↺ Project reset',
   'files.globalResetDone':  '↺ All projects reset',
   'arc.cycle':          '⚠ Cycle detected — not allowed',

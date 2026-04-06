@@ -292,6 +292,8 @@ window.LANG_DE = {
   'bulk.unflagged':     'Alle Markierungen entfernt',
   'token.inserted':     'Token eingefügt',
   'token.deleted':      'Token gelöscht',
+  'token.insertWordTitle': 'Token einfügen',
+  'token.deleteWordTitle': 'Token löschen',
   'files.resetDone':        '↺ Projekt zurückgesetzt',
   'files.globalResetDone':  '↺ Alles zurückgesetzt',
   'arc.cycle':          '⚠ Kreisreferenz — nicht erlaubt',

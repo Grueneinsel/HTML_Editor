@@ -5,21 +5,29 @@ const _undoStack = [];
 const _redoStack = [];
 const UNDO_MAX   = 80; // maximum number of snapshots kept on either stack
 
+function _cloneFlags(flags){
+  const out = {};
+  for(const [k, v] of Object.entries(flags || {})){
+    const arr = v instanceof Set ? Array.from(v) : (Array.isArray(v) ? v : []);
+    if(arr.length > 0) out[k] = new Set(arr);
+  }
+  return out;
+}
+
 // Capture a lightweight snapshot of the mutable annotation state.
 // Also saves a shallow copy of the current sentence's tokens from each doc
 // so that direct edits to d.sentences (arc editing) can be undone.
 function _snapshot(){
-  const si = state.currentSent;
   return {
     custom:    JSON.parse(JSON.stringify(state.custom)),
     goldPick:  JSON.parse(JSON.stringify(state.goldPick)),
     confirmed: new Set(state.confirmed),
-    sentIndex: si,
-    docTokens: state.docs.map(d => {
-      const s = d.sentences[si];
-      if(!s) return null;
-      return s.tokens.map(t => ({ ...t }));
-    }),
+    notes:     JSON.parse(JSON.stringify(state.notes)),
+    flags:     _cloneFlags(state.flags),
+    currentSent: state.currentSent,
+    maxSents:    state.maxSents,
+    hiddenCols:  new Set(state.hiddenCols),
+    docSentences: state.docs.map(d => JSON.parse(JSON.stringify(d.sentences || []))),
   };
 }
 
@@ -30,14 +38,18 @@ function _restore(snap){
   state.custom    = JSON.parse(JSON.stringify(snap.custom));
   state.goldPick  = JSON.parse(JSON.stringify(snap.goldPick));
   state.confirmed = new Set(snap.confirmed);
+  state.notes     = JSON.parse(JSON.stringify(snap.notes || {}));
+  state.flags     = _cloneFlags(snap.flags || {});
+  state.currentSent = snap.currentSent ?? state.currentSent;
+  state.maxSents    = snap.maxSents ?? state.maxSents;
+  state.hiddenCols  = new Set(snap.hiddenCols || []);
   // Annotations for any sentence may have changed — wipe the entire stats cache.
   _invalidateStatsCache();
-  if(snap.docTokens != null){
+  if(snap.docSentences != null){
     state.docs.forEach((d, i) => {
-      const toks = snap.docTokens[i];
-      if(!toks) return;
-      const s = d.sentences[snap.sentIndex];
-      if(s) s.tokens = toks.map(t => ({ ...t }));
+      const sents = snap.docSentences[i];
+      if(!sents) return;
+      d.sentences = JSON.parse(JSON.stringify(sents));
     });
   }
 }
@@ -77,7 +89,7 @@ function _syncUndoBtns(){
   if(r) r.disabled = _redoStack.length === 0;
   const topUndo = _undoStack[_undoStack.length - 1];
   const topRedo = _redoStack[_redoStack.length - 1];
-  const sentSuffix = snap => snap?.sentIndex != null ? ` (S${snap.sentIndex + 1})` : '';
+  const sentSuffix = snap => snap?.currentSent != null ? ` (S${snap.currentSent + 1})` : '';
   if(u) u.title = t('undo.title', { n: _undoStack.length, s: tpSuffix(_undoStack.length, 'undo') }) + sentSuffix(topUndo);
   if(r) r.title = t('redo.title', { n: _redoStack.length, s: tpSuffix(_redoStack.length, 'redo') }) + sentSuffix(topRedo);
 }
@@ -91,8 +103,12 @@ function getUndoState(){
     custom:    JSON.parse(JSON.stringify(snap.custom)),
     goldPick:  JSON.parse(JSON.stringify(snap.goldPick)),
     confirmed: Array.from(snap.confirmed),
-    sentIndex: snap.sentIndex ?? null,
-    docTokens: snap.docTokens ? snap.docTokens.map(arr => arr ? arr.map(t => ({ ...t })) : null) : null,
+    notes:     JSON.parse(JSON.stringify(snap.notes || {})),
+    flags:     Object.fromEntries(Object.entries(snap.flags || {}).map(([k, v]) => [k, Array.from(v)])),
+    currentSent: snap.currentSent ?? null,
+    maxSents:    snap.maxSents ?? null,
+    hiddenCols:  Array.from(snap.hiddenCols || []),
+    docSentences: snap.docSentences ? snap.docSentences.map(sents => JSON.parse(JSON.stringify(sents))) : null,
   });
   return { undo: _undoStack.map(ser), redo: _redoStack.map(ser) };
 }
@@ -103,8 +119,12 @@ function loadUndoState({ undo = [], redo = [] }){
     custom:    JSON.parse(JSON.stringify(s.custom   || {})),
     goldPick:  JSON.parse(JSON.stringify(s.goldPick || {})),
     confirmed: new Set(s.confirmed || []),
-    sentIndex: s.sentIndex ?? null,
-    docTokens: s.docTokens ? s.docTokens.map(arr => arr ? arr.map(t => ({ ...t })) : null) : null,
+    notes:     JSON.parse(JSON.stringify(s.notes || {})),
+    flags:     _cloneFlags(s.flags || {}),
+    currentSent: s.currentSent ?? null,
+    maxSents:    s.maxSents ?? null,
+    hiddenCols:  new Set(s.hiddenCols || []),
+    docSentences: s.docSentences ? s.docSentences.map(sents => JSON.parse(JSON.stringify(sents))) : null,
   });
   _undoStack.length = 0;
   _redoStack.length = 0;

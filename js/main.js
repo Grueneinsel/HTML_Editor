@@ -209,7 +209,10 @@ function renderFiles(){
     const dlBtn = document.createElement("button");
     dlBtn.title = t('files.download');
     dlBtn.textContent = "⬇ Download";
-    dlBtn.addEventListener("click", () => downloadText(d.content || "", d.name));
+    dlBtn.addEventListener("click", () => {
+      const txt = (typeof _docToConlluText === 'function') ? _docToConlluText(d) : (d.content || "");
+      downloadText(txt || "", d.name);
+    });
     actions.appendChild(dlBtn);
 
     // Move-to-project select (always shown so a new project can be created inline)
@@ -441,7 +444,7 @@ function renderSentence(){
     const sentIdx = state.currentSent;
     if(state.unlocked){
       // Insert button before each token + one at the end; delete button on each token
-      const insertBtn = id => `<button class="sentInsertBtn" data-before="${id}" title="Wort einfügen">+</button>`;
+      const insertBtn = id => `<button class="sentInsertBtn" data-before="${id}" title="${escapeHtml(t('token.insertWordTitle'))}">+</button>`;
       sentText.innerHTML =
         s0.tokens.map(tk => {
           const form = tk.form || '';
@@ -449,7 +452,7 @@ function renderSentence(){
           return insertBtn(tk.id) +
             `<span class="sentTokenEdit${flagCls}" data-id="${tk.id}">` +
               `<input type="text" class="sentFormInput" data-id="${tk.id}" value="${escapeHtml(form)}" size="${Math.max(1, form.length)}" spellcheck="false" autocomplete="off">` +
-              `<button class="sentDeleteBtn" data-id="${tk.id}" title="Wort löschen">×</button>` +
+              `<button class="sentDeleteBtn" data-id="${tk.id}" title="${escapeHtml(t('token.deleteWordTitle'))}">×</button>` +
             `</span>`;
         }).join('') + insertBtn(0);
     } else {
